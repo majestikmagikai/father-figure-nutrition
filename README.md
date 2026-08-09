@@ -1,7 +1,7 @@
 # Father Figure Nutrition
 ![License](https://img.shields.io/badge/license-UNLICENSED-red.svg)
 
-<img width="1121" height="826" alt="Image" src="https://github.com/user-attachments/assets/9b1caef6-4514-4dba-b24a-878330de784d" />
+<img width="640" height="472" alt="Image" src="https://github.com/user-attachments/assets/3e5e7328-c6ea-4eee-8a90-4c168b4582a5" />
 
 A veteran-owned supplement brand storefront built with React, Vite, and Shopify Storefront API.
 
