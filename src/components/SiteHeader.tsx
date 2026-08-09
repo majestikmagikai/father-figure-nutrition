@@ -1,0 +1,202 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger,
+} from "@/components/ui/sheet";
+import { ShoppingCart, Minus, Plus, Trash2, Menu, Shield } from "lucide-react";
+import { useCartStore } from "@/stores/cartStore";
+import logo from "@/assets/father-figure-logo.png";
+
+export const SiteHeader = () => {
+  const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const totalItems = useCartStore((s) => s.items.reduce((sum, i) => sum + i.quantity, 0));
+
+  const nav = [
+    { href: "/", label: "Home" },
+    { href: "/#shop", label: "Shop" },
+    { href: "/#bundle", label: "Bundle" },
+    { href: "/#mission", label: "Mission" },
+    { href: "/#about", label: "About" },
+    { href: "/#faq", label: "FAQ" },
+  ];
+
+  return (
+    <header
+      className={`sticky top-0 z-50 transition-all border-b-2 ${
+        scrolled ? "bg-background/90 backdrop-blur-lg border-accent" : "bg-transparent border-transparent"
+      }`}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-0 flex items-center justify-between gap-8 mb-4">
+        <Link to="/" className="flex items-center gap-2 shrink-0">
+          <img src={logo} alt="Father Figure Men's Supplements" className="h-16 object-contain" />
+          <div className="hidden sm:flex flex-col leading-tight">
+            <span className="font-display text-xl uppercase">Father Figure</span>
+            <span className="text-[10px] tracking-[0.2em] text-gold uppercase font-bold">Men's Supplements</span>
+          </div>
+        </Link>
+
+        <nav className="hidden md:flex items-center gap-7 text-sm font-medium">
+          {nav.map((n) => (
+            <a key={n.href} href={n.href} className="relative text-primary/80 hover:text-gold transition-colors uppercase tracking-wider text-sm font-display group">
+              {n.label}
+              <span className="absolute -bottom-1 left-0 h-[2px] w-0 bg-accent group-hover:w-full transition-all duration-300 ease-out rounded-full" />
+            </a>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-2">
+          <CartButton />
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-72">
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-primary" /> Father Figure
+                </SheetTitle>
+              </SheetHeader>
+              <div className="mt-8 flex flex-col gap-4">
+                {nav.map((n) => (
+                  <a
+                    key={n.href}
+                    href={n.href}
+                    onClick={() => setOpen(false)}
+                    className="text-lg font-display uppercase tracking-wide hover:text-primary"
+                  >
+                    {n.label}
+                  </a>
+                ))}
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+const CartButton = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const { items, updateQuantity, removeItem } = useCartStore();
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalPrice = items.reduce(
+    (sum, item) => sum + parseFloat(item.price) * item.quantity,
+    0,
+  );
+
+  return (
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      <SheetTrigger asChild>
+        <Button variant="outline" size="icon" className="relative border-border">
+          <ShoppingCart className="h-5 w-5" />
+          {totalItems > 0 && (
+            <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-gold text-primary font-bold border-2 border-background">
+              {totalItems}
+            </Badge>
+          )}
+        </Button>
+      </SheetTrigger>
+      <SheetContent className="w-full sm:max-w-lg flex flex-col h-full">
+        <SheetHeader className="flex-shrink-0">
+          <SheetTitle>Your Cart</SheetTitle>
+          <SheetDescription>
+            {totalItems === 0
+              ? "Your cart is empty"
+              : `${totalItems} item${totalItems !== 1 ? "s" : ""} in your cart`}
+          </SheetDescription>
+        </SheetHeader>
+        <div className="flex flex-col flex-1 pt-6 min-h-0">
+          {items.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">Your cart is empty</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="flex-1 overflow-y-auto pr-2 min-h-0">
+                <div className="space-y-4">
+                  {items.map((item) => (
+                    <div key={item.variantId} className="flex gap-4 p-2 rounded-md bg-card">
+                      <div className="w-16 h-16 bg-secondary/20 rounded-md overflow-hidden flex-shrink-0">
+                        <img
+                          src={item.image.url}
+                          alt={item.image.altText}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium truncate">{item.title}</h4>
+                        <p className="font-semibold text-primary">
+                          {item.currencyCode} {parseFloat(item.price).toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => removeItem(item.variantId)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="w-8 text-center text-sm">{item.quantity}</span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="flex-shrink-0 space-y-4 pt-4 border-t bg-background">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-semibold">Total</span>
+                  <span className="text-xl font-bold text-primary">
+                    ${totalPrice.toFixed(2)}
+                  </span>
+                </div>
+                <Button
+                  className="w-full bg-gradient-primary hover:opacity-95 shadow-cta"
+                  size="lg"
+                >
+                  Checkout
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+};
