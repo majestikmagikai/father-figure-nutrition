@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Shield, Leaf } from "lucide-react";
-import brandLogo from "@/assets/father-figure-logo.webp";
+import brandLogo from "@/assets/father-figure-logo-official-640.webp";
 import heroBg from "@/assets/hero-father.webp";
 
 export const Hero = () => {
@@ -23,7 +23,7 @@ export const Hero = () => {
     <section ref={sectionRef} className="relative overflow-hidden" aria-label="Hero">
       {/* Parallax background */}
       <div
-        className="absolute inset-0 w-full h-[120%] -top-[10%]"
+        className="absolute inset-0 w-full h-[180%] -top-[10%]"
         style={{
           backgroundImage: `url(${heroBg})`,
           backgroundSize: "cover",
@@ -33,17 +33,13 @@ export const Hero = () => {
         }}
       />
       {/* Overlay so text stays readable */}
-      <div className="absolute inset-0 bg-background/85" />
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
 
       <div className="relative max-w-7xl mx-auto px-6 pt-0 pb-8 md:pb-10 grid md:grid-cols-2 gap-10 items-start">
         <div>
-          <div className="relative mb-10 -mx-6">
-            <img
-              src={brandLogo}
-              alt="Father Figure Men's Supplements logo"
-              className="w-full max-w-[64rem]"
-            />
-            <div className="absolute bottom-0 translate-y-1/2 left-0">
+          <div className="relative mb-10 -mx-6 pt-20">
+            
+            <div className="absolute bottom-0 px-6 translate-y-1/2 left-0">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent border-2 border-accent/80 text-primary text-xs uppercase tracking-widest font-bold shadow-cta whitespace-nowrap">
                 <Shield className="h-4 w-4" />
                 Veteran Owned · 80% Organic
@@ -51,13 +47,13 @@ export const Hero = () => {
             </div>
           </div>
 
-          <p className="font-display uppercase tracking-wider text-xl md:text-2xl text-foreground mb-2 max-w-xl">
+          <p className="font-display uppercase tracking-wider text-2xl md:text-3xl text-foreground mb-2 max-w-xl">
             From <span className="text-muted-foreground italic">"Dad Bod"</span>, to{" "}
             <span className="text-gradient-primary">Discipline.</span>
           </p>
-          <p className="text-sm md:text-base text-muted-foreground/80 mb-2 max-w-xl">
+          <p className="text-sm md:text-base text-foreground/80 mb-2 max-w-xl">
             Simple, effective men's nutrition that supports everyday strength, energy, consistency,
-            and confidence — without unnecessary fillers or complicated routines.
+            and confidence without unnecessary fillers or complicated routines.
           </p>
           <p className="font-display uppercase tracking-widest text-xs md:text-sm text-primary mb-8">
             Performance supplements for men who lead.
@@ -88,7 +84,7 @@ export const Hero = () => {
           </div>
         </div>
 
-        <div className="hidden md:flex justify-end items-center pt-72">
+        <div className="hidden md:flex justify-end items-center pt-32">
 
             <div className="relative bg-card/90 backdrop-blur-sm border-2 border-accent rounded-2xl p-6 shadow-card max-w-xs">
               <div className="absolute -top-3 -right-3 bg-gradient-gold text-primary text-[10px] font-display uppercase tracking-widest px-2 py-1 rounded-full shadow-cta">

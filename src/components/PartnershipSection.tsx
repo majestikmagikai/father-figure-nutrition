@@ -70,7 +70,7 @@ export const PartnershipSection = () => {
               href="https://www.vitalabs.com/about/seals-and-certifications"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-semibold uppercase tracking-wide hover:bg-primary/90 transition"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-white text-sm font-semibold uppercase tracking-wide hover:opacity-90 transition" style={{background: 'linear-gradient(135deg, #006BB6 0%, #F58426 100%)'}}
             >
               View Certifications <ExternalLink className="h-3.5 w-3.5" />
             </a>
@@ -78,7 +78,7 @@ export const PartnershipSection = () => {
               href="https://www.vitalabs.com/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-border bg-background/50 text-sm font-semibold uppercase tracking-wide hover:bg-background transition"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-border bg-background/50 text-sm font-semibold uppercase tracking-wide hover:bg-accent hover:text-accent-foreground hover:border-accent transition"
             >
               Visit Vitalabs <ExternalLink className="h-3.5 w-3.5" />
             </a>

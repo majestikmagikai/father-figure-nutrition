@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/sheet";
 import { ShoppingCart, Minus, Plus, Trash2, Menu } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
-import logo from "@/assets/father-figure-logo.webp";
+import logo from "@/assets/father-figure-logo-official-640.webp";
 import favicon from "@/assets/favicon.webp";
 
 export const SiteHeader = () => {
@@ -37,13 +37,10 @@ export const SiteHeader = () => {
         scrolled ? "bg-background/90 backdrop-blur-lg border-accent" : "bg-transparent border-transparent"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-0 flex items-center justify-between gap-8 mb-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-0 flex items-center justify-between gap-8 mb-4 mt-2">
         <Link to="/" className="flex items-center gap-2 shrink-0">
-          <img src={logo} alt="Father Figure Men's Supplements" className="h-16 object-contain" />
-          <div className="hidden sm:flex flex-col leading-tight">
-            <span className="font-display text-2xl uppercase">Father Figure</span>
-            <span className="text-[10px] tracking-[0.2em] text-gold uppercase font-bold">Men's Supplements</span>
-          </div>
+          <img src={logo} alt="Father Figure Men's Supplements" className="h-28 object-contain" />
+          
         </Link>
 
         <nav className="hidden md:flex items-center gap-7 text-sm font-medium">

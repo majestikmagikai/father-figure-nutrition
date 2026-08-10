@@ -9,65 +9,65 @@
 
 @layer base {
   :root {
-    /* Golden State Warriors home: white base, royal blue, gold accent */
+    /* Father Figure Nutrition: white base, #006BB6 blue, orange accent */
     --background: 0 0% 100%;
-    --foreground: 217 64% 20%;
+    --foreground: 207 100% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 217 64% 20%;
+    --card-foreground: 207 100% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 217 64% 20%;
+    --popover-foreground: 207 100% 15%;
 
-    --primary: 217 64% 33%;           /* Warriors royal blue #1D428A */
+    --primary: 207 100% 36%;           /* #006BB6 */
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 217 70% 48%;
+    --primary-glow: 207 100% 48%;
 
-    --secondary: 210 30% 96%;
-    --secondary-foreground: 217 64% 20%;
+    --secondary: 207 30% 96%;
+    --secondary-foreground: 207 100% 15%;
 
-    --muted: 210 25% 95%;
-    --muted-foreground: 217 20% 40%;
+    --muted: 207 25% 95%;
+    --muted-foreground: 207 20% 40%;
 
-    --accent: 45 100% 58%;            /* Warriors gold #FFC72C */
-    --accent-foreground: 217 64% 20%;
+    --accent: 30 90% 55%;            /* #F58426 */
+    --accent-foreground: 207 100% 15%;
 
     --destructive: 0 75% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 217 30% 88%;
-    --input: 217 30% 90%;
-    --ring: 217 64% 33%;
+    --border: 207 30% 88%;
+    --input: 207 30% 90%;
+    --ring: 207 100% 36%;
 
     --radius: 0.625rem;
 
     /* Brand semantic tokens */
-    --steel: 217 64% 20%;
-    --olive: 217 40% 35%;
-    --gold: 45 100% 58%;
+    --steel: 207 100% 15%;
+    --olive: 207 40% 35%;
+    --gold: 30 90% 55%;
 
     /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(210 40% 97%) 50%, hsl(217 64% 90%) 100%);
-    --gradient-primary: linear-gradient(135deg, hsl(217 64% 33%) 0%, hsl(217 70% 42%) 55%, hsl(45 100% 58%) 100%);
-    --gradient-gold: linear-gradient(135deg, hsl(45 100% 58%) 0%, hsl(38 95% 50%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(207 40% 97%) 50%, hsl(207 100% 90%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(207 100% 36%) 0%, hsl(207 100% 46%) 55%, hsl(30 90% 55%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(30 90% 55%) 0%, hsl(30 90% 45%) 100%);
     --gradient-fade: linear-gradient(180deg, transparent 0%, hsl(0 0% 100%) 100%);
-    --gradient-spotlight: radial-gradient(ellipse at top, hsl(217 64% 33% / 0.12), transparent 60%);
+    --gradient-spotlight: radial-gradient(ellipse at top, hsl(207 100% 36% / 0.12), transparent 60%);
 
     /* Shadows */
-    --shadow-glow: 0 0 40px hsl(217 64% 33% / 0.30);
-    --shadow-card: 0 20px 60px -20px hsl(217 64% 20% / 0.18);
-    --shadow-cta: 0 12px 40px -8px hsl(217 64% 33% / 0.45);
+    --shadow-glow: 0 0 40px hsl(207 100% 36% / 0.30);
+    --shadow-card: 0 20px 60px -20px hsl(207 100% 15% / 0.18);
+    --shadow-cta: 0 12px 40px -8px hsl(207 100% 36% / 0.45);
 
     --transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --sidebar-background: 217 64% 33%;
+    --sidebar-background: 207 100% 36%;
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 45 100% 58%;
-    --sidebar-primary-foreground: 217 64% 20%;
-    --sidebar-accent: 217 64% 28%;
+    --sidebar-primary: 30 90% 55%;
+    --sidebar-primary-foreground: 207 100% 15%;
+    --sidebar-accent: 207 100% 28%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 217 64% 25%;
-    --sidebar-ring: 45 100% 58%;
+    --sidebar-border: 207 100% 25%;
+    --sidebar-ring: 30 90% 55%;
   }
 }
 
