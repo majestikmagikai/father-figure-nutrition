@@ -1,5 +1,5 @@
 import { Handshake, FlaskConical, Award, ShieldCheck, Leaf, FileBadge, ExternalLink } from "lucide-react";
-import productsImg from "@/assets/products-trio.jpg";
+import productsImg from "@/assets/products-trio.webp";
 
 const certifications = [
   {
@@ -86,25 +86,25 @@ export const PartnershipSection = () => {
 
           <div className="mt-6 flex flex-wrap items-center gap-4 opacity-90">
             <img
-              src="https://www.vitalabs.com/public/images/nsf_cert.png"
+              src="https://www.vitalabs.com/public/images/nsf_cert.webp"
               alt="NSF GMP Registered"
               loading="lazy"
               className="h-12 w-auto bg-white rounded p-1"
             />
             <img
-              src="https://www.vitalabs.com/public/images/sqf_logo.jpg"
+              src="https://www.vitalabs.com/public/images/sqf_logo.webp"
               alt="SQF Certified"
               loading="lazy"
               className="h-12 w-auto bg-white rounded p-1"
             />
             <img
-              src="https://www.vitalabs.com/public/images/fda_reg.png"
+              src="https://www.vitalabs.com/public/images/fda_reg.webp"
               alt="FDA Registered"
               loading="lazy"
               className="h-12 w-auto bg-white rounded p-1"
             />
             <img
-              src="https://www.vitalabs.com/public/images/wfcfo_seal.png"
+              src="https://www.vitalabs.com/public/images/wfcfo_seal.webp"
               alt="WFCFO Organic Certified"
               loading="lazy"
               className="h-12 w-auto bg-white rounded p-1"

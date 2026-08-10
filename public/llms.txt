@@ -1,0 +1,22 @@
+# Father Figure Nutrition
+
+> Veteran-owned supplement brand built for hardworking men.
+
+Father Figure Nutrition is a veteran-owned supplement brand delivering clean, effective nutrition for men who lead. Our products are formulated with organic ingredients, zero fillers, and real results in mind — from strength and recovery to daily wellness and digestive health.
+
+## Products
+- [Creatine Hardbody](https://fatherfigurenutrition.com/product/creatine-hardbody): Micronized creatine monohydrate gummies, 5g per serving, 30 servings. Built for strength, power, and recovery.
+- [Multi Vitamin Plus](https://fatherfigurenutrition.com/product/multi-vitamin-plus): Daily multivitamin with 23 essential vitamins and minerals, 80% organic, zero fillers.
+- [15 Day Fresh Start Cleanse](https://fatherfigurenutrition.com/product/15-day-fresh-start-cleanse): Gentle 15-day digestive reset formulated with organic herbs and fiber.
+
+## Core Pages
+- [Homepage](https://fatherfigurenutrition.com/): Product lineup, brand mission, bundle offers, veteran story, and FAQ.
+- [Shop](https://fatherfigurenutrition.com/#shop): All supplement products available for purchase.
+- [Apparel](https://fatherfigurenutrition.com/#apparel): Father Figure branded apparel — heavyweight basics, varsity outerwear, and signature caps.
+- [Bundle](https://fatherfigurenutrition.com/#bundle): The Father Figure Starter Stack bundle offer.
+- [Mission](https://fatherfigurenutrition.com/#mission): Our veteran-owned brand story and mission.
+- [FAQ](https://fatherfigurenutrition.com/#faq): Common questions about our products, ingredients, and shipping.
+
+## Documentation & Legal
+- [Sitemap](https://fatherfigurenutrition.com/sitemap.xml): Complete index of public routes and pages.
+- [Robots](https://fatherfigurenutrition.com/robots.txt): Crawler access policy.

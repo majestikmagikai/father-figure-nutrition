@@ -1,9 +1,9 @@
-import bottleCreatine from "@/assets/products/creatine-bottle.jpg";
-import labelCreatine from "@/assets/products/creatine-label-clean.jpg";
-import bottleMulti from "@/assets/products/multi-bottle.jpg";
-import labelMulti from "@/assets/products/multi-label-clean.jpg";
-import bottleCleanse from "@/assets/products/cleanse-bottle.jpg";
-import labelCleanse from "@/assets/products/cleanse-label-clean.jpg";
+import bottleCreatine from "@/assets/products/creatine-bottle.webp";
+import labelCreatine from "@/assets/products/creatine-label-clean.webp";
+import bottleMulti from "@/assets/products/multi-bottle.webp";
+import labelMulti from "@/assets/products/multi-label-clean.webp";
+import bottleCleanse from "@/assets/products/cleanse-bottle.webp";
+import labelCleanse from "@/assets/products/cleanse-label-clean.webp";
 
 export interface LocalProduct {
   id: string;

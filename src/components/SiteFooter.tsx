@@ -1,5 +1,5 @@
 import { Shield, Star } from "lucide-react";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo.webp";
 
 export const SiteFooter = () => {
   return (
@@ -29,6 +29,7 @@ export const SiteFooter = () => {
             <li><a href="/#bundle" className="hover:text-gold transition-colors">The Father Figure Starter Stack</a></li>
             <li><a href="/#mission" className="hover:text-gold transition-colors">Our Mission</a></li>
             <li><a href="/#faq" className="hover:text-gold transition-colors">FAQ</a></li>
+            <li><a href="/sitemap.xml" className="hover:text-gold transition-colors">Sitemap</a></li>
           </ul>
         </div>
 
@@ -50,6 +51,7 @@ export const SiteFooter = () => {
           diagnose, treat, cure, or prevent any disease.
         </p>
         <p>© {new Date().getFullYear()} Father Figure Nutrition. Veteran owned. Family built.</p>
+        <p>Site Designed & Maintained by <a href="https://majestikmagik.dev" target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-colors underline">Majestik Magik</a></p>
       </div>
     </footer>
   );

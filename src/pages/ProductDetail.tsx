@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Plus, RotateCw, Shield } from "lucide-react";
+import { ArrowLeft, Plus, RotateCw, Shield, X, ZoomIn } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { IngredientsPanel } from "@/components/IngredientsPanel";
@@ -26,8 +26,15 @@ const ProductDetail = () => {
   }, [product]);
 
   const [view, setView] = useState<"spin" | number>("spin");
+  const [zoomed, setZoomed] = useState<string | null>(null);
 
   useEffect(() => { setView("spin"); }, [handle]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setZoomed(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const handleAdd = () => {
     if (!product) return;
@@ -61,7 +68,7 @@ const ProductDetail = () => {
           <div className="grid md:grid-cols-2 gap-10">
             <div className="relative">
               <div className="absolute -inset-6 bg-primary/15 blur-3xl rounded-full" />
-              <div className="relative aspect-square rounded-2xl overflow-hidden bg-card border border-border shadow-card">
+              <div className="relative aspect-square rounded-2xl bg-card border border-border shadow-card">
                 {view === "spin" && labelImage ? (
                   <BottleSpin360
                     labelUrl={labelImage.url}
@@ -69,11 +76,19 @@ const ProductDetail = () => {
                     fillColor={product.fill}
                   />
                 ) : typeof view === "number" && product.images[view] ? (
-                  <img
-                    src={product.images[view].url}
-                    alt={product.images[view].altText}
-                    className="w-full h-full object-contain bg-card"
-                  />
+                  <div
+                    className="relative w-full h-full group cursor-zoom-in"
+                    onClick={() => setZoomed(product.images[view as number].url)}
+                  >
+                    <img
+                      src={product.images[view].url}
+                      alt={product.images[view].altText}
+                      className="w-full h-full object-contain bg-card"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/10">
+                      <ZoomIn className="h-8 w-8 text-white drop-shadow-lg" />
+                    </div>
+                  </div>
                 ) : null}
               </div>
 
@@ -93,12 +108,12 @@ const ProductDetail = () => {
                 {product.images.map((img, i) => (
                   <button
                     key={i}
-                    onClick={() => setView(i)}
-                    className={`h-16 w-16 rounded-lg overflow-hidden border-2 transition-all bg-card ${
+                    onClick={() => { setView(i); setZoomed(img.url); }}
+                    className={`cursor-pointer h-16 w-16 rounded-lg overflow-hidden border-2 transition-all bg-card ${
                       view === i ? "border-primary shadow-cta" : "border-border hover:border-primary/50"
                     }`}
                   >
-                    <img src={img.url} alt={img.altText} className="w-full h-full object-contain" />
+                    <img src={img.url} alt={img.altText} className="w-full h-full object-contain pointer-events-none" />
                   </button>
                 ))}
               </div>
@@ -123,6 +138,27 @@ const ProductDetail = () => {
                 <Plus className="h-4 w-4 mr-2" /> Add to Cart
               </Button>
             </div>
+
+            {/* Zoom overlay */}
+            {zoomed && (
+              <div
+                className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 cursor-zoom-out"
+                onClick={() => setZoomed(null)}
+              >
+                <button
+                  className="absolute top-4 right-4 text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors"
+                  onClick={() => setZoomed(null)}
+                >
+                  <X className="h-5 w-5" />
+                </button>
+                <img
+                  src={zoomed}
+                  alt="Zoomed product"
+                  className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            )}
 
             <div className="md:col-span-2">
               {handle && <IngredientsPanel handle={handle} />}

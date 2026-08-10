@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { ShopifyProduct, STOREFRONT_QUERY, storefrontApiRequest } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
+import dadCapImg from "@/assets/products/father-figure-logo-product.webp";
+
+const IMAGE_OVERRIDES: Record<string, string> = {};
 
 export const ApparelGrid = () => {
   const [products, setProducts] = useState<ShopifyProduct[]>([]);
@@ -55,16 +58,19 @@ export const ApparelGrid = () => {
             {products.map((p) => {
               const variant = p.node.variants.edges[0]?.node;
               const image = p.node.images.edges[0]?.node;
+              const imageOverride = IMAGE_OVERRIDES[p.node.handle] ?? dadCapImg;
 
               const handleAdd = async () => {
                 if (!variant) return;
                 await addItem({
-                  product: p,
+                  productId: p.node.id,
+                  handle: p.node.handle,
+                  title: p.node.title,
+                  image: { url: imageOverride ?? image?.url ?? "", altText: image?.altText ?? p.node.title },
                   variantId: variant.id,
-                  variantTitle: variant.title,
-                  price: variant.price,
+                  price: variant.price.amount,
+                  currencyCode: variant.price.currencyCode,
                   quantity: 1,
-                  selectedOptions: variant.selectedOptions || [],
                 });
                 toast.success("Added to cart", {
                   description: p.node.title,
@@ -81,10 +87,10 @@ export const ApparelGrid = () => {
                     to={`/product/${p.node.handle}`}
                     className="block aspect-square overflow-hidden bg-gradient-to-br from-secondary/40 to-background flex items-center justify-center p-8"
                   >
-                    {image ? (
+                    {image || imageOverride ? (
                       <img
-                        src={image.url}
-                        alt={image.altText || p.node.title}
+                        src={imageOverride ?? image!.url}
+                        alt={image?.altText || p.node.title}
                         loading="lazy"
                         className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 drop-shadow-[0_10px_30px_hsl(var(--primary)/0.25)]"
                       />

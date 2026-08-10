@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Shield, Leaf } from "lucide-react";
-import brandLogo from "@/assets/father-figure-logo.png";
-import heroBg from "@/assets/hero-father.jpg";
+import brandLogo from "@/assets/father-figure-logo.webp";
+import heroBg from "@/assets/hero-father.webp";
 
 export const Hero = () => {
   const [offset, setOffset] = useState(0);

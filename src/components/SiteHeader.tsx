@@ -5,9 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import {
   Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger,
 } from "@/components/ui/sheet";
-import { ShoppingCart, Minus, Plus, Trash2, Menu, Shield } from "lucide-react";
+import { ShoppingCart, Minus, Plus, Trash2, Menu } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
-import logo from "@/assets/father-figure-logo.png";
+import logo from "@/assets/father-figure-logo.webp";
+import favicon from "@/assets/favicon.webp";
 
 export const SiteHeader = () => {
   const [open, setOpen] = useState(false);
@@ -20,13 +21,12 @@ export const SiteHeader = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const totalItems = useCartStore((s) => s.items.reduce((sum, i) => sum + i.quantity, 0));
-
   const nav = [
     { href: "/", label: "Home" },
-    { href: "/#shop", label: "Shop" },
+    { href: "/#shop", label: "Shop" },    
     { href: "/#bundle", label: "Bundle" },
     { href: "/#mission", label: "Mission" },
+    { href: "/#apparel", label: "Apparel" },
     { href: "/#about", label: "About" },
     { href: "/#faq", label: "FAQ" },
   ];
@@ -41,7 +41,7 @@ export const SiteHeader = () => {
         <Link to="/" className="flex items-center gap-2 shrink-0">
           <img src={logo} alt="Father Figure Men's Supplements" className="h-16 object-contain" />
           <div className="hidden sm:flex flex-col leading-tight">
-            <span className="font-display text-xl uppercase">Father Figure</span>
+            <span className="font-display text-2xl uppercase">Father Figure</span>
             <span className="text-[10px] tracking-[0.2em] text-gold uppercase font-bold">Men's Supplements</span>
           </div>
         </Link>
@@ -66,7 +66,8 @@ export const SiteHeader = () => {
             <SheetContent side="right" className="w-72">
               <SheetHeader>
                 <SheetTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-primary" /> Father Figure
+                  <img src={favicon} alt="Father Figure" className="h-7 w-7 object-contain" />
+                  <span className="font-display uppercase tracking-wider">Father Figure</span>
                 </SheetTitle>
               </SheetHeader>
               <div className="mt-8 flex flex-col gap-4">
