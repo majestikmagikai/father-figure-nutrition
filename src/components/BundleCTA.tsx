@@ -3,8 +3,7 @@ import { CheckCircle2, Package } from "lucide-react";
 
 export const BundleCTA = () => {
   return (
-    <section
-      id="bundle"
+    <section id="bundle" aria-label="Bundle offers"
       className="relative py-24 px-6 overflow-hidden border-y border-border bg-gradient-hero"
     >
       <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/10 pointer-events-none" />
@@ -25,7 +24,7 @@ export const BundleCTA = () => {
         <div className="grid sm:grid-cols-3 gap-3 max-w-2xl mx-auto mb-10 text-left">
           {["Multi Vitamin Plus — Daily Foundation", "15 Day Fresh Start Cleanse — Reset", "Creatine Hardbody — Strength & Recovery"].map((f) => (
             <div key={f} className="flex items-start gap-2 bg-card/60 border border-border rounded-lg p-3">
-              <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" aria-hidden="true" />
               <span className="text-sm">{f}</span>
             </div>
           ))}

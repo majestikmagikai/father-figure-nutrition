@@ -60,7 +60,7 @@ const faqs: { q: string; a: React.ReactNode }[] = [
 
 export const FAQ = () => {
   return (
-    <section id="faq" className="py-24 px-6 border-t border-border">
+    <section id="faq" aria-label="Frequently asked questions" className="py-24 px-6 border-t border-border">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-primary text-xs uppercase tracking-widest font-semibold mb-4">

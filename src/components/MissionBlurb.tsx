@@ -2,7 +2,7 @@ import { Compass, Target, Users } from "lucide-react";
 
 export const MissionBlurb = () => {
   return (
-    <section id="mission" className="relative py-24 px-6 border-t border-border bg-gradient-hero">
+    <section id="mission" aria-label="Our mission" className="relative py-24 px-6 border-t border-border bg-gradient-hero">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent pointer-events-none" />
       <div className="relative max-w-4xl mx-auto">
         <div className="text-center mb-12">
@@ -49,7 +49,7 @@ export const MissionBlurb = () => {
             { icon: Compass, title: "Consistency First", text: "Daily habits that compound into results." },
           ].map((c) => (
             <div key={c.title} className="bg-card border-t-4 border-accent rounded-xl p-5 text-center shadow-card hover:-translate-y-1 transition-transform">
-              <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-gradient-gold mx-auto mb-2">
+              <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-gradient-gold mx-auto mb-2" aria-hidden="true">
                 <c.icon className="h-5 w-5 text-primary" />
               </div>
               <div className="font-display uppercase tracking-wider text-sm mb-1 text-primary">{c.title}</div>

@@ -1,0 +1,108 @@
+# Father Figure Nutrition — Full Reference
+
+> Veteran-owned supplement brand built for hardworking men. 80% organic. Zero fillers. Made in USA.
+
+## Brand Overview
+
+Father Figure Nutrition is a veteran-owned men's supplement brand founded to help hardworking men — dads, professionals, and active lifestyles — rebuild strength, energy, and consistency through simple, effective daily nutrition. Every product is formulated with 80% organic ingredients, manufactured in GMP-certified facilities, third-party tested, and backed by a 60-day money-back guarantee.
+
+- **Founded by:** U.S. Military Veteran
+- **Mission:** From "dad bod" to discipline — performance supplements for men who lead
+- **Manufacturing:** USA, GMP Certified, Third-Party Tested
+- **Guarantee:** 60-Day Money Back
+- **Site Designer:** [Majestik Magik](https://majestikmagik.dev)
+
+---
+
+## Product Catalog
+
+### 1. Creatine Hardbody
+- **URL:** https://fatherfigurenutrition.com/product/creatine-hardbody
+- **Price:** $24.99 USD
+- **Format:** Gummies
+- **Serving Size:** 5g creatine monohydrate per serving
+- **Servings:** 30 per bottle
+- **Key Ingredient:** Micronized Creatine Monohydrate
+- **Benefits:** Strength, power output, muscle recovery, training consistency
+- **Organic:** 80%
+- **Availability:** In Stock
+- **Interactive Viewer:** 360° drag-to-spin CSS 3D cylinder viewer with pinch-to-zoom
+
+### 2. Multi Vitamin Plus
+- **URL:** https://fatherfigurenutrition.com/product/multi-vitamin-plus
+- **Price:** $19.99 USD
+- **Format:** Gummies
+- **Vitamins & Minerals:** 23 essential vitamins and minerals
+- **Organic:** 80%
+- **Benefits:** Daily nutrient support, energy production, immune health, overall wellness
+- **Fillers:** Zero
+- **Availability:** In Stock
+- **Interactive Viewer:** 360° drag-to-spin CSS 3D cylinder viewer with pinch-to-zoom
+
+### 3. 15 Day Fresh Start Cleanse
+- **URL:** https://fatherfigurenutrition.com/product/15-day-fresh-start-cleanse
+- **Price:** $29.99 USD
+- **Format:** Capsules
+- **Duration:** 15-day program
+- **Key Ingredients:** Organic herbs and fiber blend
+- **Benefits:** Digestive reset, gut health restoration, toxin flush
+- **Organic:** Yes
+- **Availability:** In Stock
+- **Interactive Viewer:** 360° drag-to-spin CSS 3D cylinder viewer with pinch-to-zoom
+
+---
+
+## Bundle Offers
+
+### Performance Stack
+- **Includes:** Creatine Hardbody + Multi Vitamin Plus
+- **Price:** $34.99 USD
+- **Savings:** ~$10 vs individual
+
+### Transformation Bundle
+- **Includes:** Multi Vitamin Plus + 15 Day Fresh Start Cleanse + Creatine Hardbody
+- **Price:** $44.99 USD
+- **Savings:** ~$30 vs individual
+
+---
+
+## Technical Features
+
+### 3D Interactive Product Viewer
+- CSS-based 3D cylinder renderer (no WebGL dependency)
+- 32-segment polygon mesh for smooth curvature
+- Drag-to-spin: mouse and touch support
+- Pinch-to-zoom on mobile
+- +/- zoom buttons
+- Auto-spin at 30fps (throttled for CPU efficiency)
+- Starts from back of bottle, holds 1.2s, then spins to front
+- Lazy-loaded .webp label textures
+- Built with React + TypeScript + Tailwind CSS
+
+### Tech Stack
+- React 18 + TypeScript
+- Vite (build tool)
+- Tailwind CSS + shadcn/ui
+- Zustand (cart state)
+- Shopify Storefront API (cart & checkout)
+- Supabase (backend / edge functions)
+- TanStack Query (data fetching)
+
+---
+
+## Core Pages
+- [Homepage](https://fatherfigurenutrition.com/): Hero, product grid, bundle CTA, mission, apparel, veteran story, FAQ
+- [Shop](https://fatherfigurenutrition.com/#shop): All supplement products
+- [Apparel](https://fatherfigurenutrition.com/#apparel): Father Figure branded apparel
+- [Bundle](https://fatherfigurenutrition.com/#bundle): Starter Stack bundle offers
+- [Mission](https://fatherfigurenutrition.com/#mission): Veteran-owned brand story
+- [FAQ](https://fatherfigurenutrition.com/#faq): Product and shipping questions
+
+## Documentation & Legal
+- [Sitemap](https://fatherfigurenutrition.com/sitemap.xml): Full URL index
+- [Robots](https://fatherfigurenutrition.com/robots.txt): Crawler policy
+- [llms.txt](https://fatherfigurenutrition.com/llms.txt): AI agent summary
+
+## Site Design & Development
+- **Designed & Maintained by:** [Majestik Magik](https://majestikmagik.dev)
+- **Platform:** Vite + React SPA deployed via static hosting

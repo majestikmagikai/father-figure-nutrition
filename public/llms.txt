@@ -20,3 +20,4 @@ Father Figure Nutrition is a veteran-owned supplement brand delivering clean, ef
 ## Documentation & Legal
 - [Sitemap](https://fatherfigurenutrition.com/sitemap.xml): Complete index of public routes and pages.
 - [Robots](https://fatherfigurenutrition.com/robots.txt): Crawler access policy.
+- [Full Reference](https://fatherfigurenutrition.com/llms-full.txt): Complete product catalog, bundle pricing, tech stack, and brand details for AI agents.

@@ -1,5 +1,5 @@
 import { Shield, Star } from "lucide-react";
-import logo from "@/assets/logo.webp";
+import favicon from "@/assets/favicon.webp";
 
 export const SiteFooter = () => {
   return (
@@ -7,7 +7,7 @@ export const SiteFooter = () => {
       <div className="max-w-7xl mx-auto px-6 py-12 grid md:grid-cols-3 gap-8">
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <img src={logo} alt="" className="h-9 w-9" />
+            <img src={favicon} alt="" className="h-9 w-9 object-contain" />
             <span className="font-display text-lg uppercase">Father Figure Nutrition</span>
           </div>
           <p className="text-sm text-primary-foreground/75 max-w-xs">

@@ -9,6 +9,7 @@ import { BottleSpin360 } from "@/components/BottleSpin360";
 import { Button } from "@/components/ui/button";
 import { getProductByHandle } from "@/lib/products";
 import { useCartStore } from "@/stores/cartStore";
+import { useJsonLd } from "@/hooks/useJsonLd";
 import { toast } from "sonner";
 
 const ProductDetail = () => {
@@ -20,15 +21,48 @@ const ProductDetail = () => {
     if (product) document.title = `${product.title} — Father Figure Nutrition`;
   }, [product]);
 
+  useJsonLd(product ? {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": product.title,
+    "description": product.description,
+    "image": product.images.map((i) => i.url),
+    "sku": product.variantId,
+    "brand": {
+      "@type": "Brand",
+      "name": "Father Figure Nutrition"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": `https://fatherfigurenutrition.com/product/${product.handle}`,
+      "priceCurrency": product.currencyCode,
+      "price": product.price,
+      "availability": product.availableForSale
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
+      "seller": {
+        "@type": "Organization",
+        "name": "Father Figure Nutrition"
+      }
+    },
+    "additionalProperty": [
+      { "@type": "PropertyValue", "name": "Veteran Owned", "value": "Yes" },
+      { "@type": "PropertyValue", "name": "Organic", "value": "80%" },
+      { "@type": "PropertyValue", "name": "Interactive 3D Viewer", "value": "360° drag-to-spin CSS cylinder" },
+      { "@type": "PropertyValue", "name": "Made In", "value": "USA" },
+      { "@type": "PropertyValue", "name": "GMP Certified", "value": "Yes" }
+    ]
+  } : {});
+
   const labelImage = useMemo(() => {
     if (!product) return null;
     return product.images.find((i) => /label/i.test(i.altText)) ?? product.images[product.images.length - 1];
   }, [product]);
 
-  const [view, setView] = useState<"spin" | number>("spin");
+  const [view, setView] = useState<"spin" | number>(0);
   const [zoomed, setZoomed] = useState<string | null>(null);
 
-  useEffect(() => { setView("spin"); }, [handle]);
+  useEffect(() => { setView(0); }, [handle]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setZoomed(null); };
@@ -93,6 +127,20 @@ const ProductDetail = () => {
               </div>
 
               <div className="mt-4 flex gap-2 flex-wrap">
+                {product.images.map((img, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setView(i)}
+                    className={`group cursor-pointer h-16 w-16 rounded-lg overflow-hidden border-2 transition-all bg-card relative ${
+                      view === i ? "border-primary shadow-cta" : "border-border hover:border-primary/50"
+                    }`}
+                  >
+                    <img src={img.url} alt={img.altText} className="w-full h-full object-contain pointer-events-none" />
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                      <ZoomIn className="h-4 w-4 text-white drop-shadow" />
+                    </div>
+                  </button>
+                ))}
                 <button
                   onClick={() => setView("spin")}
                   className={`relative h-16 w-16 rounded-lg overflow-hidden border-2 transition-all flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5 ${
@@ -105,17 +153,6 @@ const ProductDetail = () => {
                     360°
                   </span>
                 </button>
-                {product.images.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => { setView(i); setZoomed(img.url); }}
-                    className={`cursor-pointer h-16 w-16 rounded-lg overflow-hidden border-2 transition-all bg-card ${
-                      view === i ? "border-primary shadow-cta" : "border-border hover:border-primary/50"
-                    }`}
-                  >
-                    <img src={img.url} alt={img.altText} className="w-full h-full object-contain pointer-events-none" />
-                  </button>
-                ))}
               </div>
             </div>
 

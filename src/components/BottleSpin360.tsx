@@ -10,17 +10,17 @@ interface BottleSpin360Props {
 // 64 segments for smooth cylindrical curvature
 const SEGMENTS = 64; 
 
-// Proportions tuned specifically for a 75-gummy wide-mouth bottle
-const BODY_HEIGHT = 280;      // Shorter, squatter main body
+// Proportions tuned specifically for a 75-gummy wide-mouth vitamin bottle
+const BODY_HEIGHT = 280;      // Squat, wide body (realistic for gummies)
 const BODY_DIAMETER = 250;    // Wide body diameter
 
 const HEEL_HEIGHT = 36;
-const HEEL_DIAMETER = 260;    // Gentle bottom taper
+const HEEL_DIAMETER = 260;    // Gentle bottom flare
 
 const NECK_HEIGHT = 44;
-const NECK_DIAMETER = 190;    // Wide mouth opening for gummies
+const NECK_DIAMETER = 190;    // Wide mouth for easy gummies
 
-const COLLAR_DIAMETER = 250;  // Safety collar extending slightly past wide neck
+const COLLAR_DIAMETER = 250;  // Tamper-evident safety collar
 const COLLAR_HEIGHT = 70;
 
 const CAP_HEIGHT = 44;
@@ -34,7 +34,7 @@ export const BottleSpin360 = ({
 }: BottleSpin360Props) => {
   const [paused, setPaused] = useState(false);
   const [angle, setAngle] = useState(180);
-  const [scale, setScale] = useState(0.82); // Initial scale to keep wide bottle centered
+  const [scale, setScale] = useState(0.72);
   const dragging = useRef(false);
   const lastX = useRef(0);
   const autoAngle = useRef(180);
@@ -42,7 +42,7 @@ export const BottleSpin360 = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const lastPinchDist = useRef<number | null>(null);
   const startTime = useRef<number | null>(null);
-  const HOLD_MS = 600;
+  const HOLD_MS = 1200;
 
   const clampScale = (s: number) => Math.min(2.5, Math.max(0.5, s));
 
@@ -78,7 +78,7 @@ export const BottleSpin360 = ({
 
   useEffect(() => {
     const degreesPerMs = 360 / (duration * 1000);
-    const FRAME_MS = 1000 / 30; // 30fps cap for smooth performance
+    const FRAME_MS = 1000 / 30;
     let last: number | null = null;
     let frameLast = 0;
 
@@ -122,6 +122,7 @@ export const BottleSpin360 = ({
     lastPinchDist.current = null;
     setPaused(false);
   };
+
   const onTouchMove = (e: React.TouchEvent) => {
     if (e.touches.length === 2) {
       const dist = Math.hypot(
@@ -153,7 +154,7 @@ export const BottleSpin360 = ({
       onTouchMove={onTouchMove}
       onTouchEnd={endDrag}
       role="img"
-      aria-label="360 degree view of gummy supplement bottle. Drag to spin."
+      aria-label="360° view of vitamin gummy supplement bottle. Drag to spin."
     >
       {/* Zoom controls */}
       <div className="absolute top-3 right-3 flex flex-col gap-1 z-10">
@@ -183,7 +184,7 @@ export const BottleSpin360 = ({
           transition: dragging.current ? "none" : "transform 0.1s ease-out",
         }}
       >
-        {/* ================= WIDE GUMMY BOTTLE CAP ================= */}
+        {/* ================= WIDE CHILD-RESISTANT CAP ================= */}
         <div
           className="absolute"
           style={{
@@ -193,7 +194,7 @@ export const BottleSpin360 = ({
             transformStyle: "preserve-3d",
           }}
         >
-          {/* Cap Top Surface */}
+          {/* Cap Top Surface (matte plastic with light reflection) */}
           <div
             className="absolute rounded-full"
             style={{
@@ -201,12 +202,13 @@ export const BottleSpin360 = ({
               height: CAP_DIAMETER,
               top: -capRadius,
               left: 0,
-              background: `radial-gradient(circle at 35% 35%, #ffffff 0%, ${capColor} 60%, #111111 100%)`,
+              background: `radial-gradient(circle at 30% 30%, #f0f0f0 0%, ${capColor} 55%, #afafaf80 95%)`,
               transform: "rotateX(90deg)",
+              boxShadow: "inset 0 0 20px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.5)",
             }}
           />
 
-          {/* Cap Outer Mesh */}
+          {/* Cap Side Mesh (ribbed plastic look) */}
           {segmentRotations.map((s, i) => (
             <div
               key={`cap-${i}`}
@@ -215,7 +217,7 @@ export const BottleSpin360 = ({
                 width: capSegmentWidth,
                 height: CAP_HEIGHT,
                 marginLeft: -capSegmentWidth / 2,
-                background: `linear-gradient(180deg, ${capColor} 0%, #151515 100%)`,
+                background: `linear-gradient(180deg, ${capColor} 0%, #d6d6d6 45%, #a5a5a5 100%)`,
                 transform: `rotateY(${s.rotate}deg) translateZ(${capRadius}px)`,
                 backfaceVisibility: "hidden",
               }}
@@ -223,7 +225,7 @@ export const BottleSpin360 = ({
           ))}
         </div>
 
-        {/* ================= WIDE NECK & SOLID COLLAR ================= */}
+        {/* ================= NECK + TAMPER-EVIDENT COLLAR ================= */}
         <div
           className="absolute"
           style={{
@@ -233,7 +235,7 @@ export const BottleSpin360 = ({
             transformStyle: "preserve-3d",
           }}
         >
-          {/* Main Neck Mesh */}
+          {/* Neck Mesh */}
           {segmentRotations.map((s, i) => (
             <div
               key={`neck-${i}`}
@@ -242,14 +244,14 @@ export const BottleSpin360 = ({
                 width: neckSegmentWidth,
                 height: NECK_HEIGHT,
                 marginLeft: -neckSegmentWidth / 2,
-                background: "linear-gradient(180deg, #d4d4d4 0%, #888888 60%, #444444 100%)",
+                background: "linear-gradient(180deg, #e8e8e8 0%, #9a9a9a 55%, #555555 100%)",
                 transform: `rotateY(${s.rotate}deg) translateZ(${neckRadius}px)`,
                 backfaceVisibility: "hidden",
               }}
             />
           ))}
 
-          {/* Solid 3D Collar Ring Assembly */}
+          {/* Solid 3D Tamper-Evident Collar */}
           <div
             className="absolute left-1/2 -translate-x-1/2"
             style={{
@@ -267,12 +269,13 @@ export const BottleSpin360 = ({
                 height: COLLAR_DIAMETER,
                 top: -collarRadius,
                 left: 0,
-                background: "radial-gradient(circle at center, #ffffff 0%, #aaaaaa 60%, #444444 100%)",
+                background: "radial-gradient(circle at 30% 25%, #ffffff 0%, #c0c0c0 50%, #555555 95%)",
                 transform: "rotateX(90deg)",
+                boxShadow: "inset 0 0 12px rgba(0,0,0,0.5)",
               }}
             />
 
-            {/* 360-Degree Collar Wall (Visible backface creates solid 3D sides) */}
+            {/* Collar Wall Segments */}
             {segmentRotations.map((s, i) => (
               <div
                 key={`collar-${i}`}
@@ -281,7 +284,7 @@ export const BottleSpin360 = ({
                   width: collarSegmentWidth,
                   height: COLLAR_HEIGHT,
                   marginLeft: -collarSegmentWidth / 2,
-                  background: "linear-gradient(180deg, #ffffff 0%, #999999 50%, #222222 100%)",
+                  background: "linear-gradient(180deg, #f5f5f5 0%, #b0b0b0 45%, #444444 100%)",
                   transform: `rotateY(${s.rotate}deg) translateZ(${collarRadius}px)`,
                 }}
               />
@@ -302,7 +305,7 @@ export const BottleSpin360 = ({
           </div>
         </div>
 
-        {/* ================= SQUAT GUMMY BOTTLE / LABEL ================= */}
+        {/* ================= MAIN BOTTLE BODY + LABEL ================= */}
         <div
           className="absolute"
           style={{
@@ -312,7 +315,7 @@ export const BottleSpin360 = ({
             transformStyle: "preserve-3d",
           }}
         >
-          {/* Bottle Shoulder Transition Disc */}
+          {/* Shoulder Transition Disc */}
           <div
             className="absolute rounded-full"
             style={{
@@ -320,12 +323,13 @@ export const BottleSpin360 = ({
               height: BODY_DIAMETER,
               top: -bodyRadius,
               left: 0,
-              background: "radial-gradient(circle at center, #a0a0a0 0%, #222222 70%)",
+              background: "radial-gradient(circle at center, #b8b8b8 0%, #3a3a3a 70%)",
               transform: "rotateX(90deg)",
+              boxShadow: "inset 0 0 20px rgba(0,0,0,0.6)",
             }}
           />
 
-          {/* High-Density Body Mesh */}
+          {/* Body Mesh with Label (the label image is wrapped around the cylinder) */}
           {segmentRotations.map((s, i) => (
             <div
               key={`body-${i}`}
@@ -344,30 +348,31 @@ export const BottleSpin360 = ({
             />
           ))}
 
-          {/* Curved Surface Lighting Overlay */}
+          {/* Realistic Lighting + Gloss Overlay */}
           <div
             className="absolute inset-0 pointer-events-none rounded-lg"
             style={{
-              background: "linear-gradient(90deg, rgba(0,0,0,0.4) 0%, rgba(255,255,255,0.2) 25%, rgba(255,255,255,0) 50%, rgba(0,0,0,0.4) 100%)",
+              background: "linear-gradient(90deg, rgba(0,0,0,0.55) 0%, rgba(255,255,255,0.18) 22%, rgba(255,255,255,0.06) 48%, rgba(0,0,0,0.55) 100%)",
               transform: "translateZ(1px)",
             }}
           />
 
+          {/* Optional fill color highlight (e.g., gummies visible through top) */}
           {fillColor && (
             <div
-              className="absolute left-1/2 -translate-x-1/2 rounded-full opacity-80 pointer-events-none"
+              className="absolute left-1/2 -translate-x-1/2 rounded-full opacity-75 pointer-events-none"
               style={{
-                top: -12,
-                width: BODY_DIAMETER * 0.95,
-                height: 24,
-                background: `radial-gradient(ellipse at center, ${fillColor} 0%, rgba(0,0,0,0.4) 80%)`,
-                filter: "blur(1px)",
+                top: -14,
+                width: BODY_DIAMETER * 0.93,
+                height: 22,
+                background: `radial-gradient(ellipse at center, ${fillColor} 0%, rgba(0,0,0,0.5) 80%)`,
+                filter: "blur(1.5px)",
               }}
             />
           )}
         </div>
 
-        {/* ================= 3D HEEL & BASE ================= */}
+        {/* ================= TAPERED HEEL / BASE ================= */}
         <div
           className="absolute"
           style={{
@@ -377,7 +382,7 @@ export const BottleSpin360 = ({
             transformStyle: "preserve-3d",
           }}
         >
-          {/* Tapered Bottom Heel Mesh */}
+          {/* Heel Side Mesh */}
           {segmentRotations.map((s, i) => (
             <div
               key={`heel-${i}`}
@@ -386,14 +391,14 @@ export const BottleSpin360 = ({
                 width: heelSegmentWidth,
                 height: HEEL_HEIGHT,
                 marginLeft: -heelSegmentWidth / 2,
-                background: "linear-gradient(180deg, #ffffff 0%, #aaaaaa 60%, #444444 100%)",
+                background: "linear-gradient(180deg, #f0f0f0 0%, #b0b0b0 50%, #444444 100%)",
                 transform: `rotateY(${s.rotate}deg) translateZ(${heelRadius}px)`,
                 backfaceVisibility: "hidden",
               }}
             />
           ))}
 
-          {/* Bottom Base Disc */}
+          {/* Bottom Base Disc (with realistic shadow) */}
           <div
             className="absolute rounded-full"
             style={{
@@ -401,9 +406,9 @@ export const BottleSpin360 = ({
               height: HEEL_DIAMETER,
               top: HEEL_HEIGHT - heelRadius,
               left: 0,
-              background: "radial-gradient(circle at center, #0a0a0a 0%, #222222 80%)",
+              background: "radial-gradient(circle at center, #111111 0%, #1f1f1f 65%, #0a0a0a 95%)",
               transform: "rotateX(90deg)",
-              boxShadow: "inset 0 0 15px rgba(0,0,0,0.8)",
+              boxShadow: "inset 0 0 25px rgba(0,0,0,0.95)",
             }}
           />
         </div>
@@ -413,10 +418,10 @@ export const BottleSpin360 = ({
           className="absolute rounded-full pointer-events-none"
           style={{
             top: totalAssemblyHeight + 6,
-            width: BODY_DIAMETER * 1.15,
-            height: 24,
-            background: "radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 75%)",
-            filter: "blur(4px)",
+            width: BODY_DIAMETER * 1.2,
+            height: 28,
+            background: "radial-gradient(ellipse at center, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0) 78%)",
+            filter: "blur(5px)",
             transform: "rotateX(85deg)",
           }}
         />

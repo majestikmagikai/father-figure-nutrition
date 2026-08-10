@@ -76,9 +76,10 @@ const ProductCard = ({ product }: { product: LocalProduct }) => {
           <Button
             onClick={handleAdd}
             disabled={isLoading || !product.availableForSale}
+            aria-label={`Add ${product.title} to cart`}
             className="bg-gradient-primary hover:opacity-95 shadow-cta font-display uppercase tracking-wider"
           >
-            <Plus className="h-4 w-4 mr-1" /> Add
+            <Plus className="h-4 w-4 mr-1" aria-hidden="true" /> Add
           </Button>
         </div>
       </div>

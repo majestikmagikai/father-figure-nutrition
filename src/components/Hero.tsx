@@ -20,7 +20,7 @@ export const Hero = () => {
   }, []);
 
   return (
-    <section ref={sectionRef} className="relative overflow-hidden">
+    <section ref={sectionRef} className="relative overflow-hidden" aria-label="Hero">
       {/* Parallax background */}
       <div
         className="absolute inset-0 w-full h-[120%] -top-[10%]"
@@ -74,15 +74,15 @@ export const Hero = () => {
             </Button>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 mt-12 max-w-md">
+          <div className="grid grid-cols-3 gap-4 mt-12 max-w-md" role="list" aria-label="Brand highlights">
             {[
               { v: "80%", l: "Organic" },
               { v: "100%", l: "USA Made" },
               { v: "60d", l: "Guarantee" },
             ].map((s) => (
-              <div key={s.l} className="border-l-2 border-accent pl-3">
-                <div className="font-display text-3xl text-gold drop-shadow-[0_2px_8px_hsl(var(--accent)/0.4)]">{s.v}</div>
-                <div className="text-xs uppercase tracking-widest text-muted-foreground">{s.l}</div>
+              <div key={s.l} role="listitem" className="border-l-2 border-accent pl-3">
+                <div className="font-display text-3xl text-gold drop-shadow-[0_2px_8px_hsl(var(--accent)/0.4)]" aria-label={`${s.v} ${s.l}`}>{s.v}</div>
+                <div className="text-xs uppercase tracking-widest text-muted-foreground" aria-hidden="true">{s.l}</div>
               </div>
             ))}
           </div>
