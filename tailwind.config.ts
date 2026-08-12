@@ -74,8 +74,8 @@ export default {
       },
       fontFamily: {
         display: ['Anton', 'Inter', 'sans-serif'],
-        sans: ['Geist', 'system-ui', 'sans-serif'],
-        body: ['Geist', 'system-ui', 'sans-serif'],
+        sans: ['Barlow', 'system-ui', 'sans-serif'],
+        body: ['Barlow', 'system-ui', 'sans-serif'],
       },
       backgroundImage: {
         'gradient-primary': 'var(--gradient-primary)',

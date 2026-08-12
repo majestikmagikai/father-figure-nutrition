@@ -10,6 +10,28 @@ import { useCartStore } from "@/stores/cartStore";
 import logo from "@/assets/father-figure-logo-official-640.webp";
 import favicon from "@/assets/favicon.webp";
 
+const smoothScrollTo = (id: string) => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const start = window.scrollY;
+  const target = el.getBoundingClientRect().top + start - 80;
+  const distance = target - start;
+  const duration = 1000;
+  let startTime: number | null = null;
+
+  const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+
+  const step = (timestamp: number) => {
+    if (!startTime) startTime = timestamp;
+    const elapsed = timestamp - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    window.scrollTo(0, start + distance * easeOutCubic(progress));
+    if (progress < 1) requestAnimationFrame(step);
+  };
+
+  requestAnimationFrame(step);
+};
+
 export const SiteHeader = () => {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -44,12 +66,20 @@ export const SiteHeader = () => {
         </Link>
 
         <nav className="hidden md:flex items-center gap-7 text-sm font-medium">
-          {nav.map((n) => (
-            <a key={n.href} href={n.href} className="relative text-navy hover:text-orange transition-colors uppercase tracking-wider text-[1.15rem] font-display group">
-              {n.label}
-              <span className="absolute -bottom-1 left-0 h-[2px] w-0 bg-orange group-hover:w-full transition-all duration-300 ease-out rounded-full" />
-            </a>
-          ))}
+          {nav.map((n) => {
+            const hash = n.href.includes("#") ? n.href.split("#")[1] : null;
+            return (
+              <a
+                key={n.href}
+                href={n.href}
+                onClick={hash ? (e) => { e.preventDefault(); smoothScrollTo(hash); } : undefined}
+                className="relative text-navy hover:text-orange transition-colors uppercase tracking-wider text-[1.15rem] font-display group"
+              >
+                {n.label}
+                <span className="absolute -bottom-1 left-0 h-[2px] w-0 bg-orange group-hover:w-full transition-all duration-300 ease-out rounded-full" />
+              </a>
+            );
+          })}
         </nav>
 
         <div className="flex items-center gap-2">

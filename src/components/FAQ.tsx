@@ -63,12 +63,12 @@ export const FAQ = () => {
     <section id="faq" aria-label="Frequently asked questions" className="py-24 px-6 border-t border-border">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-primary text-xs uppercase tracking-widest font-semibold mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-navy/10 border border-navy/30 text-navy text-xs uppercase tracking-widest font-semibold mb-4">
             <HelpCircle className="h-3.5 w-3.5" />
             FAQ
           </div>
           <h2 className="font-display text-4xl md:text-5xl uppercase mb-3">
-            Frequently Asked <span className="text-gradient-primary">Questions</span>
+            Frequently Asked <span className="text-orange">Questions</span>
           </h2>
           <p className="text-muted-foreground">
             Everything you need to know about the Starter Stack and daily routine.

@@ -47,7 +47,7 @@ export const Hero = () => {
             </div>
           </div>
 
-          <h1 className="font-display uppercase tracking-tight text-[2rem] md:text-[4.5rem] leading-none text-foreground mb-2 max-w-xl">
+          <h1 className="font-display uppercase tracking-tight text-[2rem] md:text-[4.5rem] leading-none text-foreground mb-2 max-w-xl drop-shadow-[4px_4px_0px_rgba(255,255,255,1)]">
             From<span className="italic">"Dad Bod"</span>, to {" "}
             <span className="text-primary">Discip</span><span className="text-orange">line.</span>
           </h1>

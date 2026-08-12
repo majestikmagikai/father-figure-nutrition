@@ -45,7 +45,7 @@ export const ApparelGrid = () => {
             The Uniform
           </div>
           <h2 className="font-display text-4xl md:text-5xl uppercase mb-3 text-white">
-            Father Figure <span className="text-sky">App</span><span className="text-orange">arel</span>
+            Father Figure <span className="text-orange">Apparel</span>
           </h2>
           <p className="text-white/60 max-w-xl mx-auto">
             Heavyweight basics, varsity outerwear, and signature caps. Wear the mission.
