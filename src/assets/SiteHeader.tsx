@@ -24,10 +24,10 @@ export const SiteHeader = () => {
   const nav = [
     { href: "/", label: "Home" },
     { href: "/#shop", label: "Shop" },    
-    { href: "/#bundle", label: "Bundle" },
-    { href: "/#mission", label: "Mission" },
+    { href: "/#bundle", label: "Bundle" },    
     { href: "/#apparel", label: "Apparel" },
-    { href: "/#about", label: "About" },
+    { href: "/#mission", label: "Mission" },
+    { href: "/#partner", label: "Partners" },
     { href: "/#faq", label: "FAQ" },
   ];
 
@@ -45,9 +45,9 @@ export const SiteHeader = () => {
 
         <nav className="hidden md:flex items-center gap-7 text-sm font-medium">
           {nav.map((n) => (
-            <a key={n.href} href={n.href} className="relative text-primary/80 hover:text-gold transition-colors uppercase tracking-wider text-sm font-display group">
+            <a key={n.href} href={n.href} className="relative text-navy hover:text-orange transition-colors uppercase tracking-wider text-[1.15rem] font-display group">
               {n.label}
-              <span className="absolute -bottom-1 left-0 h-[2px] w-0 bg-accent group-hover:w-full transition-all duration-300 ease-out rounded-full" />
+              <span className="absolute -bottom-1 left-0 h-[2px] w-0 bg-orange group-hover:w-full transition-all duration-300 ease-out rounded-full" />
             </a>
           ))}
         </nav>
@@ -73,7 +73,7 @@ export const SiteHeader = () => {
                     key={n.href}
                     href={n.href}
                     onClick={() => setOpen(false)}
-                    className="text-lg font-display uppercase tracking-wide hover:text-primary"
+                    className="text-xl font-display uppercase tracking-wide hover:text-primary"
                   >
                     {n.label}
                   </a>

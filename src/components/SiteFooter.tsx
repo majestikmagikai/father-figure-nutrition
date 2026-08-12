@@ -1,57 +1,74 @@
-import { Shield, Star } from "lucide-react";
-import favicon from "@/assets/favicon.webp";
+import { Shield, Star, ArrowRight } from "lucide-react";
+import logo from "@/assets/father-figure-logo-official-640.webp";
 
 export const SiteFooter = () => {
   return (
-    <footer className="border-t-4 border-accent bg-primary text-primary-foreground">
-      <div className="max-w-7xl mx-auto px-6 py-12 grid md:grid-cols-3 gap-8">
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <img src={favicon} alt="" className="h-9 w-9 object-contain" />
-            <span className="font-display text-lg uppercase">Father Figure Nutrition</span>
-          </div>
-          <p className="text-sm text-primary-foreground/75 max-w-xs">
-            Performance supplements for men who lead. From "dad bod" to discipline — simple,
-            effective nutrition for hardworking men.
+    <footer className="relative bg-navy text-white overflow-hidden">
+      {/* Orbs */}
+      <div className="absolute -top-20 -right-20 w-80 h-80 bg-orange/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-10 -left-20 w-80 h-80 bg-sky/10 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="relative z-10 max-w-7xl mx-auto px-6 pt-16 pb-10 grid md:grid-cols-4 gap-10">
+
+        {/* Brand col */}
+        <div className="md:col-span-2">
+          <img src={logo} alt="Father Figure Nutrition" className="h-16 object-contain mb-4" />
+          <p className="text-sm text-white/60 max-w-sm leading-relaxed mb-5">
+            Performance supplements for men who lead. From dad bod to discipline. Simple, effective nutrition for hardworking men.
           </p>
-          <div className="flex items-center gap-2 mt-4 text-xs text-gold font-bold">
+          <div className="flex items-center gap-2 text-xs text-orange font-bold uppercase tracking-widest">
             <Shield className="h-4 w-4" />
-            <span className="uppercase tracking-widest">Veteran Owned · 80% Organic</span>
+            Veteran Owned · 80% Organic
           </div>
         </div>
 
+        {/* Shop col */}
         <div>
-          <h4 className="font-display uppercase text-sm tracking-wider mb-3 text-gold">
-            Shop
-          </h4>
-          <ul className="space-y-2 text-sm text-primary-foreground/80">
-            <li><a href="/#shop" className="hover:text-gold transition-colors">All Supplements</a></li>
-            <li><a href="/#bundle" className="hover:text-gold transition-colors">The Father Figure Starter Stack</a></li>
-            <li><a href="/#mission" className="hover:text-gold transition-colors">Our Mission</a></li>
-            <li><a href="/#faq" className="hover:text-gold transition-colors">FAQ</a></li>
-            <li><a href="/sitemap.xml" className="hover:text-gold transition-colors">Sitemap</a></li>
+          <h4 className="font-display uppercase text-sm tracking-wider mb-4 text-orange">Shop</h4>
+          <ul className="space-y-2.5 text-sm text-white/60">
+            {[
+              { href: "/#shop", label: "All Supplements" },
+              { href: "/#bundle", label: "Starter Stack" },
+              { href: "/#mission", label: "Our Mission" },
+              { href: "/#apparel", label: "Apparel" },
+              { href: "/#faq", label: "FAQ" },
+            ].map((l) => (
+              <li key={l.href}>
+                <a href={l.href} className="hover:text-orange transition-colors inline-flex items-center gap-1 group">
+                  <ArrowRight className="h-3 w-3 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all duration-200" />
+                  {l.label}
+                </a>
+              </li>
+            ))}
           </ul>
         </div>
 
+        {/* Promise col */}
         <div>
-          <h4 className="font-display uppercase text-sm tracking-wider mb-3 text-gold">
-            Promise
-          </h4>
-          <ul className="space-y-2 text-sm text-primary-foreground/80">
-            <li className="flex items-center gap-2"><Star className="h-3 w-3 text-gold fill-current" /> Made in USA</li>
-            <li className="flex items-center gap-2"><Star className="h-3 w-3 text-gold fill-current" /> GMP Certified</li>
-            <li className="flex items-center gap-2"><Star className="h-3 w-3 text-gold fill-current" /> Quality Tested</li>
-            <li className="flex items-center gap-2"><Star className="h-3 w-3 text-gold fill-current" /> 60-Day Money Back</li>
+          <h4 className="font-display uppercase text-sm tracking-wider mb-4 text-orange">Our Promise</h4>
+          <ul className="space-y-2.5 text-sm text-white/60">
+            {["Made in USA", "GMP Certified", "Quality Tested", "60-Day Money Back"].map((item) => (
+              <li key={item} className="flex items-center gap-2">
+                <Star className="h-3 w-3 text-orange fill-current shrink-0" />
+                {item}
+              </li>
+            ))}
           </ul>
         </div>
       </div>
-      <div className="border-t border-accent/40 py-5 px-6 text-center text-xs text-primary-foreground/70 space-y-2">
+
+      {/* Bottom bar */}
+      <div className="relative z-10 border-t border-white/10 py-6 px-6 text-center text-xs text-white/40 space-y-2">
         <p className="max-w-3xl mx-auto italic">
-          *These statements have not been evaluated by the FDA. This product is not intended to
-          diagnose, treat, cure, or prevent any disease.
+          *These statements have not been evaluated by the FDA. This product is not intended to diagnose, treat, cure, or prevent any disease.
         </p>
         <p>© {new Date().getFullYear()} Father Figure Nutrition. Veteran owned. Family built.</p>
-        <p>Site Designed & Maintained by <a href="https://majestikmagik.dev" target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-colors underline">Majestik Magik</a></p>
+        <p>
+          Site Designed & Maintained by{" "}
+          <a href="https://majestikmagik.dev" target="_blank" rel="noopener noreferrer" className="hover:text-orange transition-colors underline">
+            Majestik Magik
+          </a>
+        </p>
       </div>
     </footer>
   );

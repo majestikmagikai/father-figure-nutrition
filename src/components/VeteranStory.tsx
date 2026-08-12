@@ -13,7 +13,7 @@ export const VeteranStory = () => {
             Built by a Veteran. <span className="text-gradient-primary">For Every Father.</span>
           </h2>
           <p className="max-w-2xl mx-auto text-muted-foreground">
-            After serving my country, I came home to the hardest mission of all — being the father
+            After serving my country, I came home to the hardest mission of all: being the father
             my family deserves. Father Figure Nutrition was built so no dad has to choose between
             his health and his family.
           </p>
@@ -34,7 +34,7 @@ export const VeteranStory = () => {
             {
               icon: HeartHandshake,
               title: "Family First",
-              text: "Built for fathers who want strength, energy, and longevity — so they can show up for the people who count on them.",
+              text: "Built for fathers who want strength, energy, and longevity. Show up for the people who count on you.",
             },
           ].map((card) => (
             <div

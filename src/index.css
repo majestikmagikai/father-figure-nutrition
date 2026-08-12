@@ -1,73 +1,73 @@
-@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Geist:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Father Figure Nutrition — premium dark + tactical orange design system.
-   All colors HSL. */
-
 @layer base {
   :root {
-    /* Father Figure Nutrition: white base, #006BB6 blue, orange accent */
+    --radius: 0.5rem;
+
     --background: 0 0% 100%;
-    --foreground: 207 100% 15%;
+    --foreground: 220 40% 18%;
 
     --card: 0 0% 100%;
-    --card-foreground: 207 100% 15%;
+    --card-foreground: 220 40% 18%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 207 100% 15%;
+    --popover-foreground: 220 40% 18%;
 
-    --primary: 207 100% 36%;           /* #006BB6 */
+    /* Sky Blue #00AEEF */
+    --primary: 199 100% 47%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 207 100% 48%;
+    --primary-glow: 199 100% 58%;
 
-    --secondary: 207 30% 96%;
-    --secondary-foreground: 207 100% 15%;
+    --secondary: 220 20% 97%;
+    --secondary-foreground: 220 40% 18%;
 
-    --muted: 207 25% 95%;
-    --muted-foreground: 207 20% 40%;
+    --muted: 220 20% 97%;
+    --muted-foreground: 220 15% 50%;
 
-    --accent: 30 90% 55%;            /* #F58426 */
-    --accent-foreground: 207 100% 15%;
+    --accent: 220 20% 97%;
+    --accent-foreground: 220 40% 18%;
 
-    --destructive: 0 75% 50%;
+    --destructive: 20 90% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 207 30% 88%;
-    --input: 207 30% 90%;
-    --ring: 207 100% 36%;
+    --border: 220 15% 92%;
+    --input: 220 15% 92%;
+    --ring: 199 100% 47%;
 
-    --radius: 0.625rem;
-
-    /* Brand semantic tokens */
-    --steel: 207 100% 15%;
-    --olive: 207 40% 35%;
-    --gold: 30 90% 55%;
+    /* Brand tokens */
+    --navy: 214 52% 11%;             /* #0D1B2A */
+    --navy-foreground: 0 0% 100%;
+    --orange: 28 100% 50%;           /* #FF7A00 */
+    --orange-foreground: 0 0% 100%;
+    --sky: 199 100% 47%;             /* #00AEEF */
+    --gold: 28 100% 50%;
 
     /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(207 40% 97%) 50%, hsl(207 100% 90%) 100%);
-    --gradient-primary: linear-gradient(135deg, hsl(207 100% 36%) 0%, hsl(207 100% 46%) 55%, hsl(30 90% 55%) 100%);
-    --gradient-gold: linear-gradient(135deg, hsl(30 90% 55%) 0%, hsl(30 90% 45%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(207 40% 97%) 50%, hsl(199 100% 92%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(214 52% 11%) 0%, hsl(214 52% 11%) 25%, hsl(28 100% 50%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(28 100% 50%) 0%, hsl(28 100% 40%) 100%);
     --gradient-fade: linear-gradient(180deg, transparent 0%, hsl(0 0% 100%) 100%);
-    --gradient-spotlight: radial-gradient(ellipse at top, hsl(207 100% 36% / 0.12), transparent 60%);
+    --gradient-spotlight: radial-gradient(ellipse at top, hsl(199 100% 47% / 0.10), transparent 60%);
 
     /* Shadows */
-    --shadow-glow: 0 0 40px hsl(207 100% 36% / 0.30);
-    --shadow-card: 0 20px 60px -20px hsl(207 100% 15% / 0.18);
-    --shadow-cta: 0 12px 40px -8px hsl(207 100% 36% / 0.45);
+    --shadow-glow: 0 0 40px hsl(199 100% 47% / 0.25);
+    --shadow-card: 0 20px 60px -20px hsl(214 52% 11% / 0.15);
+    --shadow-cta: 0 12px 40px -8px hsl(199 100% 47% / 0.40);
 
     --transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --sidebar-background: 207 100% 36%;
+    --sidebar-background: 214 52% 11%;
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 30 90% 55%;
-    --sidebar-primary-foreground: 207 100% 15%;
-    --sidebar-accent: 207 100% 28%;
+    --sidebar-primary: 28 100% 50%;
+    --sidebar-primary-foreground: 214 52% 11%;
+    --sidebar-accent: 214 52% 18%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 207 100% 25%;
-    --sidebar-ring: 30 90% 55%;
+    --sidebar-border: 214 52% 20%;
+    --sidebar-ring: 28 100% 50%;
   }
 }
 
@@ -81,13 +81,16 @@
   }
 
   body {
-    @apply bg-background text-foreground font-body antialiased;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Geist', system-ui, sans-serif;
     background-image: var(--gradient-spotlight);
     background-attachment: fixed;
   }
 
-  h1, h2, h3, h4 {
-    @apply font-display tracking-tight;
+  h1, h2, h3, h4, .font-display {
+    font-family: 'Anton', 'Inter', sans-serif;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
   }
 }
 
@@ -106,9 +109,9 @@
     background-clip: text;
   }
 
-  .text-gold { color: hsl(var(--accent)); }
-  .bg-gold { background-color: hsl(var(--accent)); }
-  .border-gold { border-color: hsl(var(--accent)); }
+  .text-gold { color: hsl(var(--orange)); }
+  .bg-gold { background-color: hsl(var(--orange)); }
+  .border-gold { border-color: hsl(var(--orange)); }
 
   .bg-gradient-gold {
     background: var(--gradient-gold);
@@ -134,8 +137,23 @@
     box-shadow: var(--shadow-card);
   }
 
-  .stencil {
-    font-family: 'Oswald', sans-serif;
-    letter-spacing: 0.02em;
+  @keyframes orb-float-1 {
+    0%, 100% { transform: translate(0, 0) scale(1); filter: blur(48px); }
+    33% { transform: translate(60px, -60px) scale(1.1); filter: blur(56px); }
+    66% { transform: translate(-40px, 40px) scale(0.95); filter: blur(40px); }
   }
+  @keyframes orb-float-2 {
+    0%, 100% { transform: translate(0, 0) scale(1); filter: blur(48px); }
+    33% { transform: translate(-60px, -50px) scale(1.08); filter: blur(36px); }
+    66% { transform: translate(50px, 60px) scale(0.92); filter: blur(56px); }
+  }
+  @keyframes orb-float-3 {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); filter: blur(32px); }
+    33% { transform: translate(-30%, -70%) scale(1.2); filter: blur(20px); }
+    66% { transform: translate(-70%, -30%) scale(0.9); filter: blur(40px); }
+  }
+
+  .animate-orb-1 { animation: orb-float-1 5s ease-in-out infinite; }
+  .animate-orb-2 { animation: orb-float-2 4s ease-in-out infinite; }
+  .animate-orb-3 { animation: orb-float-3 3.5s ease-in-out infinite; }
 }

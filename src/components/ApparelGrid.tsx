@@ -34,24 +34,27 @@ export const ApparelGrid = () => {
   if (!loading && products.length === 0) return null;
 
   return (
-    <section id="apparel" className="py-24 px-6 border-t border-border bg-card/20">
+    <section id="apparel" className="relative py-24 px-6 bg-navy overflow-hidden">
+      {/* Background orbs */}
+      <div className="absolute -top-20 -right-20 w-96 h-96 bg-sky/20 rounded-full pointer-events-none z-0 animate-orb-1" />
+      <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-orange/20 rounded-full pointer-events-none z-0 animate-orb-2" />
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-primary text-xs uppercase tracking-widest font-semibold mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-white text-xs uppercase tracking-widest font-semibold mb-4">
             <Shirt className="h-3.5 w-3.5" />
             The Uniform
           </div>
-          <h2 className="font-display text-4xl md:text-5xl uppercase mb-3">
-            Father Figure <span className="text-gradient-primary">Apparel</span>
+          <h2 className="font-display text-4xl md:text-5xl uppercase mb-3 text-white">
+            Father Figure <span className="text-sky">App</span><span className="text-orange">arel</span>
           </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto">
+          <p className="text-white/60 max-w-xl mx-auto">
             Heavyweight basics, varsity outerwear, and signature caps. Wear the mission.
           </p>
         </div>
 
         {loading ? (
           <div className="flex justify-center py-20">
-            <Loader2 className="h-8 w-8 text-primary animate-spin" />
+            <Loader2 className="h-8 w-8 text-orange animate-spin" />
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -81,7 +84,7 @@ export const ApparelGrid = () => {
               return (
                 <div
                   key={p.node.id}
-                  className="group relative bg-card border border-border rounded-xl overflow-hidden shadow-card hover:border-primary/50 transition-all hover:-translate-y-1 duration-300"
+                  className="group relative bg-white/5 border border-white/10 rounded-xl overflow-hidden shadow-card hover:border-orange/50 transition-all hover:-translate-y-1 duration-300"
                 >
                   <Link
                     to={`/product/${p.node.handle}`}
@@ -98,23 +101,23 @@ export const ApparelGrid = () => {
                       <div className="text-muted-foreground">No image</div>
                     )}
                   </Link>
-                  <div className="p-5">
+                  <div className="p-5 bg-[#0D1B2A]">
                     <Link to={`/product/${p.node.handle}`}>
-                      <h3 className="font-display text-xl uppercase tracking-wide mb-1 hover:text-primary transition-colors">
+                      <h3 className="font-display text-xl uppercase tracking-wide mb-1 text-white hover:text-orange transition-colors">
                         {p.node.title}
                       </h3>
                     </Link>
-                    <p className="text-xs uppercase tracking-widest text-muted-foreground mb-4">
+                    <p className="text-xs uppercase tracking-widest text-white/40 mb-4">
                       Apparel
                     </p>
                     <div className="flex items-center justify-between">
-                      <span className="font-display text-2xl text-primary">
+                      <span className="font-display text-2xl text-orange">
                         ${parseFloat(p.node.priceRange.minVariantPrice.amount).toFixed(2)}
                       </span>
                       <Button
                         onClick={handleAdd}
                         disabled={isLoading || !variant?.availableForSale}
-                        className="bg-gradient-primary hover:opacity-95 shadow-cta font-display uppercase tracking-wider"
+                        className="bg-orange text-white hover:opacity-90 shadow-cta font-display uppercase tracking-wider"
                       >
                         {isLoading ? (
                           <Loader2 className="h-4 w-4 animate-spin" />

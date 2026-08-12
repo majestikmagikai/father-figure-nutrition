@@ -19,12 +19,12 @@ export const VeteranBadge = ({ variant = "compact", className }: VeteranBadgePro
           <Shield className="h-4.5 w-4.5 text-primary" />
         </div>
         <div className="min-w-0">
-          <div className="font-display uppercase tracking-widest text-[11px] text-primary mb-0.5">
+          <div className="font-display uppercase tracking-widest text-[11px] text-navy mb-0.5">
             Veteran Owned · Family Built
           </div>
           <p className="text-xs text-muted-foreground leading-snug">
             Founded by a U.S. military veteran. Simple, effective men's nutrition for
-            hardworking dads — no fillers, no nonsense.
+            hardworking dads. No fillers, no nonsense.
           </p>
         </div>
       </div>
@@ -34,7 +34,7 @@ export const VeteranBadge = ({ variant = "compact", className }: VeteranBadgePro
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-gold border border-accent text-primary text-[10px] uppercase tracking-widest font-bold shadow-sm",
+        "inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-gold border border-accent text-navy text-[10px] uppercase tracking-widest font-bold shadow-sm",
         className,
       )}
       title="Veteran Owned · Family Built"

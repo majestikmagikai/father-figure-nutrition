@@ -5,7 +5,6 @@ import { TrustBar } from "@/components/TrustBar";
 import { ProductGrid } from "@/components/ProductGrid";
 import { BundleCTA } from "@/components/BundleCTA";
 import { ApparelGrid } from "@/components/ApparelGrid";
-import { VeteranStory } from "@/components/VeteranStory";
 import { PartnershipSection } from "@/components/PartnershipSection";
 import { MissionBlurb } from "@/components/MissionBlurb";
 import { FAQ } from "@/components/FAQ";
@@ -34,10 +33,9 @@ const Index = () => {
         <Hero />
         <TrustBar />
         <ProductGrid />
-        <BundleCTA />
-        <MissionBlurb />
+        <BundleCTA />        
         <ApparelGrid />
-        <VeteranStory />
+        <MissionBlurb />
         <PartnershipSection />
         <FAQ />
       </main>

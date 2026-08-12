@@ -1,62 +1,86 @@
-import { Compass, Target, Users } from "lucide-react";
+import { Compass, Target, Users, Shield, Leaf, HeartHandshake } from "lucide-react";
 
 export const MissionBlurb = () => {
   return (
-    <section id="mission" aria-label="Our mission" className="relative py-24 px-6 border-t border-border bg-gradient-hero">
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent pointer-events-none" />
-      <div className="relative max-w-4xl mx-auto">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gold border-2 border-accent text-primary text-xs uppercase tracking-widest font-bold mb-5 shadow-cta">
-            <Compass className="h-3.5 w-3.5" />
-            Our Mission
+    <section id="mission" aria-label="Our mission" className="relative py-24 px-6 bg-white overflow-hidden">
+      {/* Subtle background accents */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-orange/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-sky/5 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="relative max-w-6xl mx-auto">
+
+        {/* Two-column: heading left, body right */}
+        <div className="grid md:grid-cols-2 gap-12 items-start mb-16">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-navy/10 border border-navy/20 text-navy text-xs uppercase tracking-widest font-bold mb-5">
+              <Compass className="h-3.5 w-3.5" />
+              Our Mission
+            </div>
+            <h2 className="font-display text-5xl md:text-7xl uppercase leading-[0.9] text-navy mb-6">
+              Built for <span className="text-orange">Fathers.</span><br />
+              <span className="italic text-navy/40">Trusted by Men.</span>
+            </h2>
           </div>
-          <h2 className="font-display text-4xl md:text-6xl uppercase mb-3 leading-[0.95]">
-            From <span className="italic text-muted-foreground">"Dad Bod"</span> <br />
-            to <span className="text-gradient-primary">Discipline.</span>
-          </h2>
+
+          <div className="space-y-5 text-base text-navy/60 leading-relaxed pt-2">
+            <p>
+              At <span className="text-navy font-semibold">Father Figure Nutrition</span>, we believe performance isn't just about looking better. It's about showing up stronger for yourself, your family, and your future.
+            </p>
+            <p>
+              Our mission is to create simple, effective men's nutrition products that support everyday strength, energy, consistency, and confidence. No unnecessary fillers or complicated routines.
+            </p>
+            <p>
+              We built Father Figure Nutrition for hardworking men balancing real life. Long days, responsibilities, and personal goals. Taking care of yourself should feel achievable, not overwhelming.
+            </p>
+          </div>
         </div>
 
-        <div className="space-y-6 text-base md:text-lg text-muted-foreground leading-relaxed text-center max-w-2xl mx-auto">
-          <p>
-            At <span className="text-foreground font-semibold">Father Figure Nutrition</span>, we
-            believe performance isn't just about looking better — it's about showing up stronger
-            for yourself, your family, and your future.
-          </p>
-          <p>
-            Our mission is to create simple, effective men's nutrition products that support
-            everyday strength, energy, consistency, and confidence — without unnecessary fillers
-            or complicated routines.
-          </p>
-          <p>
-            We built Father Figure Nutrition for hardworking men balancing real life — long days,
-            responsibilities, and personal goals — because taking care of yourself should feel
-            achievable, not overwhelming.
-          </p>
-          <p>
-            Whether you're getting back into the gym, rebuilding discipline, or simply trying to
-            feel better every day, we're here to support the process.
-          </p>
-        </div>
-
-        <p className="text-center font-display uppercase tracking-widest text-xl md:text-2xl mt-12 text-gradient-primary">
-          Performance supplements for men who lead.
-        </p>
-
-        <div className="grid md:grid-cols-3 gap-4 mt-14">
+        {/* Pillars */}
+        <div className="grid md:grid-cols-3 gap-6">
           {[
             { icon: Target, title: "Simple", text: "No fillers. No complicated routines." },
             { icon: Users, title: "Built for Real Life", text: "For dads, professionals, and busy men." },
             { icon: Compass, title: "Consistency First", text: "Daily habits that compound into results." },
           ].map((c) => (
-            <div key={c.title} className="bg-card border-t-4 border-accent rounded-xl p-5 text-center shadow-card hover:-translate-y-1 transition-transform">
-              <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-gradient-gold mx-auto mb-2" aria-hidden="true">
-                <c.icon className="h-5 w-5 text-primary" />
+            <div key={c.title} className="group bg-secondary border border-navy/10 rounded-2xl p-8 hover:border-orange/40 hover:-translate-y-1 transition-all shadow-card">
+              <div className="inline-flex items-center justify-center h-14 w-14 rounded-xl bg-navy mb-5" aria-hidden="true">
+                <c.icon className="h-7 w-7 text-orange" />
               </div>
-              <div className="font-display uppercase tracking-wider text-sm mb-1 text-primary">{c.title}</div>
-              <p className="text-xs text-muted-foreground">{c.text}</p>
+              <h3 className="font-display uppercase tracking-wider text-xl mb-2 text-navy">{c.title}</h3>
+              <p className="text-base text-navy/50">{c.text}</p>
             </div>
           ))}
         </div>
+
+        {/* About / Veteran section */}
+        <div className="mt-16 pt-16 border-t border-navy/10">
+          <div className="text-center mb-10">
+            <h2 className="font-display text-4xl md:text-5xl uppercase text-navy mb-4">
+              Built by a Veteran. <span className="text-orange">For Every Father.</span>
+            </h2>
+            <p className="max-w-2xl mx-auto text-navy/60">
+              After serving my country, I came home to the hardest mission of all: being the father
+              my family deserves. Father Figure Nutrition was built so no dad has to choose between
+              his health and his family.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              { icon: Shield, title: "Veteran Owned", text: "Founded and operated by a U.S. military veteran. Discipline, integrity, and accountability in every bottle." },
+              { icon: Leaf, title: "80% Organic", text: "Every formula is sourced from at least 80% certified organic ingredients. No fillers. No shortcuts." },
+              { icon: HeartHandshake, title: "Family First", text: "Built for fathers who want strength, energy, and longevity. Show up for the people who count on you." },
+            ].map((card) => (
+              <div key={card.title} className="group bg-secondary border border-navy/10 rounded-2xl p-8 hover:border-orange/40 hover:-translate-y-1 transition-all shadow-card">
+                <div className="inline-flex items-center justify-center h-14 w-14 rounded-xl bg-navy mb-5">
+                  <card.icon className="h-7 w-7 text-orange" />
+                </div>
+                <h3 className="font-display text-xl uppercase mb-2 text-navy">{card.title}</h3>
+                <p className="text-base text-navy/50">{card.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
       </div>
     </section>
   );

@@ -161,9 +161,9 @@ const ProductDetail = () => {
                 <Shield className="h-3.5 w-3.5" /> Veteran Owned · 80% Organic
               </div>
               <h1 className="font-display text-4xl md:text-5xl uppercase mb-3 leading-tight">{product.title}</h1>
-              <div className="font-display text-3xl text-primary mb-6">
+              <p className="font-display text-3xl text-primary mb-6">
                 ${parseFloat(product.price).toFixed(2)}
-              </div>
+              </p>
               <p className="text-muted-foreground mb-6">{product.description}</p>
               <VeteranBadge variant="full" className="mb-6" />
               <Button

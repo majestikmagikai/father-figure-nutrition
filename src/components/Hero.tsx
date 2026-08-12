@@ -47,15 +47,15 @@ export const Hero = () => {
             </div>
           </div>
 
-          <p className="font-display uppercase tracking-wider text-2xl md:text-3xl text-foreground mb-2 max-w-xl">
-            From <span className="text-muted-foreground italic">"Dad Bod"</span>, to{" "}
-            <span className="text-gradient-primary">Discipline.</span>
-          </p>
+          <h1 className="font-display uppercase tracking-tight text-[2rem] md:text-[4.5rem] leading-none text-foreground mb-2 max-w-xl">
+            From<span className="italic">"Dad Bod"</span>, to {" "}
+            <span className="text-primary">Discip</span><span className="text-orange">line.</span>
+          </h1>
           <p className="text-sm md:text-base text-foreground/80 mb-2 max-w-xl">
             Simple, effective men's nutrition that supports everyday strength, energy, consistency,
             and confidence without unnecessary fillers or complicated routines.
           </p>
-          <p className="font-display uppercase tracking-widest text-xs md:text-sm text-primary mb-8">
+          <p className="font-sans uppercase tracking-widest text-sm md:text-md text-primary mb-8 font-bold">
             Performance supplements for men who lead.
           </p>
 
@@ -87,15 +87,15 @@ export const Hero = () => {
         <div className="hidden md:flex justify-end items-center pt-32">
 
             <div className="relative bg-card/90 backdrop-blur-sm border-2 border-accent rounded-2xl p-6 shadow-card max-w-xs">
-              <div className="absolute -top-3 -right-3 bg-gradient-gold text-primary text-[10px] font-display uppercase tracking-widest px-2 py-1 rounded-full shadow-cta">
+              <div className="absolute -top-3 -right-3 bg-gradient-gold text-navy text-[16px] font-display uppercase tracking-widest px-2 py-1 rounded-full shadow-cta">
                 Veteran Built
               </div>
               <Leaf className="h-7 w-7 text-gold mb-3" />
-              <p className="font-display uppercase text-lg leading-tight mb-2 text-primary">
+              <h3 className="font-display uppercase text-[1.75rem] leading-tight mb-2 text-navy">
                 Built by a Veteran. <br />Trusted by Fathers.
-              </p>
+              </h3>
               <p className="text-sm text-muted-foreground">
-                Every batch is sourced 80% organic and third-party tested — because your family is
+                Every batch is sourced 80% organic and third-party tested. Your family is
                 non-negotiable.
               </p>
             </div>
