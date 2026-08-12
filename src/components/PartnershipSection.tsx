@@ -55,7 +55,7 @@ export const PartnershipSection = () => {
               href="https://www.vitalabs.com/about/seals-and-certifications"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-orange text-white text-sm font-semibold uppercase tracking-wide hover:opacity-90 transition"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-orange text-white text-sm font-semibold uppercase tracking-wide hover:bg-sky transition-colors duration-200"
             >
               View Certifications <ExternalLink className="h-3.5 w-3.5" />
             </a>

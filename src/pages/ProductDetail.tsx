@@ -18,6 +18,10 @@ const ProductDetail = () => {
   const addItem = useCartStore((s) => s.addItem);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [handle]);
+
+  useEffect(() => {
     if (product) document.title = `${product.title} — Father Figure Nutrition`;
   }, [product]);
 
@@ -89,7 +93,7 @@ const ProductDetail = () => {
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
       <main className="flex-1 max-w-6xl mx-auto px-6 py-12 w-full">
-        <Link to="/#shop" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary mb-8">
+        <Link to="/#shop" className="inline-flex items-center gap-2 text-sm text-navy/60 hover:text-orange transition-colors mb-8 font-medium">
           <ArrowLeft className="h-4 w-4" /> Back to shop
         </Link>
 
@@ -101,8 +105,8 @@ const ProductDetail = () => {
         ) : (
           <div className="grid md:grid-cols-2 gap-10">
             <div className="relative">
-              <div className="absolute -inset-6 bg-primary/15 blur-3xl rounded-full" />
-              <div className="relative aspect-square rounded-2xl bg-card border border-border shadow-card">
+              <div className="absolute -inset-6 bg-orange/10 blur-3xl rounded-full" />
+              <div className="relative aspect-square rounded-2xl bg-secondary border border-navy/10 shadow-card">
                 {view === "spin" && labelImage ? (
                   <BottleSpin360
                     labelUrl={labelImage.url}
@@ -117,7 +121,7 @@ const ProductDetail = () => {
                     <img
                       src={product.images[view].url}
                       alt={product.images[view].altText}
-                      className="w-full h-full object-contain bg-card"
+                      className="w-full h-full object-contain"
                     />
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/10">
                       <ZoomIn className="h-8 w-8 text-white drop-shadow-lg" />
@@ -131,8 +135,8 @@ const ProductDetail = () => {
                   <button
                     key={i}
                     onClick={() => setView(i)}
-                    className={`group cursor-pointer h-16 w-16 rounded-lg overflow-hidden border-2 transition-all bg-card relative ${
-                      view === i ? "border-primary shadow-cta" : "border-border hover:border-primary/50"
+                    className={`group cursor-pointer h-16 w-16 rounded-lg overflow-hidden border-2 transition-all bg-secondary relative ${
+                      view === i ? "border-orange shadow-cta" : "border-navy/10 hover:border-orange/50"
                     }`}
                   >
                     <img src={img.url} alt={img.altText} className="w-full h-full object-contain pointer-events-none" />
@@ -143,37 +147,53 @@ const ProductDetail = () => {
                 ))}
                 <button
                   onClick={() => setView("spin")}
-                  className={`relative h-16 w-16 rounded-lg overflow-hidden border-2 transition-all flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5 ${
-                    view === "spin" ? "border-primary shadow-cta" : "border-border hover:border-primary/50"
+                  className={`relative h-16 w-16 rounded-lg overflow-hidden border-2 transition-all flex items-center justify-center bg-gradient-to-br from-orange/20 to-orange/5 ${
+                    view === "spin" ? "border-orange shadow-cta" : "border-navy/10 hover:border-orange/50"
                   }`}
                   title="360° spinning bottle"
                 >
-                  <RotateCw className="h-5 w-5 text-primary" />
-                  <span className="absolute bottom-0 inset-x-0 text-[8px] uppercase tracking-widest text-primary font-bold bg-background/80 py-0.5">
+                  <RotateCw className="h-5 w-5 text-orange" />
+                  <span className="absolute bottom-0 inset-x-0 text-[8px] uppercase tracking-widest text-orange font-bold bg-white/80 py-0.5">
                     360°
                   </span>
                 </button>
               </div>
             </div>
 
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-primary text-xs uppercase tracking-widest font-semibold mb-4">
+            <div className="flex flex-col justify-start pt-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-navy/10 border border-navy/20 text-navy text-xs uppercase tracking-widest font-semibold mb-4 w-fit">
                 <Shield className="h-3.5 w-3.5" /> Veteran Owned · 80% Organic
               </div>
-              <h1 className="font-display text-4xl md:text-5xl uppercase mb-3 leading-tight">{product.title}</h1>
-              <p className="font-display text-3xl text-primary mb-6">
+              <h1 className="font-display text-4xl md:text-5xl uppercase mb-2 leading-tight text-navy">{product.title}</h1>
+              <p className="font-display text-4xl text-orange mb-4">
                 ${parseFloat(product.price).toFixed(2)}
               </p>
-              <p className="text-muted-foreground mb-6">{product.description}</p>
+              <div className="w-12 h-1 bg-orange rounded-full mb-4" />
+              <p className="text-navy/60 mb-6 text-base leading-relaxed">{product.description}</p>
               <VeteranBadge variant="full" className="mb-6" />
-              <Button
-                onClick={handleAdd}
-                disabled={!product.availableForSale}
-                size="lg"
-                className="bg-gradient-primary hover:opacity-95 shadow-cta font-display uppercase tracking-wider"
-              >
-                <Plus className="h-4 w-4 mr-2" /> Add to Cart
-              </Button>
+              <div className="flex flex-wrap gap-3 items-center">
+                <Button
+                  onClick={handleAdd}
+                  disabled={!product.availableForSale}
+                  size="lg"
+                  className="bg-orange text-white hover:opacity-90 shadow-cta font-display uppercase tracking-wider"
+                >
+                  <Plus className="h-4 w-4 mr-2" /> Add to Cart
+                </Button>
+                <p className="text-xs text-navy/40 uppercase tracking-widest">60-Day Money Back Guarantee</p>
+              </div>
+              <div className="grid grid-cols-3 gap-4 mt-8 border-t border-navy/10 pt-6">
+                {[
+                  { v: "80%", l: "Organic" },
+                  { v: "USA", l: "Made In" },
+                  { v: "GMP", l: "Certified" },
+                ].map((s) => (
+                  <div key={s.l} className="border-l-2 border-navy pl-3">
+                    <div className="font-display text-2xl text-orange">{s.v}</div>
+                    <div className="text-xs uppercase tracking-widest text-navy/50">{s.l}</div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Zoom overlay */}

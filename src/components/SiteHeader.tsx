@@ -65,7 +65,7 @@ export const SiteHeader = () => {
           
         </Link>
 
-        <nav className="hidden md:flex items-center gap-7 text-sm font-medium">
+        <nav className="hidden md:flex items-center gap-10 text-sm font-medium">
           {nav.map((n) => {
             const hash = n.href.includes("#") ? n.href.split("#")[1] : null;
             return (

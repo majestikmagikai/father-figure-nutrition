@@ -1,37 +1,56 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Loader2, Plus, Shirt } from "lucide-react";
+import { Plus, Shirt } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ShopifyProduct, STOREFRONT_QUERY, storefrontApiRequest } from "@/lib/shopify";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
 import dadCapImg from "@/assets/products/father-figure-logo-product.webp";
 
-const IMAGE_OVERRIDES: Record<string, string> = {};
+interface ApparelProduct {
+  id: string;
+  handle: string;
+  title: string;
+  price: string;
+  currencyCode: string;
+  availableForSale: boolean;
+  image: { url: string; altText: string };
+  variantId: string;
+}
+
+const APPAREL: ApparelProduct[] = [
+  {
+    id: "apparel-dad-cap",
+    handle: "father-figure-dad-cap",
+    title: "Father Figure Dad Cap",
+    price: "34.99",
+    currencyCode: "USD",
+    availableForSale: true,
+    image: { url: dadCapImg, altText: "Father Figure Dad Cap" },
+    variantId: "var-dad-cap-default",
+  },
+  {
+    id: "apparel-letterman-jacket",
+    handle: "father-figure-letterman-jacket",
+    title: "Father Figure Letterman Jacket",
+    price: "289.99",
+    currencyCode: "USD",
+    availableForSale: true,
+    image: { url: dadCapImg, altText: "Father Figure Letterman Jacket" },
+    variantId: "var-letterman-jacket-default",
+  },
+  {
+    id: "apparel-tshirt",
+    handle: "father-figure-tshirt",
+    title: "Father Figure T-Shirt",
+    price: "49.99",
+    currencyCode: "USD",
+    availableForSale: true,
+    image: { url: dadCapImg, altText: "Father Figure T-Shirt" },
+    variantId: "var-tshirt-default",
+  },
+];
 
 export const ApparelGrid = () => {
-  const [products, setProducts] = useState<ShopifyProduct[]>([]);
-  const [loading, setLoading] = useState(true);
   const addItem = useCartStore((s) => s.addItem);
-  const isLoading = useCartStore((s) => s.isLoading);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const data = await storefrontApiRequest(STOREFRONT_QUERY, {
-          first: 24,
-          query: "tag:apparel",
-        });
-        setProducts(data?.data?.products?.edges || []);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
-
-  if (!loading && products.length === 0) return null;
 
   return (
     <section id="apparel" className="relative py-24 px-6 bg-navy overflow-hidden">
@@ -52,88 +71,61 @@ export const ApparelGrid = () => {
           </p>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="h-8 w-8 text-orange animate-spin" />
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((p) => {
-              const variant = p.node.variants.edges[0]?.node;
-              const image = p.node.images.edges[0]?.node;
-              const imageOverride = IMAGE_OVERRIDES[p.node.handle] ?? dadCapImg;
-
-              const handleAdd = async () => {
-                if (!variant) return;
-                await addItem({
-                  productId: p.node.id,
-                  handle: p.node.handle,
-                  title: p.node.title,
-                  image: { url: imageOverride ?? image?.url ?? "", altText: image?.altText ?? p.node.title },
-                  variantId: variant.id,
-                  price: variant.price.amount,
-                  currencyCode: variant.price.currencyCode,
-                  quantity: 1,
-                });
-                toast.success("Added to cart", {
-                  description: p.node.title,
-                  position: "top-center",
-                });
-              };
-
-              return (
-                <div
-                  key={p.node.id}
-                  className="group relative bg-white/5 border border-white/10 rounded-xl overflow-hidden shadow-card hover:border-orange/50 transition-all hover:-translate-y-1 duration-300"
-                >
-                  <Link
-                    to={`/product/${p.node.handle}`}
-                    className="block aspect-square overflow-hidden bg-gradient-to-br from-secondary/40 to-background flex items-center justify-center p-8"
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {APPAREL.map((p) => (
+            <div
+              key={p.id}
+              className="group relative bg-white/5 border border-white/10 rounded-xl overflow-hidden shadow-card hover:border-orange/50 transition-all hover:-translate-y-1 duration-300"
+            >
+              <Link
+                to={`/product/${p.handle}`}
+                className="block aspect-square overflow-hidden bg-gradient-to-br from-secondary/40 to-background flex items-center justify-center p-8"
+              >
+                <img
+                  src={p.image.url}
+                  alt={p.image.altText}
+                  loading="lazy"
+                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 drop-shadow-[0_10px_30px_hsl(var(--primary)/0.25)]"
+                />
+              </Link>
+              <div className="p-5 bg-[#0D1B2A]">
+                <Link to={`/product/${p.handle}`}>
+                  <h3 className="font-display text-xl uppercase tracking-wide mb-1 text-white hover:text-orange transition-colors">
+                    {p.title}
+                  </h3>
+                </Link>
+                <p className="text-xs uppercase tracking-widest text-white/40 mb-4">Apparel</p>
+                <div className="flex items-center justify-between">
+                  <span className="font-display text-2xl text-orange">
+                    ${parseFloat(p.price).toFixed(2)}
+                  </span>
+                  <Button
+                    onClick={() => {
+                      addItem({
+                        productId: p.id,
+                        handle: p.handle,
+                        title: p.title,
+                        image: p.image,
+                        variantId: p.variantId,
+                        price: p.price,
+                        currencyCode: p.currencyCode,
+                        quantity: 1,
+                      });
+                      toast.success("Added to cart", {
+                        description: p.title,
+                        position: "top-center",
+                      });
+                    }}
+                    disabled={!p.availableForSale}
+                    className="bg-orange text-white hover:opacity-90 shadow-cta font-display uppercase tracking-wider"
                   >
-                    {image || imageOverride ? (
-                      <img
-                        src={imageOverride ?? image!.url}
-                        alt={image?.altText || p.node.title}
-                        loading="lazy"
-                        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 drop-shadow-[0_10px_30px_hsl(var(--primary)/0.25)]"
-                      />
-                    ) : (
-                      <div className="text-muted-foreground">No image</div>
-                    )}
-                  </Link>
-                  <div className="p-5 bg-[#0D1B2A]">
-                    <Link to={`/product/${p.node.handle}`}>
-                      <h3 className="font-display text-xl uppercase tracking-wide mb-1 text-white hover:text-orange transition-colors">
-                        {p.node.title}
-                      </h3>
-                    </Link>
-                    <p className="text-xs uppercase tracking-widest text-white/40 mb-4">
-                      Apparel
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <span className="font-display text-2xl text-orange">
-                        ${parseFloat(p.node.priceRange.minVariantPrice.amount).toFixed(2)}
-                      </span>
-                      <Button
-                        onClick={handleAdd}
-                        disabled={isLoading || !variant?.availableForSale}
-                        className="bg-orange text-white hover:opacity-90 shadow-cta font-display uppercase tracking-wider"
-                      >
-                        {isLoading ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <>
-                            <Plus className="h-4 w-4 mr-1" /> Add
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
+                    <Plus className="h-4 w-4 mr-1" /> Add to Cart
+                  </Button>
                 </div>
-              );
-            })}
-          </div>
-        )}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

@@ -57,7 +57,7 @@ export const BundleCTA = () => {
           size="lg"
           className="bg-orange text-white hover:opacity-90 shadow-cta font-display uppercase tracking-wider text-base"
         >
-          <a href="#shop">Build Your Stack</a>
+          <a href="#shop" onClick={(e) => { e.preventDefault(); const el = document.getElementById('shop'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }}>Build Your Stack</a>
         </Button>
         <p className="text-xs text-navy/40 mt-3 uppercase tracking-widest">
           60-day money back guarantee

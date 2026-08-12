@@ -14,7 +14,6 @@ export interface CartItem {
 
 interface CartStore {
   items: CartItem[];
-  isLoading: boolean;
   addItem: (item: Omit<CartItem, "quantity"> & { quantity?: number }) => void;
   updateQuantity: (variantId: string, quantity: number) => void;
   removeItem: (variantId: string) => void;
@@ -25,7 +24,6 @@ export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
-      isLoading: false,
 
       addItem: (item) => {
         const { items } = get();

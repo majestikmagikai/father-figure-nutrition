@@ -60,9 +60,9 @@ export const Hero = () => {
           </p>
 
           <div className="flex flex-wrap gap-3">
-            <Button asChild size="lg" className="bg-gradient-primary hover:opacity-95 shadow-cta font-display uppercase tracking-wider text-base">
+            <Button asChild size="lg" className="bg-gradient-primary hover:opacity-95 shadow-cta font-display uppercase tracking-wider text-base group">
               <a href="#shop">
-                Start Your Mission <ArrowRight className="ml-2 h-4 w-4" />
+                Start Your Mission <ArrowRight className="ml-2 h-4 w-4 transition-all duration-200 group-hover:translate-x-2 group-hover:[filter:blur(0.6px)_drop-shadow(4px_0_3px_currentColor)]" />
               </a>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-border font-display uppercase tracking-wider text-base">
@@ -76,7 +76,7 @@ export const Hero = () => {
               { v: "100%", l: "USA Made" },
               { v: "60d", l: "Guarantee" },
             ].map((s) => (
-              <div key={s.l} role="listitem" className="border-l-2 border-accent pl-3">
+              <div key={s.l} role="listitem" className="border-l-2 border-navy pl-3">
                 <div className="font-display text-3xl text-gold drop-shadow-[0_2px_8px_hsl(var(--accent)/0.4)]" aria-label={`${s.v} ${s.l}`}>{s.v}</div>
                 <div className="text-xs uppercase tracking-widest text-muted-foreground" aria-hidden="true">{s.l}</div>
               </div>
