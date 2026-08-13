@@ -98,7 +98,7 @@ export const BottleSpin360 = ({ labelUrl }: BottleSpin360Props) => {
         </div>
       )}
 
-      <Canvas camera={{ position: [0, 0.1, 18], fov: 35 }} shadows onCreated={() => setLoaded(true)}>
+      <Canvas camera={{ position: [0, 0.1, 18], fov: 35 }} shadows onCreated={() => setLoaded(true)} style={{ width: "100%", height: "100%" }} resize={{ scroll: false, debounce: { scroll: 50, resize: 0 } }}>
         <ambientLight intensity={0.25} />
         <directionalLight position={[4, 6, 4]} intensity={0.05} />
         <directionalLight position={[-4, 2, -2]} intensity={0.1} />

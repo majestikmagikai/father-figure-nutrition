@@ -16,7 +16,7 @@ const smoothScrollTo = (id: string) => {
   const start = window.scrollY;
   const target = el.getBoundingClientRect().top + start - 80;
   const distance = target - start;
-  const duration = 3500;
+  const duration = 2000;
   let startTime: number | null = null;
 
   const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
@@ -61,8 +61,7 @@ export const SiteHeader = () => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-0 flex items-center justify-between gap-8 mb-4 mt-2">
         <Link to="/" className="flex items-center gap-2 shrink-0">
-          <img src={logo} alt="Father Figure Men's Supplements" className="h-28 object-contain" />
-          
+          <img src={logo} alt="Father Figure Men's Supplements" className="h-16 md:h-20 object-contain" />
         </Link>
 
         <nav className="hidden md:flex items-center gap-10 text-sm font-medium">
@@ -73,7 +72,7 @@ export const SiteHeader = () => {
                 key={n.href}
                 href={n.href}
                 onClick={(e) => { e.preventDefault(); smoothScrollTo(hash); }}
-                className="relative text-navy hover:text-orange transition-colors uppercase tracking-wider text-[1.15rem] font-display group"
+                className="relative text-navy hover:text-orange transition-colors uppercase tracking-wider text-[1.05rem] font-display group"
               >
                 {n.label}
                 <span className="absolute -bottom-1 left-0 h-[2px] w-0 bg-orange group-hover:w-full transition-all duration-300 ease-out rounded-full" />
@@ -83,7 +82,7 @@ export const SiteHeader = () => {
                 key={n.href}
                 to={n.href}
                 onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                className="relative text-navy hover:text-orange transition-colors uppercase tracking-wider text-[1.15rem] font-display group"
+                className="relative text-navy hover:text-orange transition-colors uppercase tracking-wider text-[1.05rem] font-display group"
               >
                 {n.label}
                 <span className="absolute -bottom-1 left-0 h-[2px] w-0 bg-orange group-hover:w-full transition-all duration-300 ease-out rounded-full" />
