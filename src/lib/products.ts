@@ -1,7 +1,7 @@
 import bottleCreatine from "@/assets/products/creatine-bottle.webp";
 import labelCreatine from "@/assets/products/creatine-label-clean.webp";
 import bottleMulti from "@/assets/products/multi-bottle.webp";
-import labelMulti from "@/assets/products/multi-label-clean.webp";
+import labelMulti from "@/assets/products/multi-label-clean1.webp";
 import bottleCleanse from "@/assets/products/cleanse-bottle.webp";
 import labelCleanse from "@/assets/products/cleanse-label-clean.webp";
 
