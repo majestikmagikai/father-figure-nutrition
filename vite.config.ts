@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => ({
     },
     base: "/father-figure-nutrition/",
   },
-  assetsInclude: ["**/*.glb"],
+  assetsInclude: ["**/*.glb", "**/*.hdr"],
   base: "/father-figure-nutrition/",
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

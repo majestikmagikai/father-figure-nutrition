@@ -3,6 +3,7 @@ import { Canvas } from "@react-three/fiber";
 import { useGLTF, OrbitControls, Environment, ContactShadows, useTexture } from "@react-three/drei";
 import * as THREE from "three";
 import bottleGlb from "@/assets/products/VitaminBottle.glb";
+import studioHdr from "@/assets/studio_small_08_2k.hdr";
 
 interface BottleSpin360Props {
   labelUrl?: string;
@@ -94,7 +95,7 @@ export const BottleSpin360 = ({ labelUrl }: BottleSpin360Props) => {
         <Suspense fallback={null}>
           <Bottle labelUrl={labelUrl} />
           <ContactShadows position={[0, -2, 0]} opacity={0.5} scale={5} blur={2} />
-          <Environment preset="sunset" environmentRotation={[1, 0, 1]} />
+          <Environment files={studioHdr} background />
         </Suspense>
         <OrbitControls
           enableZoom={true}
