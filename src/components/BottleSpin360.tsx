@@ -1,4 +1,4 @@
-import { Suspense, useLayoutEffect } from "react";
+import { Suspense, useLayoutEffect, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { useGLTF, OrbitControls, Environment, ContactShadows, useTexture } from "@react-three/drei";
 import * as THREE from "three";
@@ -80,6 +80,8 @@ function Bottle({ labelUrl }: { labelUrl?: string }) {
 }
 
 export const BottleSpin360 = ({ labelUrl }: BottleSpin360Props) => {
+  const [loaded, setLoaded] = useState(false);
+
   return (
     <div
       className="relative w-full aspect-square cursor-grab active:cursor-grabbing"
@@ -87,9 +89,17 @@ export const BottleSpin360 = ({ labelUrl }: BottleSpin360Props) => {
       aria-label="360° view of supplement bottle. Drag to rotate."
     >
       <div className="absolute inset-10 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+      
+      {/* Loading 3D viewer */}
+      {!loaded && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-sm rounded-2xl">
+          <div className="w-10 h-10 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">Loading 3D 360 Viewer...</p>
+        </div>
+      )}
 
-      <Canvas camera={{ position: [0, 0.6, 18], fov: 35 }} shadows>
-        <ambientLight intensity={0.05} />
+      <Canvas camera={{ position: [0, 0.1, 18], fov: 35 }} shadows onCreated={() => setLoaded(true)}>
+        <ambientLight intensity={0.02} />
         <directionalLight position={[4, 6, 4]} intensity={0.05} />
         <directionalLight position={[-4, 2, -2]} intensity={0.1} />
         <Suspense fallback={null}>
