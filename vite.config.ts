@@ -11,8 +11,10 @@ export default defineConfig(({ mode }) => ({
     hmr: {
       overlay: false,
     },
+    base: "/father-figure-nutrition/",
   },
   assetsInclude: ["**/*.glb"],
+  base: "/father-figure-nutrition/",
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
     alias: {

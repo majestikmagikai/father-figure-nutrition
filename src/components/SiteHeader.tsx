@@ -68,16 +68,26 @@ export const SiteHeader = () => {
         <nav className="hidden md:flex items-center gap-10 text-sm font-medium">
           {nav.map((n) => {
             const hash = n.href.includes("#") ? n.href.split("#")[1] : null;
-            return (
+            return hash ? (
               <a
                 key={n.href}
                 href={n.href}
-                onClick={hash ? (e) => { e.preventDefault(); smoothScrollTo(hash); } : undefined}
+                onClick={(e) => { e.preventDefault(); smoothScrollTo(hash); }}
                 className="relative text-navy hover:text-orange transition-colors uppercase tracking-wider text-[1.15rem] font-display group"
               >
                 {n.label}
                 <span className="absolute -bottom-1 left-0 h-[2px] w-0 bg-orange group-hover:w-full transition-all duration-300 ease-out rounded-full" />
               </a>
+            ) : (
+              <Link
+                key={n.href}
+                to={n.href}
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                className="relative text-navy hover:text-orange transition-colors uppercase tracking-wider text-[1.15rem] font-display group"
+              >
+                {n.label}
+                <span className="absolute -bottom-1 left-0 h-[2px] w-0 bg-orange group-hover:w-full transition-all duration-300 ease-out rounded-full" />
+              </Link>
             );
           })}
         </nav>
