@@ -40,8 +40,8 @@ function Bottle({ labelUrl }: { labelUrl?: string }) {
           if (labelTexture) {
             mesh.material = new THREE.MeshStandardMaterial({
               map: labelTexture,
-              roughness: 0.2,
-              metalness: 0.05,
+              roughness: 0.4,
+              metalness: 0.0,
               side: THREE.FrontSide,
               polygonOffset: true,
               polygonOffsetFactor: -1,
@@ -88,17 +88,17 @@ export const BottleSpin360 = ({ labelUrl }: BottleSpin360Props) => {
       <div className="absolute inset-10 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
 
       <Canvas camera={{ position: [0, 0.6, 18], fov: 35 }} shadows>
-        <ambientLight intensity={0.75} />
-        <directionalLight position={[4, 6, 4]} intensity={0.15} />
+        <ambientLight intensity={0.05} />
+        <directionalLight position={[4, 6, 4]} intensity={0.05} />
         <directionalLight position={[-4, 2, -2]} intensity={0.1} />
         <Suspense fallback={null}>
           <Bottle labelUrl={labelUrl} />
-          <ContactShadows position={[0, -2, 0]} opacity={0.2} scale={5} blur={2} />
-          <Environment preset="lobby" environmentRotation={[0, 2, 0]} />
+          <ContactShadows position={[0, -2, 0]} opacity={0.5} scale={5} blur={2} />
+          <Environment preset="sunset" environmentRotation={[1, 0, 1]} />
         </Suspense>
         <OrbitControls
           enableZoom={true}
-          enablePan={false}
+          enablePan={true}
           minDistance={4}
           maxDistance={12}
           minPolarAngle={Math.PI / 2}
