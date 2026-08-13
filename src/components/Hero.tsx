@@ -66,7 +66,7 @@ export const Hero = () => {
               </a>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-border font-display uppercase tracking-wider text-base">
-              <a href="#about">My Story</a>
+              <a href="#mission">My Story</a>
             </Button>
           </div>
 
