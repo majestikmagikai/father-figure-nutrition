@@ -22,7 +22,7 @@ const ProductDetail = () => {
   }, [handle]);
 
   useEffect(() => {
-    if (product) document.title = `${product.title} — Father Figure Nutrition`;
+    if (product) document.title = `${product.title} - Father Figure Nutrition`;
   }, [product]);
 
   useJsonLd(product ? {

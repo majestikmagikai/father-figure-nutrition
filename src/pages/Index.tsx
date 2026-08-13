@@ -12,7 +12,7 @@ import { useEffect } from "react";
 
 const Index = () => {
   useEffect(() => {
-    document.title = "Father Figure Nutrition — Performance Supplements for Men Who Lead";
+    document.title = "Father Figure Nutrition - Performance Supplements for Men Who Lead";
     const desc = "From dad bod to discipline. Simple, effective men's nutrition — creatine gummies, multivitamins and the Starter Stack — built for hardworking men, dads, and pros.";
     let meta = document.querySelector('meta[name="description"]');
     if (!meta) {
