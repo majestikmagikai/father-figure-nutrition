@@ -108,16 +108,28 @@ export const SiteHeader = () => {
                 </SheetTitle>
               </SheetHeader>
               <div className="mt-8 flex flex-col gap-4">
-                {nav.map((n) => (
-                  <a
-                    key={n.href}
-                    href={n.href}
-                    onClick={() => setOpen(false)}
-                    className="text-xl font-display uppercase tracking-wide hover:text-primary"
-                  >
-                    {n.label}
-                  </a>
-                ))}
+                {nav.map((n) => {
+                  const hash = n.href.includes("#") ? n.href.split("#")[1] : null;
+                  return hash ? (
+                    <a
+                      key={n.href}
+                      href={n.href}
+                      onClick={(e) => { e.preventDefault(); setOpen(false); smoothScrollTo(hash); }}
+                      className="text-xl font-display uppercase tracking-wide hover:text-primary"
+                    >
+                      {n.label}
+                    </a>
+                  ) : (
+                    <Link
+                      key={n.href}
+                      to={n.href}
+                      onClick={() => { setOpen(false); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                      className="text-xl font-display uppercase tracking-wide hover:text-primary"
+                    >
+                      {n.label}
+                    </Link>
+                  );
+                })}
               </div>
             </SheetContent>
           </Sheet>
