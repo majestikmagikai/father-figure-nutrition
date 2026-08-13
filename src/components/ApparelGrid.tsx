@@ -53,9 +53,9 @@ export const ApparelGrid = () => {
   const addItem = useCartStore((s) => s.addItem);
 
   return (
-    <section id="apparel" className="relative py-24 px-6 bg-navy overflow-hidden">
+    <section id="apparel" className="relative py-24 px-6 bg-gradient-to-b from-sky to-navy overflow-hidden">
       {/* Background orbs */}
-      <div className="absolute -top-20 -right-20 w-96 h-96 bg-sky/20 rounded-full pointer-events-none z-0 animate-orb-1" />
+      <div className="absolute -top-20 -right-20 w-96 h-96 bg-navy/20 rounded-full pointer-events-none z-0 animate-orb-1" />
       <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-orange/20 rounded-full pointer-events-none z-0 animate-orb-2" />
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
