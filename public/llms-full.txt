@@ -17,7 +17,7 @@ Father Figure Nutrition is a veteran-owned men's supplement brand founded to hel
 ## Product Catalog
 
 ### 1. Creatine Hardbody
-- **URL:** https://fatherfigurenutrition.com/product/creatine-hardbody
+- **URL:** https://figurefuel.fit/product/creatine-hardbody
 - **Price:** $24.99 USD
 - **Format:** Gummies
 - **Serving Size:** 5g creatine monohydrate per serving
@@ -29,7 +29,7 @@ Father Figure Nutrition is a veteran-owned men's supplement brand founded to hel
 - **Interactive Viewer:** 360° drag-to-spin CSS 3D cylinder viewer with pinch-to-zoom
 
 ### 2. Multi Vitamin Plus
-- **URL:** https://fatherfigurenutrition.com/product/multi-vitamin-plus
+- **URL:** https://figurefuel.fit/product/multi-vitamin-plus
 - **Price:** $19.99 USD
 - **Format:** Gummies
 - **Vitamins & Minerals:** 23 essential vitamins and minerals
@@ -40,7 +40,7 @@ Father Figure Nutrition is a veteran-owned men's supplement brand founded to hel
 - **Interactive Viewer:** 360° drag-to-spin CSS 3D cylinder viewer with pinch-to-zoom
 
 ### 3. 15 Day Fresh Start Cleanse
-- **URL:** https://fatherfigurenutrition.com/product/15-day-fresh-start-cleanse
+- **URL:** https://figurefuel.fit/product/15-day-fresh-start-cleanse
 - **Price:** $29.99 USD
 - **Format:** Capsules
 - **Duration:** 15-day program
@@ -91,17 +91,17 @@ Father Figure Nutrition is a veteran-owned men's supplement brand founded to hel
 ---
 
 ## Core Pages
-- [Homepage](https://fatherfigurenutrition.com/): Hero, product grid, bundle CTA, mission, apparel, veteran story, FAQ
-- [Shop](https://fatherfigurenutrition.com/#shop): All supplement products
-- [Apparel](https://fatherfigurenutrition.com/#apparel): Father Figure branded apparel
-- [Bundle](https://fatherfigurenutrition.com/#bundle): Starter Stack bundle offers
-- [Mission](https://fatherfigurenutrition.com/#mission): Veteran-owned brand story
-- [FAQ](https://fatherfigurenutrition.com/#faq): Product and shipping questions
+- [Homepage](https://figurefuel.fit/): Hero, product grid, bundle CTA, mission, apparel, veteran story, FAQ
+- [Shop](https://figurefuel.fit/#shop): All supplement products
+- [Apparel](https://figurefuel.fit/#apparel): Father Figure branded apparel
+- [Bundle](https://figurefuel.fit/#bundle): Starter Stack bundle offers
+- [Mission](https://figurefuel.fit/#mission): Veteran-owned brand story
+- [FAQ](https://figurefuel.fit/#faq): Product and shipping questions
 
 ## Documentation & Legal
-- [Sitemap](https://fatherfigurenutrition.com/sitemap.xml): Full URL index
-- [Robots](https://fatherfigurenutrition.com/robots.txt): Crawler policy
-- [llms.txt](https://fatherfigurenutrition.com/llms.txt): AI agent summary
+- [Sitemap](https://figurefuel.fit/sitemap.xml): Full URL index
+- [Robots](https://figurefuel.fit/robots.txt): Crawler policy
+- [llms.txt](https://figurefuel.fit/llms.txt): AI agent summary
 
 ## Site Design & Development
 - **Designed & Maintained by:** [Majestik Magik](https://majestikmagik.dev)

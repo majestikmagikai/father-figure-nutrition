@@ -36,4 +36,4 @@ Disallow: /dashboard
 Disallow: /api/admin
 Disallow: /checkout
 
-Sitemap: https://fatherfigurenutrition.com/sitemap.xml
+Sitemap: https://figurefuel.fit/sitemap.xml
