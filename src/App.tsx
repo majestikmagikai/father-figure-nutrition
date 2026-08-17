@@ -30,7 +30,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster position="top-center" />
-      <BrowserRouter basename="/father-figure-nutrition/">
+      <BrowserRouter basename="/">
         <AppRoutes />
       </BrowserRouter>
     </TooltipProvider>
