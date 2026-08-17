@@ -38,7 +38,7 @@ const ProductDetail = () => {
     },
     "offers": {
       "@type": "Offer",
-      "url": `https://fatherfigurenutrition.com/product/${product.handle}`,
+      "url": `https://figurefuel.fit/product/${product.handle}`,
       "priceCurrency": product.currencyCode,
       "price": product.price,
       "availability": product.availableForSale

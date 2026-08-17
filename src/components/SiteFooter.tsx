@@ -32,6 +32,7 @@ export const SiteFooter = () => {
               { href: "/#mission", label: "Our Mission" },
               { href: "/#apparel", label: "Apparel" },
               { href: "/#faq", label: "FAQ" },
+              { href: "/sitemap.xml", label: "Sitemap" },
             ].map((l) => (
               <li key={l.href}>
                 <a href={l.href} className="hover:text-orange transition-colors inline-flex items-center gap-1 group">
@@ -64,7 +65,7 @@ export const SiteFooter = () => {
         </p>
         <p>© {new Date().getFullYear()} Father Figure Nutrition. Veteran owned. Family built.</p>
         <p>
-          Site Designed & Maintained by{" "}
+          Site Designer & Maintainer by{" "}
           <a href="https://majestikmagik.dev" target="_blank" rel="noopener noreferrer" className="hover:text-orange transition-colors underline">
             Majestik Magik
           </a>
