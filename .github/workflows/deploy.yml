@@ -26,5 +26,5 @@ jobs:
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          accountId: "424575ae668c4ef0e834e231087bee95"
           command: pages deploy dist --project-name=father-figure-nutrition
