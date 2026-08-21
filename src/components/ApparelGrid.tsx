@@ -20,30 +20,30 @@ const APPAREL: ApparelProduct[] = [
   {
     id: "apparel-dad-cap",
     handle: "father-figure-dad-cap",
-    title: "Father Figure Dad Cap",
-    price: "34.99",
+    title: "Beanie",
+    price: "0.00",
     currencyCode: "USD",
-    availableForSale: true,
-    image: { url: dadCapImg, altText: "Father Figure Dad Cap" },
+    availableForSale: false,
+    image: { url: dadCapImg, altText: "Beanie" },
     variantId: "var-dad-cap-default",
   },
   {
     id: "apparel-letterman-jacket",
     handle: "father-figure-letterman-jacket",
-    title: "Father Figure Letterman Jacket",
-    price: "289.99",
+    title: "Exercise Equipment",
+    price: "0.00",
     currencyCode: "USD",
-    availableForSale: true,
-    image: { url: dadCapImg, altText: "Father Figure Letterman Jacket" },
+    availableForSale: false,
+    image: { url: dadCapImg, altText: "Exercise Equipment" },
     variantId: "var-letterman-jacket-default",
   },
   {
     id: "apparel-tshirt",
     handle: "father-figure-tshirt",
     title: "Father Figure T-Shirt",
-    price: "49.99",
+    price: "0.00",
     currencyCode: "USD",
-    availableForSale: true,
+    availableForSale: false,
     image: { url: dadCapImg, altText: "Father Figure T-Shirt" },
     variantId: "var-tshirt-default",
   },
@@ -95,12 +95,14 @@ export const ApparelGrid = () => {
                   </h3>
                 </Link>
                 <p className="text-xs uppercase tracking-widest text-white/40 mb-4">Apparel</p>
-                <div className="flex items-center justify-between">
-                  <span className="font-display text-2xl text-orange">
-                    ${parseFloat(p.price).toFixed(2)}
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-display text-xl text-orange">
+                    {p.availableForSale ? `$${parseFloat(p.price).toFixed(2)}` : "Coming Soon"}
                   </span>
                   <Button
                     onClick={() => {
+                      if (!p.availableForSale) return;
+
                       addItem({
                         productId: p.id,
                         handle: p.handle,
@@ -119,7 +121,7 @@ export const ApparelGrid = () => {
                     disabled={!p.availableForSale}
                     className="bg-orange text-white hover:opacity-90 shadow-cta font-display uppercase tracking-wider"
                   >
-                    <Plus className="h-4 w-4 mr-1" /> Add to Cart
+                    {p.availableForSale ? <><Plus className="h-4 w-4 mr-1" /> Add to Cart</> : "Coming Soon"}
                   </Button>
                 </div>
               </div>

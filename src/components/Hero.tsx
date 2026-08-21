@@ -42,22 +42,22 @@ export const Hero = () => {
             <div className="absolute bottom-0 px-6 translate-y-1/2 left-0">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent border-2 border-accent/80 text-primary text-xs uppercase tracking-widest font-bold shadow-cta whitespace-nowrap">
                 <Shield className="h-4 w-4" />
-                Veteran Owned · 80% Organic
+                Father Figure Nutrition
               </div>
             </div>
           </div>
 
           <h1 className="font-display uppercase tracking-tight text-[2rem] md:text-[4.5rem] leading-none text-foreground mb-2 max-w-xl drop-shadow-[4px_4px_0px_rgba(255,255,255,1)]">
-            From<span className="italic">"Dad Bod"</span>, to {" "}
-            <span className="text-primary">Discip</span><span className="text-orange">line.</span>
+            <span className="italic">Fuel the Man</span> <br />
+            <span className="text-primary">You’re </span>{" "}<span className="text-orange">Becoming</span>
           </h1>
-          <p className="text-sm md:text-base text-foreground/80 mb-2 max-w-xl">
-            Simple, effective men's nutrition that supports everyday strength, energy, consistency,
-            and confidence without unnecessary fillers or complicated routines.
-          </p>
-          <p className="font-sans uppercase tracking-widest text-sm md:text-md text-primary mb-8 font-bold">
+          <p className="font-sans uppercase tracking-widest text-sm md:text-md text-primary mb-2 font-bold">
             Performance supplements for men who lead.
           </p>
+          <p className="text-sm md:text-base text-foreground/80 mb-6 max-w-xl">
+            Daily nutrition designed for men balancing work, family, fitness, and everything in between. Perform better, look better, feel better, and keep up with life.
+          </p>
+          
 
           <div className="flex flex-wrap gap-3">
             <Button asChild size="lg" className="bg-gradient-primary hover:opacity-95 shadow-cta font-display uppercase tracking-wider text-base group">
@@ -66,14 +66,13 @@ export const Hero = () => {
               </a>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-border font-display uppercase tracking-wider text-base">
-              <a href="#mission">My Story</a>
+              <a href="#bundle">SHOP NOW</a>
             </Button>
           </div>
 
           <div className="grid grid-cols-3 gap-4 mt-12 max-w-md" role="list" aria-label="Brand highlights">
             {[
               { v: "80%", l: "Organic" },
-              { v: "100%", l: "USA Made" },
               { v: "60d", l: "Guarantee" },
             ].map((s) => (
               <div key={s.l} role="listitem" className="border-l-2 border-navy pl-3">
@@ -82,24 +81,7 @@ export const Hero = () => {
               </div>
             ))}
           </div>
-        </div>
-
-        <div className="hidden md:flex justify-end items-center pt-32">
-
-            <div className="relative bg-card/90 backdrop-blur-sm border-2 border-accent rounded-2xl p-6 shadow-card max-w-xs">
-              <div className="absolute -top-3 -right-3 bg-gradient-gold text-navy text-[16px] font-display uppercase tracking-widest px-2 py-1 rounded-full shadow-cta">
-                Veteran Built
-              </div>
-              <Leaf className="h-7 w-7 text-gold mb-3" />
-              <h3 className="font-display uppercase text-[1.75rem] leading-tight mb-2 text-navy">
-                Built by a Veteran. <br />Trusted by Fathers.
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Every batch is sourced 80% organic and third-party tested. Your family is
-                non-negotiable.
-              </p>
-            </div>
-        </div>
+        </div>        
       </div>
     </section>
   );

@@ -12,6 +12,10 @@ import { useCartStore } from "@/stores/cartStore";
 import { useJsonLd } from "@/hooks/useJsonLd";
 import { toast } from "sonner";
 
+const renderHtmlDescription = (html: string) => ({
+  __html: html,
+});
+
 const ProductDetail = () => {
   const { handle } = useParams<{ handle: string }>();
   const product = handle ? getProductByHandle(handle) : undefined;
@@ -169,7 +173,11 @@ const ProductDetail = () => {
                 ${parseFloat(product.price).toFixed(2)}
               </p>
               <div className="w-12 h-1 bg-orange rounded-full mb-4" />
-              <p className="text-navy/60 mb-6 text-base leading-relaxed">{product.description}</p>
+              <p className="text-navy/60 mb-2 text-base leading-relaxed">{product.description}</p>
+              <div
+                className="mb-6 text-navy/70 text-base leading-relaxed [&_b]:font-semibold [&_b]:text-navy [&_i]:italic [&_ul]:list-disc [&_ul]:ml-5 [&_ul]:mt-3 [&_ul]:mb-3 [&_li]:mb-1"
+                dangerouslySetInnerHTML={renderHtmlDescription(product.fullDescription ?? product.description)}
+              />
               <VeteranBadge variant="full" className="mb-6" />
               <div className="flex flex-wrap gap-3 items-center">
                 <Button
