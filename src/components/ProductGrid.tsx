@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fetchStorefrontProducts, LocalProduct, PRODUCTS } from "@/lib/products";
+import { fetchStorefrontProducts, LocalProduct } from "@/lib/products";
 import { useCartStore } from "@/stores/cartStore";
 import { VeteranBadge } from "@/components/VeteranBadge";
 import { toast } from "sonner";
 
 export const ProductGrid = () => {
-  const [products, setProducts] = useState<LocalProduct[]>(PRODUCTS);
+  const [products, setProducts] = useState<LocalProduct[]>([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -21,8 +21,23 @@ export const ProductGrid = () => {
 
     void loadProducts();
 
+    const handleFocus = () => {
+      void loadProducts();
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        void loadProducts();
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibility);
+
     return () => {
       isMounted = false;
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, []);
 

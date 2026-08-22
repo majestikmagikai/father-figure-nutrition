@@ -7,7 +7,7 @@ import { IngredientsPanel } from "@/components/IngredientsPanel";
 import { VeteranBadge } from "@/components/VeteranBadge";
 import { BottleSpin360 } from "@/components/BottleSpin360";
 import { Button } from "@/components/ui/button";
-import { fetchStorefrontProductByHandle, getProductByHandle, type LocalProduct } from "@/lib/products";
+import { fetchStorefrontProductByHandle, type LocalProduct } from "@/lib/products";
 import { useCartStore } from "@/stores/cartStore";
 import { useJsonLd } from "@/hooks/useJsonLd";
 import { toast } from "sonner";
@@ -18,7 +18,7 @@ const renderHtmlDescription = (html: string) => ({
 
 const ProductDetail = () => {
   const { handle } = useParams<{ handle: string }>();
-  const [product, setProduct] = useState<LocalProduct | undefined>(handle ? getProductByHandle(handle) : undefined);
+  const [product, setProduct] = useState<LocalProduct | undefined>(undefined);
   const [isLoadingProduct, setIsLoadingProduct] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
 
@@ -29,9 +29,9 @@ const ProductDetail = () => {
     }
 
     let isMounted = true;
-    setIsLoadingProduct(true);
 
     const loadProduct = async () => {
+      setIsLoadingProduct(true);
       const nextProduct = await fetchStorefrontProductByHandle(handle);
       if (!isMounted) return;
       setProduct(nextProduct);
@@ -40,8 +40,23 @@ const ProductDetail = () => {
 
     void loadProduct();
 
+    const handleFocus = () => {
+      void loadProduct();
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        void loadProduct();
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibility);
+
     return () => {
       isMounted = false;
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, [handle]);
 

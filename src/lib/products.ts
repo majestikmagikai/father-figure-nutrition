@@ -220,13 +220,13 @@ export const fetchStorefrontProducts = async (): Promise<LocalProduct[]> => {
     .order("sort_order", { ascending: true })
     .order("updated_at", { ascending: false });
 
-  if (error) return PRODUCTS;
+  if (error) return [];
 
   const mapped = (data ?? [])
     .map(mapInventoryRowToProduct)
     .filter((product): product is LocalProduct => Boolean(product));
 
-  return mapped.length > 0 ? mapped : PRODUCTS;
+  return mapped;
 };
 
 export const fetchStorefrontProductByHandle = async (handle: string): Promise<LocalProduct | undefined> => {
@@ -238,7 +238,7 @@ export const fetchStorefrontProductByHandle = async (handle: string): Promise<Lo
     .eq("handle", handle)
     .maybeSingle();
 
-  if (error || !data) return getProductByHandle(handle);
+  if (error || !data) return undefined;
 
-  return mapInventoryRowToProduct(data) ?? getProductByHandle(handle);
+  return mapInventoryRowToProduct(data) ?? undefined;
 };
