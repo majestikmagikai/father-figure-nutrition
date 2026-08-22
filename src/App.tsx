@@ -39,10 +39,30 @@ const OAuthHashBridge = () => {
   return null;
 };
 
+const StripeReturnBridge = () => {
+  const { pathname, search, hash } = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    const isStripeReturn =
+      params.has("payment_intent") ||
+      params.has("payment_intent_client_secret") ||
+      params.has("redirect_status");
+
+    if (!isStripeReturn || pathname === "/checkout/success") return;
+
+    navigate({ pathname: "/checkout/success", search, hash }, { replace: true });
+  }, [hash, navigate, pathname, search]);
+
+  return null;
+};
+
 const AppRoutes = () => (
   <>
     <ScrollToTop />
     <OAuthHashBridge />
+    <StripeReturnBridge />
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/product/:handle" element={<ProductDetail />} /> 
