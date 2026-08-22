@@ -46,7 +46,35 @@ Create a `.env.local` file in the root:
 ```env
 VITE_SUPABASE_URL=<your_supabase_url>
 VITE_SUPABASE_ANON_KEY=<your_supabase_anon_key>
+VITE_STRIPE_PUBLISHABLE_KEY=pk_test_xxx
 ```
+
+For Stripe checkout via Supabase Edge Functions, configure server-side secrets in Supabase:
+
+```bash
+supabase secrets set STRIPE_SECRET_KEY=sk_test_xxx
+supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_xxx
+supabase secrets set ADMIN_EMAILS="admin1@example.com,admin2@example.com"
+```
+
+Deploy payment functions:
+
+```bash
+supabase functions deploy create-payment-intent
+supabase functions deploy create-checkout-session
+supabase functions deploy stripe-webhook --no-verify-jwt
+supabase functions deploy refund-order
+```
+
+In Stripe Dashboard, point your webhook endpoint to:
+
+`https://<your-project-ref>.supabase.co/functions/v1/stripe-webhook`
+
+Listen for at least:
+
+- `checkout.session.completed`
+- `checkout.session.async_payment_succeeded`
+- `payment_intent.succeeded`
 
 > Shopify Storefront credentials are configured in `src/lib/shopify.ts`.
 

@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS public.uniq_orders_client_order_token;

@@ -3,10 +3,22 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
   Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger,
 } from "@/components/ui/sheet";
-import { ShoppingCart, Minus, Plus, Trash2, Menu } from "lucide-react";
+import { ShoppingCart, Minus, Plus, Trash2, Menu, ChevronDown } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
+import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
+import { isAdminUser } from "@/lib/auth";
+import { upsertOwnCustomerProfile } from "@/lib/adminData";
+import { toast } from "sonner";
+import type { User } from "@supabase/supabase-js";
 import logo from "@/assets/father-figure-logo-official-640.webp";
 import favicon from "@/assets/favicon.webp";
 
@@ -35,12 +47,52 @@ const smoothScrollTo = (id: string) => {
 export const SiteHeader = () => {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
     onScroll();
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase) return;
+
+    let isMounted = true;
+
+    const syncSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!isMounted) return;
+      const nextUser = data.session?.user ?? null;
+      setUser(nextUser);
+      if (nextUser) {
+        try {
+          await upsertOwnCustomerProfile(nextUser);
+        } catch {
+          // Keep header behavior resilient even if profile sync fails.
+        }
+      }
+    };
+
+    syncSession();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) return;
+      const nextUser = session?.user ?? null;
+      setUser(nextUser);
+      if (nextUser) {
+        void upsertOwnCustomerProfile(nextUser).catch(() => {
+          // Keep header behavior resilient even if profile sync fails.
+        });
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   const nav = [
@@ -52,6 +104,32 @@ export const SiteHeader = () => {
     { href: "/#partner", label: "Partners" },
     { href: "/#faq", label: "FAQ" },
   ];
+
+  const accountRouteItems = user
+    ? [
+        ...(isAdminUser(user) ? [{ href: "/admin", label: "Admin" }] : []),
+        { href: "/dashboard", label: "Dashboard" },
+      ]
+    : [
+        { href: "/login", label: "Login" },
+        { href: "/signup", label: "Sign Up" },
+      ];
+
+  const handleSignOut = async () => {
+    if (!supabase) return;
+
+    setIsSigningOut(true);
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      toast.error("Could not sign out right now. Please try again.");
+      setIsSigningOut(false);
+      return;
+    }
+
+    toast.success("Signed out successfully.");
+    window.location.assign("/login");
+  };
 
   return (
     <header
@@ -89,6 +167,41 @@ export const SiteHeader = () => {
               </Link>
             );
           })}
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="relative text-navy hover:text-orange transition-colors uppercase tracking-wider text-[1.05rem] font-display group inline-flex items-center gap-1"
+              >
+                Account
+                <ChevronDown className="h-4 w-4" />
+                <span className="absolute -bottom-1 left-0 h-[2px] w-0 bg-orange group-hover:w-full transition-all duration-300 ease-out rounded-full" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              {accountRouteItems.map((item) => (
+                <DropdownMenuItem key={item.href} asChild className="cursor-pointer">
+                  <Link
+                    to={item.href}
+                    onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                    className="uppercase tracking-wide font-display cursor-pointer"
+                  >
+                    {item.label}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+              {user && (
+                <DropdownMenuItem
+                  className="cursor-pointer uppercase tracking-wide font-display text-destructive"
+                  disabled={isSigningOut}
+                  onClick={handleSignOut}
+                >
+                  {isSigningOut ? "Signing Out..." : "Logout"}
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </nav>
 
         <div className="flex items-center gap-2">
@@ -129,6 +242,35 @@ export const SiteHeader = () => {
                     </Link>
                   );
                 })}
+
+                <Collapsible>
+                  <CollapsibleTrigger className="text-xl font-display uppercase tracking-wide hover:text-primary inline-flex items-center justify-between w-full cursor-pointer">
+                    Account
+                    <ChevronDown className="h-5 w-5" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-2 pl-4 flex flex-col gap-3 border-l border-navy/15">
+                    {accountRouteItems.map((item) => (
+                      <Link
+                        key={item.href}
+                        to={item.href}
+                        onClick={() => { setOpen(false); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                        className="text-base font-display uppercase tracking-wide text-navy/80 hover:text-primary cursor-pointer"
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                    {user && (
+                      <button
+                        type="button"
+                        disabled={isSigningOut}
+                        onClick={() => { setOpen(false); void handleSignOut(); }}
+                        className="text-base text-left font-display uppercase tracking-wide text-destructive hover:opacity-80 cursor-pointer disabled:opacity-50"
+                      >
+                        {isSigningOut ? "Signing Out..." : "Logout"}
+                      </button>
+                    )}
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
             </SheetContent>
           </Sheet>
@@ -236,10 +378,11 @@ const CartButton = () => {
                   </span>
                 </div>
                 <Button
+                  asChild
                   className="w-full bg-gradient-primary hover:opacity-95 shadow-cta"
                   size="lg"
                 >
-                  Checkout
+                  <Link to="/checkout" onClick={() => setIsOpen(false)}>Checkout</Link>
                 </Button>
               </div>
             </>

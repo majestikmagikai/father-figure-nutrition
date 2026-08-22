@@ -1,13 +1,33 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PRODUCTS, LocalProduct } from "@/lib/products";
+import { fetchStorefrontProducts, LocalProduct, PRODUCTS } from "@/lib/products";
 import { useCartStore } from "@/stores/cartStore";
 import { VeteranBadge } from "@/components/VeteranBadge";
 import { toast } from "sonner";
 
-export const ProductGrid = () => (
-  <section id="shop" className="relative py-24 px-6 bg-navy overflow-hidden">
+export const ProductGrid = () => {
+  const [products, setProducts] = useState<LocalProduct[]>(PRODUCTS);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadProducts = async () => {
+      const nextProducts = await fetchStorefrontProducts();
+      if (!isMounted) return;
+      setProducts(nextProducts);
+    };
+
+    void loadProducts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  return (
+    <section id="shop" className="relative py-24 px-6 bg-navy overflow-hidden">
     {/* Background orbs */}
     <div className="absolute -top-20 -left-20 w-96 h-96 bg-orange/20 rounded-full pointer-events-none z-0 animate-orb-1" />
     <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-sky/20 rounded-full pointer-events-none z-0 animate-orb-2" />
@@ -26,11 +46,12 @@ export const ProductGrid = () => (
         </p>
       </div>
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {PRODUCTS.map((p) => <ProductCard key={p.id} product={p} />)}
+        {products.map((p) => <ProductCard key={p.id} product={p} />)}
       </div>
     </div>
   </section>
-);
+  );
+};
 
 const ProductCard = ({ product }: { product: LocalProduct }) => {
   const addItem = useCartStore((s) => s.addItem);

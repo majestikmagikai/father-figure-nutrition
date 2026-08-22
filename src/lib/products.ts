@@ -4,6 +4,8 @@ import bottleMulti from "@/assets/products/multi-bottle.webp";
 import labelMulti from "@/assets/products/multi-label-clean.webp";
 import bottleCleanse from "@/assets/products/cleanse-bottle.webp";
 import labelCleanse from "@/assets/products/cleanse-label-clean.webp";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database, Json } from "@/integrations/supabase/types";
 
 export interface LocalProduct {
   id: string;
@@ -18,7 +20,10 @@ export interface LocalProduct {
   variantId: string;
   cap: string;
   fill: string | null;
+  model3dUrl?: string | null;
 }
+
+type InventoryProductRow = Database["public"]["Tables"]["inventory_products"]["Row"];
 
 export const PRODUCTS: LocalProduct[] = [
   {
@@ -117,3 +122,87 @@ Recommended Use: 2 capsules, once a week for two weeks a month. As directed for 
 export function getProductByHandle(handle: string): LocalProduct | undefined {
   return PRODUCTS.find((p) => p.handle === handle);
 }
+
+const isImageEntry = (value: unknown): value is { url: string; altText: string } => {
+  if (!value || typeof value !== "object") return false;
+  const entry = value as { url?: unknown; altText?: unknown };
+  return typeof entry.url === "string" && typeof entry.altText === "string";
+};
+
+const parseImages = (images: Json, fallback: Array<{ url: string; altText: string }>) => {
+  if (!Array.isArray(images)) return fallback;
+  const parsed = images.filter(isImageEntry);
+  return parsed.length > 0 ? parsed : fallback;
+};
+
+export const toProductRecordInput = (product: LocalProduct) => ({
+  handle: product.handle,
+  title: product.title,
+  description: product.description,
+  fullDescription: product.fullDescription ?? null,
+  price: Number.parseFloat(product.price),
+  currencyCode: product.currencyCode,
+  availableForSale: product.availableForSale,
+  images: product.images,
+  variantId: product.variantId,
+  capColor: product.cap,
+  fillColor: product.fill,
+  model3dUrl: product.model3dUrl ?? null,
+});
+
+const mapInventoryRowToProduct = (row: InventoryProductRow): LocalProduct | null => {
+  const fallback = getProductByHandle(row.handle);
+  const price = Number(row.price);
+
+  if (!fallback && (!Number.isFinite(price) || !row.title || !row.handle)) {
+    return null;
+  }
+
+  return {
+    id: row.id,
+    handle: row.handle,
+    title: row.title || fallback?.title || "Product",
+    description: row.description || fallback?.description || "",
+    fullDescription: row.full_description || fallback?.fullDescription || "",
+    price: Number.isFinite(price) ? price.toFixed(2) : fallback?.price || "0.00",
+    currencyCode: row.currency_code || fallback?.currencyCode || "USD",
+    availableForSale: row.available_for_sale,
+    images: parseImages(row.images, fallback?.images || []),
+    variantId: row.variant_id || fallback?.variantId || `variant-${row.handle}`,
+    cap: row.cap_color || fallback?.cap || "#f5f5f5",
+    fill: row.fill_color ?? fallback?.fill ?? null,
+    model3dUrl: row.model_3d_url ?? fallback?.model3dUrl ?? null,
+  };
+};
+
+export const fetchStorefrontProducts = async (): Promise<LocalProduct[]> => {
+  if (!supabase) return PRODUCTS;
+
+  const { data, error } = await supabase
+    .from("inventory_products")
+    .select("*")
+    .order("sort_order", { ascending: true })
+    .order("updated_at", { ascending: false });
+
+  if (error) return PRODUCTS;
+
+  const mapped = (data ?? [])
+    .map(mapInventoryRowToProduct)
+    .filter((product): product is LocalProduct => Boolean(product));
+
+  return mapped.length > 0 ? mapped : PRODUCTS;
+};
+
+export const fetchStorefrontProductByHandle = async (handle: string): Promise<LocalProduct | undefined> => {
+  if (!supabase) return getProductByHandle(handle);
+
+  const { data, error } = await supabase
+    .from("inventory_products")
+    .select("*")
+    .eq("handle", handle)
+    .maybeSingle();
+
+  if (error || !data) return getProductByHandle(handle);
+
+  return mapInventoryRowToProduct(data) ?? getProductByHandle(handle);
+};

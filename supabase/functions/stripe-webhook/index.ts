@@ -1,0 +1,193 @@
+import Stripe from "npm:stripe@16.8.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature",
+};
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  if (req.method !== "POST") {
+    return new Response("Method not allowed", { status: 405, headers: corsHeaders });
+  }
+
+  try {
+    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+    const stripeWebhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!stripeSecretKey || !stripeWebhookSecret || !supabaseUrl || !supabaseServiceRole) {
+      return new Response("Webhook not configured", { status: 500, headers: corsHeaders });
+    }
+
+    const stripeSignature = req.headers.get("stripe-signature");
+    if (!stripeSignature) {
+      return new Response("Missing stripe-signature", { status: 400, headers: corsHeaders });
+    }
+
+    const payload = await req.text();
+
+    const stripe = new Stripe(stripeSecretKey, {
+      apiVersion: "2024-06-20",
+    });
+
+    const event = await stripe.webhooks.constructEventAsync(
+      payload,
+      stripeSignature,
+      stripeWebhookSecret,
+    );
+
+    const supabase = createClient(supabaseUrl, supabaseServiceRole);
+
+    if (
+      event.type === "checkout.session.completed" ||
+      event.type === "checkout.session.async_payment_succeeded"
+    ) {
+      const session = event.data.object as Stripe.Checkout.Session;
+
+      const totalAmount = (session.amount_total ?? 0) / 100;
+      const currencyCode = (session.currency ?? "usd").toUpperCase();
+      const itemCount = Number.parseInt(session.metadata?.item_count ?? "0", 10) || 0;
+
+      const customerEmail =
+        session.customer_details?.email ??
+        session.customer_email ??
+        session.metadata?.customer_email ??
+        null;
+
+      const paymentIntentId = typeof session.payment_intent === "string" ? session.payment_intent : null;
+      const orderExternalId = paymentIntentId ?? session.id;
+      const clientOrderToken = session.metadata?.client_order_token ?? null;
+
+      const status = session.payment_status === "paid" ? "processing" : "pending";
+
+      const { error } = await supabase
+        .from("orders")
+        .upsert(
+          {
+            external_id: orderExternalId,
+            stripe_payment_intent_id: paymentIntentId,
+            client_order_token: clientOrderToken,
+            customer_email: customerEmail,
+            total_amount: Number(totalAmount.toFixed(2)),
+            currency_code: currencyCode,
+            item_count: itemCount,
+            status,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "external_id" },
+        );
+
+      if (error) {
+        console.error("Failed to upsert order from webhook", error);
+        return new Response("Failed to persist order", { status: 500, headers: corsHeaders });
+      }
+    }
+
+    if (event.type === "payment_intent.succeeded") {
+      const intent = event.data.object as Stripe.PaymentIntent;
+
+      const totalAmount = (intent.amount_received || intent.amount || 0) / 100;
+      const currencyCode = (intent.currency ?? "usd").toUpperCase();
+      const itemCount = Number.parseInt(intent.metadata?.item_count ?? "0", 10) || 0;
+      const customerEmail = intent.metadata?.customer_email ?? intent.receipt_email ?? null;
+      const clientOrderToken = intent.metadata?.client_order_token ?? null;
+      const cartItemsRaw = intent.metadata?.cart_items ?? "[]";
+      let cartItems: Array<{ h: string; t: string; v: string; q: number; p: number; c: string; i: string }> = [];
+
+      try {
+        const parsed = JSON.parse(cartItemsRaw) as Array<{ h?: unknown; t?: unknown; v?: unknown; q?: unknown; p?: unknown; c?: unknown; i?: unknown }>;
+        if (Array.isArray(parsed)) {
+          cartItems = parsed
+            .filter((item) =>
+              typeof item?.h === "string" &&
+              typeof item?.t === "string" &&
+              typeof item?.q === "number" &&
+              typeof item?.p === "number" &&
+              typeof item?.c === "string"
+            )
+            .map((item) => ({
+              h: String(item.h),
+              t: String(item.t),
+              v: typeof item.v === "string" ? item.v : "",
+              q: Number(item.q),
+              p: Number(item.p),
+              c: String(item.c),
+              i: typeof item.i === "string" ? item.i : "",
+            }));
+        }
+      } catch {
+        cartItems = [];
+      }
+
+      const { error } = await supabase
+        .from("orders")
+        .upsert(
+          {
+            external_id: intent.id,
+            stripe_payment_intent_id: intent.id,
+            client_order_token: clientOrderToken,
+            customer_email: customerEmail,
+            total_amount: Number(totalAmount.toFixed(2)),
+            currency_code: currencyCode,
+            item_count: itemCount,
+            status: "processing",
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "external_id" },
+        );
+
+      if (error) {
+        console.error("Failed to upsert payment intent order", error);
+        return new Response("Failed to persist payment intent order", { status: 500, headers: corsHeaders });
+      }
+
+      const { data: savedOrder, error: orderLookupError } = await supabase
+        .from("orders")
+        .select("id")
+        .eq("external_id", intent.id)
+        .maybeSingle();
+
+      if (orderLookupError || !savedOrder) {
+        console.error("Could not resolve saved order for items", orderLookupError);
+        return new Response("Failed to resolve saved order", { status: 500, headers: corsHeaders });
+      }
+
+      if (cartItems.length > 0) {
+        const { error: orderItemsError } = await supabase
+          .from("order_items")
+          .upsert(
+            cartItems.map((item) => ({
+              order_id: savedOrder.id,
+              product_handle: item.h,
+              product_title: item.t,
+              variant_id: item.v || null,
+              image_url: item.i || null,
+              unit_price: Number((item.p / 100).toFixed(2)),
+              quantity: item.q,
+              currency_code: item.c.toUpperCase(),
+            })),
+            { onConflict: "order_id,product_handle" },
+          );
+
+        if (orderItemsError) {
+          console.error("Failed to persist order items", orderItemsError);
+          return new Response("Failed to persist order items", { status: 500, headers: corsHeaders });
+        }
+      }
+    }
+
+    return new Response(JSON.stringify({ received: true }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("stripe-webhook error", error);
+    return new Response("Webhook handler failed", { status: 400, headers: corsHeaders });
+  }
+});

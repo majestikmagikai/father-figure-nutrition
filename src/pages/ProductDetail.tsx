@@ -7,7 +7,7 @@ import { IngredientsPanel } from "@/components/IngredientsPanel";
 import { VeteranBadge } from "@/components/VeteranBadge";
 import { BottleSpin360 } from "@/components/BottleSpin360";
 import { Button } from "@/components/ui/button";
-import { getProductByHandle } from "@/lib/products";
+import { fetchStorefrontProductByHandle, getProductByHandle, type LocalProduct } from "@/lib/products";
 import { useCartStore } from "@/stores/cartStore";
 import { useJsonLd } from "@/hooks/useJsonLd";
 import { toast } from "sonner";
@@ -18,8 +18,32 @@ const renderHtmlDescription = (html: string) => ({
 
 const ProductDetail = () => {
   const { handle } = useParams<{ handle: string }>();
-  const product = handle ? getProductByHandle(handle) : undefined;
+  const [product, setProduct] = useState<LocalProduct | undefined>(handle ? getProductByHandle(handle) : undefined);
+  const [isLoadingProduct, setIsLoadingProduct] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
+
+  useEffect(() => {
+    if (!handle) {
+      setProduct(undefined);
+      return;
+    }
+
+    let isMounted = true;
+    setIsLoadingProduct(true);
+
+    const loadProduct = async () => {
+      const nextProduct = await fetchStorefrontProductByHandle(handle);
+      if (!isMounted) return;
+      setProduct(nextProduct);
+      setIsLoadingProduct(false);
+    };
+
+    void loadProduct();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [handle]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -101,7 +125,12 @@ const ProductDetail = () => {
           <ArrowLeft className="h-4 w-4" /> Back to shop
         </Link>
 
-        {!product ? (
+        {isLoadingProduct ? (
+          <div className="text-center py-32">
+            <h1 className="font-display text-3xl uppercase mb-2">Loading product...</h1>
+            <p className="text-muted-foreground">Please wait a moment.</p>
+          </div>
+        ) : !product ? (
           <div className="text-center py-32">
             <h1 className="font-display text-3xl uppercase mb-2">Product not found</h1>
             <p className="text-muted-foreground">Check back soon.</p>
@@ -116,6 +145,7 @@ const ProductDetail = () => {
                     labelUrl={labelImage.url}
                     capColor={product.cap}
                     fillColor={product.fill}
+                    modelUrl={product.model3dUrl}
                   />
                 ) : typeof view === "number" && product.images[view] ? (
                   <div

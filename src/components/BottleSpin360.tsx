@@ -9,11 +9,12 @@ interface BottleSpin360Props {
   labelUrl?: string;
   capColor?: string;
   fillColor?: string | null;
+  modelUrl?: string | null;
   duration?: number;
 }
 
-function Bottle({ labelUrl }: { labelUrl?: string }) {
-  const { scene } = useGLTF(bottleGlb);
+function Bottle({ labelUrl, modelUrl }: { labelUrl?: string; modelUrl?: string | null }) {
+  const { scene } = useGLTF(modelUrl || bottleGlb);
   const labelTexture = labelUrl ? useTexture(labelUrl) : null;
 
   useLayoutEffect(() => {
@@ -79,7 +80,7 @@ function Bottle({ labelUrl }: { labelUrl?: string }) {
   );
 }
 
-export const BottleSpin360 = ({ labelUrl }: BottleSpin360Props) => {
+export const BottleSpin360 = ({ labelUrl, modelUrl }: BottleSpin360Props) => {
   const [loaded, setLoaded] = useState(false);
 
   return (
@@ -103,7 +104,7 @@ export const BottleSpin360 = ({ labelUrl }: BottleSpin360Props) => {
         <directionalLight position={[4, 6, 4]} intensity={0.05} />
         <directionalLight position={[-4, 2, -2]} intensity={0.1} />
         <Suspense fallback={null}>
-          <Bottle labelUrl={labelUrl} />
+          <Bottle labelUrl={labelUrl} modelUrl={modelUrl} />
           <ContactShadows position={[0, -2, 0]} opacity={0.5} scale={5} blur={2} />
           <Environment files={studioHdr} background />
         </Suspense>

@@ -1,0 +1,1822 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { ArrowLeft, BarChart3, GripVertical, LogOut, ShieldAlert, ShieldCheck, Trash2, UsersRound } from "lucide-react";
+import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  type CustomerProfile,
+  createInventoryProduct,
+  cancelAndRefundOrder,
+  deleteInventoryProduct,
+  fetchCustomerProfiles,
+  fetchDashboardMetrics,
+  fetchInventoryProducts,
+  fetchOrderItems,
+  fetchOrders,
+  type InventoryProduct,
+  type OrderItemRecord,
+  type OrderRecord,
+  uploadProductAsset,
+  updateInventoryProductSortOrders,
+  updateOrderTracking,
+  updateOrderStatus,
+  updateInventoryProduct,
+} from "@/lib/adminData";
+import { PRODUCTS, toProductRecordInput } from "@/lib/products";
+import { toast } from "sonner";
+import type { User } from "@supabase/supabase-js";
+
+type RichTextEditorProps = {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+};
+
+type HexColorInputProps = {
+  value: string;
+  onChange: (color: string) => void;
+  placeholder: string;
+  fallbackColor: string;
+};
+
+const isHexColor = (value: string) => /^#[0-9a-fA-F]{6}$/.test(value.trim());
+
+const HexColorInput = ({ value, onChange, placeholder, fallbackColor }: HexColorInputProps) => {
+  const pickerRef = useRef<HTMLInputElement | null>(null);
+  const pickerColor = isHexColor(value) ? value.trim() : fallbackColor;
+
+  return (
+    <div className="relative">
+      <Input
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onClick={() => pickerRef.current?.click()}
+        className="pr-12 font-mono text-sm"
+      />
+      <button
+        type="button"
+        onClick={() => pickerRef.current?.click()}
+        className="absolute right-1 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center rounded border border-navy/20"
+        aria-label="Open color palette"
+        title="Open color palette"
+      >
+        <span className="h-5 w-5 rounded-sm border border-black/10" style={{ backgroundColor: pickerColor }} />
+      </button>
+      <input
+        ref={pickerRef}
+        type="color"
+        value={pickerColor}
+        onChange={(e) => onChange(e.target.value)}
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden="true"
+      />
+    </div>
+  );
+};
+
+const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorProps) => {
+  const editorRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    if (editor.innerHTML !== value) {
+      editor.innerHTML = value;
+    }
+  }, [value]);
+
+  const runCommand = (command: string) => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    editor.focus();
+    document.execCommand(command);
+    onChange(editor.innerHTML);
+  };
+
+  const runHeading = (tag: "H2" | "H3" | "P") => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    editor.focus();
+    document.execCommand("formatBlock", false, tag);
+    onChange(editor.innerHTML);
+  };
+
+  const insertLink = () => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    editor.focus();
+    const rawUrl = window.prompt("Enter URL", "https://");
+    if (!rawUrl) return;
+    const url = rawUrl.trim();
+    if (!/^https?:\/\//i.test(url)) {
+      toast.error("Please enter a valid http(s) URL.");
+      return;
+    }
+    document.execCommand("createLink", false, url);
+    onChange(editor.innerHTML);
+  };
+
+  return (
+    <div className="rounded-md border border-input bg-background">
+      <div className="flex flex-wrap gap-2 border-b border-input p-2">
+        <Button type="button" variant="outline" size="sm" onClick={() => runCommand("bold")}>
+          Bold
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={() => runCommand("italic")}>
+          Italic
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={() => runCommand("underline")}>
+          Underline
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={() => runCommand("insertUnorderedList")}>
+          Bullet List
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={() => runHeading("H2")}>
+          H2
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={() => runHeading("H3")}>
+          H3
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={() => runHeading("P")}>
+          Paragraph
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={insertLink}>
+          Link
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={() => runCommand("unlink")}>
+          Unlink
+        </Button>
+      </div>
+      <div
+        ref={editorRef}
+        contentEditable
+        suppressContentEditableWarning
+        className="min-h-28 p-3 text-sm leading-relaxed focus:outline-none [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-2 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-2 [&_a]:text-orange [&_a]:underline [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1"
+        onInput={(e) => onChange((e.currentTarget as HTMLDivElement).innerHTML)}
+        data-placeholder={placeholder ?? "Type description..."}
+      />
+    </div>
+  );
+};
+
+const AdminDashboard = () => {
+  const { section, productHandle } = useParams<{ section?: string; productHandle?: string }>();
+  const currentSection = section ?? "overview";
+  const isOverview = currentSection === "overview";
+  const isMetricsSection = currentSection === "metrics";
+  const isProductsSection = currentSection === "products";
+  const isProductEditSection = currentSection === "product-edit";
+  const isOrdersSection = currentSection === "orders";
+  const isUsersSection = currentSection === "users";
+  const isInsightsSection = currentSection === "insights";
+  const isEditingNewProduct = isProductEditSection && productHandle === "new";
+
+  const parseImagesInput = (value: string) => {
+    try {
+      const parsed = JSON.parse(value) as Array<{ url?: unknown; altText?: unknown }>;
+      if (!Array.isArray(parsed)) return null;
+
+      const normalized = parsed
+        .filter((entry) => typeof entry?.url === "string" && typeof entry?.altText === "string")
+        .map((entry) => ({
+          url: String(entry.url),
+          altText: String(entry.altText),
+        }));
+
+      return normalized.length > 0 ? normalized : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isSavingProduct, setIsSavingProduct] = useState<string | null>(null);
+  const [isDeletingProduct, setIsDeletingProduct] = useState<string | null>(null);
+  const [isUploadingImageFor, setIsUploadingImageFor] = useState<string | null>(null);
+  const [isUploadingModelFor, setIsUploadingModelFor] = useState<string | null>(null);
+  const [isSavingSortOrder, setIsSavingSortOrder] = useState(false);
+  const [draggingProductId, setDraggingProductId] = useState<string | null>(null);
+  const [productsPage, setProductsPage] = useState(1);
+  const [ordersPage, setOrdersPage] = useState(1);
+  const [isSavingOrder, setIsSavingOrder] = useState<string | null>(null);
+  const [isAddingProduct, setIsAddingProduct] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [products, setProducts] = useState<InventoryProduct[]>([]);
+  const [orders, setOrders] = useState<OrderRecord[]>([]);
+  const [orderItems, setOrderItems] = useState<OrderItemRecord[]>([]);
+  const [customerProfiles, setCustomerProfiles] = useState<CustomerProfile[]>([]);
+  const [metrics, setMetrics] = useState({
+    totalSales: 0,
+    totalOrders: 0,
+    activeUsers: 0,
+    currencyCode: "USD",
+  });
+  const [newProduct, setNewProduct] = useState({
+    handle: "",
+    title: "",
+    description: "",
+    fullDescription: "",
+    price: "0.00",
+    currencyCode: "USD",
+    availableForSale: true,
+    imagesJson: "[]",
+    variantId: "",
+    capColor: "#f5f5f5",
+    fillColor: "",
+    model3dUrl: "",
+  });
+
+  useEffect(() => {
+    if (!supabase) return;
+
+    let isMounted = true;
+
+    const syncUser = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!isMounted) return;
+      setUser(data.session?.user ?? null);
+    };
+
+    syncUser();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const reloadAdminData = async (options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false;
+
+    if (!silent) {
+      setIsLoadingData(true);
+    }
+    try {
+      const [nextMetrics, nextProductsRaw, nextOrders, nextOrderItems, nextCustomerProfiles] = await Promise.all([
+        fetchDashboardMetrics(),
+        fetchInventoryProducts(),
+        fetchOrders(),
+        fetchOrderItems(),
+        fetchCustomerProfiles(),
+      ]);
+
+      let nextProducts = nextProductsRaw;
+      const existingHandles = new Set(nextProductsRaw.map((product) => product.handle));
+      const missingLocalProducts = PRODUCTS.filter((product) => !existingHandles.has(product.handle));
+
+      if (missingLocalProducts.length > 0) {
+        await Promise.all(
+          missingLocalProducts.map((product) => {
+            const mapped = toProductRecordInput(product);
+            return createInventoryProduct(mapped);
+          }),
+        );
+
+        nextProducts = await fetchInventoryProducts();
+      }
+
+      const fallbackByHandle = new Map(PRODUCTS.map((product) => [product.handle, product]));
+      const productsNeedingBackfill = nextProducts.filter((product) => {
+        const fallback = fallbackByHandle.get(product.handle);
+        if (!fallback) return false;
+
+        const hasDescription = Boolean(product.description?.trim());
+        const hasFullDescription = Boolean(product.full_description?.trim());
+        const hasVariant = Boolean(product.variant_id?.trim());
+        const hasCapColor = Boolean(product.cap_color?.trim());
+        const hasImages = Array.isArray(product.images) && product.images.length > 0;
+
+        return !hasDescription || !hasFullDescription || !hasVariant || !hasCapColor || !hasImages;
+      });
+
+      if (productsNeedingBackfill.length > 0) {
+        await Promise.all(
+          productsNeedingBackfill.map((product) => {
+            const fallback = fallbackByHandle.get(product.handle);
+            if (!fallback) return Promise.resolve();
+
+            const mapped = toProductRecordInput(fallback);
+            const parsedImages = parseImagesInput(JSON.stringify(product.images));
+
+            return updateInventoryProduct({
+              id: product.id,
+              handle: product.handle,
+              title: product.title || mapped.title,
+              description: product.description?.trim() ? product.description : mapped.description,
+              fullDescription: product.full_description?.trim() ? product.full_description : mapped.fullDescription,
+              price: Number(product.price),
+              availableForSale: product.available_for_sale,
+              currencyCode: product.currency_code || mapped.currencyCode,
+              images: parsedImages && parsedImages.length > 0 ? parsedImages : mapped.images,
+              variantId: product.variant_id?.trim() ? product.variant_id : mapped.variantId,
+              capColor: product.cap_color?.trim() ? product.cap_color : mapped.capColor,
+              fillColor: product.fill_color ?? mapped.fillColor,
+              model3dUrl: product.model_3d_url ?? mapped.model3dUrl ?? null,
+            });
+          }),
+        );
+
+        nextProducts = await fetchInventoryProducts();
+      }
+
+      setMetrics(nextMetrics);
+      setProducts(nextProducts);
+      setOrders(nextOrders);
+      setOrderItems(nextOrderItems);
+      setCustomerProfiles(nextCustomerProfiles);
+    } catch {
+      if (!silent) {
+        toast.error("Could not load dashboard data from Supabase.");
+      }
+    } finally {
+      if (!silent) {
+        setIsLoadingData(false);
+      }
+    }
+  };
+
+  const handleSaveOrderStatus = async (order: OrderRecord) => {
+    const trackingNumber = (order.tracking_number ?? "").trim();
+    const trackingCarrier = (order.tracking_carrier ?? "").trim();
+    const trackingUrl = (order.tracking_url ?? "").trim();
+
+    if (trackingUrl && !/^https?:\/\//i.test(trackingUrl)) {
+      toast.error("Tracking URL must be a valid http(s) URL.");
+      return;
+    }
+
+    setIsSavingOrder(order.id);
+    try {
+      await updateOrderStatus({
+        id: order.id,
+        status: order.status as "pending" | "processing" | "fulfilled" | "cancelled",
+      });
+      const trackingSentAt = trackingNumber
+        ? order.tracking_sent_at ?? new Date().toISOString()
+        : null;
+      await updateOrderTracking({
+        id: order.id,
+        trackingNumber: trackingNumber || null,
+        trackingCarrier: trackingCarrier || null,
+        trackingUrl: trackingUrl || null,
+        trackingSentAt,
+      });
+      toast.success("Order updated.");
+      await reloadAdminData();
+    } catch {
+      toast.error("Could not update order.");
+    } finally {
+      setIsSavingOrder(null);
+    }
+  };
+
+  const handleMarkFulfilled = async (order: OrderRecord) => {
+    setIsSavingOrder(order.id);
+    try {
+      await updateOrderStatus({ id: order.id, status: "fulfilled" });
+      toast.success("Order marked fulfilled.");
+      await reloadAdminData();
+    } catch {
+      toast.error("Could not mark order fulfilled.");
+    } finally {
+      setIsSavingOrder(null);
+    }
+  };
+
+  const handleSendTrackingEmail = async (order: OrderRecord) => {
+    const customerEmail = (order.customer_email ?? "").trim();
+    const trackingNumber = (order.tracking_number ?? "").trim();
+    const trackingUrl = (order.tracking_url ?? "").trim();
+    const trackingCarrier = (order.tracking_carrier ?? "").trim();
+
+    if (!customerEmail) {
+      toast.error("This order has no customer email.");
+      return;
+    }
+    if (!trackingNumber) {
+      toast.error("Add a tracking number before sending.");
+      return;
+    }
+    if (trackingUrl && !/^https?:\/\//i.test(trackingUrl)) {
+      toast.error("Tracking URL must be a valid http(s) URL.");
+      return;
+    }
+
+    setIsSavingOrder(order.id);
+    try {
+      await updateOrderTracking({
+        id: order.id,
+        trackingNumber,
+        trackingCarrier: trackingCarrier || null,
+        trackingUrl: trackingUrl || null,
+        trackingSentAt: new Date().toISOString(),
+      });
+
+      const subject = encodeURIComponent(`Your Father Figure order tracking: ${trackingNumber}`);
+      const bodyLines = [
+        "Hi,",
+        "",
+        "Your order has shipped.",
+        trackingCarrier ? `Carrier: ${trackingCarrier}` : null,
+        `Tracking number: ${trackingNumber}`,
+        trackingUrl ? `Track shipment: ${trackingUrl}` : null,
+        "",
+        "Thank you for choosing Father Figure.",
+      ].filter(Boolean);
+
+      const body = encodeURIComponent(bodyLines.join("\n"));
+      window.location.href = `mailto:${encodeURIComponent(customerEmail)}?subject=${subject}&body=${body}`;
+
+      toast.success("Tracking email draft opened.");
+      await reloadAdminData();
+    } catch {
+      toast.error("Could not send tracking details.");
+    } finally {
+      setIsSavingOrder(null);
+    }
+  };
+
+  const handleCancelAndRefundOrder = async (order: OrderRecord) => {
+    const confirmed = window.confirm(
+      `Cancel and refund this order for ${order.customer_email ?? "this customer"}? This action cannot be undone.`,
+    );
+
+    if (!confirmed) return;
+
+    setIsSavingOrder(order.id);
+    try {
+      const result = await cancelAndRefundOrder({ id: order.id });
+      setOrders((prev) => prev.map((currentOrder) => (currentOrder.id === order.id ? { ...currentOrder, status: "cancelled" } : currentOrder)));
+
+      if (result?.warning) {
+        toast.error(result.warning);
+      } else {
+        toast.success("Order cancelled and refunded.");
+      }
+
+      await reloadAdminData();
+    } catch {
+      toast.error("Could not cancel and refund order.");
+      await reloadAdminData({ silent: true });
+    } finally {
+      setIsSavingOrder(null);
+    }
+  };
+
+  useEffect(() => {
+    void reloadAdminData();
+  }, []);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      // Avoid overwriting unsaved tracking/status edits while on Orders.
+      if (isOrdersSection) return;
+      void reloadAdminData({ silent: true });
+    }, 15000);
+
+    return () => window.clearInterval(interval);
+  }, [isOrdersSection]);
+
+  const displayName = useMemo(() => {
+    const first = user?.user_metadata?.first_name as string | undefined;
+    const last = user?.user_metadata?.last_name as string | undefined;
+    const full = [first, last].filter(Boolean).join(" ").trim();
+    return full || user?.email || "Admin";
+  }, [user]);
+
+  const editingProduct = useMemo(() => {
+    if (!isProductEditSection || !productHandle || productHandle === "new") return null;
+    return products.find((product) => product.handle === productHandle) ?? null;
+  }, [isProductEditSection, productHandle, products]);
+
+  const customerNameByEmail = useMemo(() => {
+    return new Map(
+      customerProfiles.map((profile) => {
+        const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(" ").trim();
+        return [profile.email, fullName || profile.email];
+      }),
+    );
+  }, [customerProfiles]);
+
+  const orderItemsByOrderId = useMemo(() => {
+    return orderItems.reduce<Record<string, OrderItemRecord[]>>((accumulator, item) => {
+      accumulator[item.order_id] ||= [];
+      accumulator[item.order_id].push(item);
+      return accumulator;
+    }, {});
+  }, [orderItems]);
+
+  const insights = useMemo(() => {
+    const now = Date.now();
+    const msInDay = 24 * 60 * 60 * 1000;
+    const sevenDaysAgo = now - 7 * msInDay;
+    const thirtyDaysAgo = now - 30 * msInDay;
+
+    const customersWithRecentSignIn = customerProfiles.filter((profile) => {
+      if (!profile.last_sign_in_at) return false;
+      const signedInAt = new Date(profile.last_sign_in_at).getTime();
+      return Number.isFinite(signedInAt) && signedInAt >= thirtyDaysAgo;
+    }).length;
+
+    const ordersLast7Days = orders.filter((order) => {
+      const createdAt = new Date(order.created_at).getTime();
+      return Number.isFinite(createdAt) && createdAt >= sevenDaysAgo;
+    });
+
+    const revenueLast7Days = ordersLast7Days.reduce((sum, order) => sum + Number(order.total_amount), 0);
+    const averageOrderValue = ordersLast7Days.length > 0 ? revenueLast7Days / ordersLast7Days.length : 0;
+
+    const productCounts = orderItems.reduce<Record<string, { title: string; qty: number }>>((acc, item) => {
+      const key = item.product_handle;
+      if (!acc[key]) {
+        acc[key] = { title: item.product_title, qty: 0 };
+      }
+      acc[key].qty += item.quantity;
+      return acc;
+    }, {});
+
+    const topProduct = Object.values(productCounts).sort((a, b) => b.qty - a.qty)[0] ?? null;
+
+    const cancelledOrders = orders.filter((order) => order.status === "cancelled").length;
+    const fulfilledWithoutTracking = orders.filter(
+      (order) => order.status === "fulfilled" && !(order.tracking_number ?? "").trim(),
+    ).length;
+
+    return {
+      totalCustomers: customerProfiles.length,
+      customersWithRecentSignIn,
+      ordersLast7Days: ordersLast7Days.length,
+      revenueLast7Days,
+      averageOrderValue,
+      topProduct,
+      cancelledOrders,
+      fulfilledWithoutTracking,
+    };
+  }, [customerProfiles, orderItems, orders]);
+
+  const productsPerPage = 10;
+  const totalProductPages = Math.max(1, Math.ceil(products.length / productsPerPage));
+  const paginatedProducts = useMemo(() => {
+    const start = (productsPage - 1) * productsPerPage;
+    return products.slice(start, start + productsPerPage);
+  }, [products, productsPage]);
+
+  const ordersPerPage = 10;
+  const totalOrderPages = Math.max(1, Math.ceil(orders.length / ordersPerPage));
+  const paginatedOrders = useMemo(() => {
+    const start = (ordersPage - 1) * ordersPerPage;
+    return orders.slice(start, start + ordersPerPage);
+  }, [orders, ordersPage]);
+
+  useEffect(() => {
+    setProductsPage((current) => {
+      if (current > totalProductPages) return totalProductPages;
+      if (current < 1) return 1;
+      return current;
+    });
+  }, [totalProductPages]);
+
+  useEffect(() => {
+    setOrdersPage((current) => {
+      if (current > totalOrderPages) return totalOrderPages;
+      if (current < 1) return 1;
+      return current;
+    });
+  }, [totalOrderPages]);
+
+  useEffect(() => {
+    if (isProductsSection) {
+      setProductsPage(1);
+    }
+  }, [isProductsSection]);
+
+  useEffect(() => {
+    if (isOrdersSection) {
+      setOrdersPage(1);
+    }
+  }, [isOrdersSection]);
+
+  const handleSignOut = async () => {
+    if (!supabase) return;
+
+    setIsSigningOut(true);
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      toast.error("Could not sign out right now. Please try again.");
+      setIsSigningOut(false);
+      return;
+    }
+
+    toast.success("Signed out successfully.");
+    window.location.assign("/login");
+  };
+
+  const handleSaveProduct = async (product: InventoryProduct) => {
+    const handle = product.handle.trim().toLowerCase();
+    const title = product.title.trim();
+    const description = product.description.trim();
+    const variantId = (product.variant_id ?? "").trim();
+    const capColor = (product.cap_color ?? "").trim();
+    const images = parseImagesInput(JSON.stringify(product.images));
+
+    const parsedPrice = Number.parseFloat(String(product.price));
+    if (!/^[a-z0-9-]+$/.test(handle)) {
+      toast.error("Handle must contain lowercase letters, numbers, or hyphens.");
+      return;
+    }
+    if (title.length < 2) {
+      toast.error("Title must be at least 2 characters.");
+      return;
+    }
+    if (description.length < 2) {
+      toast.error("Description must be at least 2 characters.");
+      return;
+    }
+    if (!variantId) {
+      toast.error("Variant ID is required.");
+      return;
+    }
+    if (!/^#[0-9a-fA-F]{6}$/.test(capColor)) {
+      toast.error("Cap color must be a valid hex code like #f5f5f5.");
+      return;
+    }
+    if (!images) {
+      toast.error("Images must be valid JSON array with url and altText.");
+      return;
+    }
+
+    const fillColor = (product.fill_color ?? "").trim();
+    const model3dUrl = (product.model_3d_url ?? "").trim();
+    if (fillColor && !/^#[0-9a-fA-F]{6}$/.test(fillColor)) {
+      toast.error("Fill color must be blank or a hex code like #7a86b8.");
+      return;
+    }
+    if (model3dUrl && !/^https?:\/\//i.test(model3dUrl)) {
+      toast.error("3D model URL must be a valid http(s) URL.");
+      return;
+    }
+
+    if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
+      toast.error("Price must be a valid non-negative number.");
+      return;
+    }
+
+    setIsSavingProduct(product.id);
+    try {
+      await updateInventoryProduct({
+        id: product.id,
+        handle,
+        title,
+        description,
+        fullDescription: product.full_description,
+        price: parsedPrice,
+        availableForSale: product.available_for_sale,
+        currencyCode: product.currency_code,
+        images,
+        variantId,
+        capColor,
+        fillColor: fillColor || null,
+        model3dUrl: model3dUrl || null,
+      });
+      toast.success("Product updated.");
+      await reloadAdminData();
+    } catch {
+      toast.error("Could not update product.");
+    } finally {
+      setIsSavingProduct(null);
+    }
+  };
+
+  const handleDeleteProduct = async (product: InventoryProduct) => {
+    const accepted = window.confirm(`Delete ${product.title}? This cannot be undone.`);
+    if (!accepted) return;
+
+    setIsDeletingProduct(product.id);
+    try {
+      await deleteInventoryProduct(product.id);
+      toast.success("Product deleted.");
+      await reloadAdminData();
+    } catch {
+      toast.error("Could not delete product.");
+    } finally {
+      setIsDeletingProduct(null);
+    }
+  };
+
+  const handleUploadNewProductImage = async (file: File | null) => {
+    if (!file) return;
+
+    const handle = newProduct.handle.trim().toLowerCase();
+    if (!handle) {
+      toast.error("Enter a product handle before uploading files.");
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file.");
+      return;
+    }
+
+    setIsUploadingImageFor("new");
+    try {
+      const url = await uploadProductAsset({ productHandle: handle, file, kind: "image" });
+      const existingImages = parseImagesInput(newProduct.imagesJson) ?? [];
+      const altText = `${newProduct.title || handle} image`;
+      const nextImages = [...existingImages, { url, altText }];
+      setNewProduct((prev) => ({ ...prev, imagesJson: JSON.stringify(nextImages, null, 2) }));
+      toast.success("Image uploaded and added to product images.");
+    } catch {
+      toast.error("Could not upload image.");
+    } finally {
+      setIsUploadingImageFor(null);
+    }
+  };
+
+  const handleUploadNewProductModel = async (file: File | null) => {
+    if (!file) return;
+
+    const handle = newProduct.handle.trim().toLowerCase();
+    if (!handle) {
+      toast.error("Enter a product handle before uploading files.");
+      return;
+    }
+
+    const isGlb = /\.glb$/i.test(file.name) || file.type === "model/gltf-binary";
+    if (!isGlb) {
+      toast.error("Please choose a .glb file.");
+      return;
+    }
+
+    setIsUploadingModelFor("new");
+    try {
+      const url = await uploadProductAsset({ productHandle: handle, file, kind: "model" });
+      setNewProduct((prev) => ({ ...prev, model3dUrl: url }));
+      toast.success("3D model uploaded.");
+    } catch {
+      toast.error("Could not upload 3D model.");
+    } finally {
+      setIsUploadingModelFor(null);
+    }
+  };
+
+  const handleUploadProductImage = async (product: InventoryProduct, file: File | null) => {
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file.");
+      return;
+    }
+
+    setIsUploadingImageFor(product.id);
+    try {
+      const url = await uploadProductAsset({ productHandle: product.handle, file, kind: "image" });
+      const existingImages = parseImagesInput(JSON.stringify(product.images)) ?? [];
+      const next = { ...product, images: [...existingImages, { url, altText: `${product.title} image` }] };
+      setProducts((prev) => prev.map((p) => (p.id === product.id ? next : p)));
+      await handleSaveProduct(next);
+      toast.success("Image uploaded.");
+    } catch {
+      toast.error("Could not upload image.");
+    } finally {
+      setIsUploadingImageFor(null);
+    }
+  };
+
+  const handleUploadProductModel = async (product: InventoryProduct, file: File | null) => {
+    if (!file) return;
+
+    const isGlb = /\.glb$/i.test(file.name) || file.type === "model/gltf-binary";
+    if (!isGlb) {
+      toast.error("Please choose a .glb file.");
+      return;
+    }
+
+    setIsUploadingModelFor(product.id);
+    try {
+      const url = await uploadProductAsset({ productHandle: product.handle, file, kind: "model" });
+      const next = { ...product, model_3d_url: url };
+      setProducts((prev) => prev.map((p) => (p.id === product.id ? next : p)));
+      await handleSaveProduct(next);
+      toast.success("3D model uploaded.");
+    } catch {
+      toast.error("Could not upload 3D model.");
+    } finally {
+      setIsUploadingModelFor(null);
+    }
+  };
+
+  const handleAddProduct = async () => {
+    const handle = newProduct.handle.trim().toLowerCase();
+    const title = newProduct.title.trim();
+    const description = newProduct.description.trim();
+    const fullDescription = newProduct.fullDescription.trim();
+    const images = parseImagesInput(newProduct.imagesJson);
+    const variantId = newProduct.variantId.trim();
+    const capColor = newProduct.capColor.trim();
+    const fillColor = newProduct.fillColor.trim();
+    const model3dUrl = newProduct.model3dUrl.trim();
+    const parsedPrice = Number.parseFloat(newProduct.price);
+
+    if (!/^[a-z0-9-]+$/.test(handle)) {
+      toast.error("Handle must contain lowercase letters, numbers, or hyphens.");
+      return;
+    }
+    if (title.length < 2) {
+      toast.error("Title must be at least 2 characters.");
+      return;
+    }
+    if (description.length < 2) {
+      toast.error("Description must be at least 2 characters.");
+      return;
+    }
+    if (!variantId) {
+      toast.error("Variant ID is required.");
+      return;
+    }
+    if (!/^#[0-9a-fA-F]{6}$/.test(capColor)) {
+      toast.error("Cap color must be a valid hex code like #f5f5f5.");
+      return;
+    }
+    if (fillColor && !/^#[0-9a-fA-F]{6}$/.test(fillColor)) {
+      toast.error("Fill color must be blank or a hex code like #7a86b8.");
+      return;
+    }
+    if (!images) {
+      toast.error("Images must be valid JSON array with url and altText.");
+      return;
+    }
+    if (model3dUrl && !/^https?:\/\//i.test(model3dUrl)) {
+      toast.error("3D model URL must be a valid http(s) URL.");
+      return;
+    }
+    if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
+      toast.error("Price must be a valid non-negative number.");
+      return;
+    }
+
+    setIsAddingProduct(true);
+    try {
+      await createInventoryProduct({
+        handle,
+        title,
+        description,
+        fullDescription: fullDescription || null,
+        price: parsedPrice,
+        currencyCode: newProduct.currencyCode.trim().toUpperCase() || "USD",
+        availableForSale: newProduct.availableForSale,
+        images,
+        variantId,
+        capColor,
+        fillColor: fillColor || null,
+        model3dUrl: model3dUrl || null,
+      });
+      toast.success("Product added.");
+      setNewProduct({
+        handle: "",
+        title: "",
+        description: "",
+        fullDescription: "",
+        price: "0.00",
+        currencyCode: "USD",
+        availableForSale: true,
+        imagesJson: "[]",
+        variantId: "",
+        capColor: "#f5f5f5",
+        fillColor: "",
+        model3dUrl: "",
+      });
+      await reloadAdminData();
+    } catch {
+      toast.error("Could not add product. Handle may already exist.");
+    } finally {
+      setIsAddingProduct(false);
+    }
+  };
+
+  const persistSortOrder = async (orderedProducts: InventoryProduct[]) => {
+    setIsSavingSortOrder(true);
+    try {
+      await updateInventoryProductSortOrders(
+        orderedProducts.map((product, index) => ({ id: product.id, sortOrder: index })),
+      );
+      toast.success("Product order saved.");
+    } catch {
+      toast.error("Could not save product order.");
+      await reloadAdminData();
+    } finally {
+      setIsSavingSortOrder(false);
+    }
+  };
+
+  const handleDragStart = (productId: string) => {
+    setDraggingProductId(productId);
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+  };
+
+  const handleDropOnProduct = async (targetId: string) => {
+    if (!draggingProductId || draggingProductId === targetId) {
+      setDraggingProductId(null);
+      return;
+    }
+
+    const fromIndex = products.findIndex((product) => product.id === draggingProductId);
+    const toIndex = products.findIndex((product) => product.id === targetId);
+
+    if (fromIndex < 0 || toIndex < 0) {
+      setDraggingProductId(null);
+      return;
+    }
+
+    const reordered = [...products];
+    const [moved] = reordered.splice(fromIndex, 1);
+    reordered.splice(toIndex, 0, moved);
+
+    setProducts(reordered);
+    setDraggingProductId(null);
+    await persistSortOrder(reordered);
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <SiteHeader />
+      <main className="flex-1 bg-gradient-to-b from-sky/20 via-secondary to-background px-6 py-12">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-between gap-4 mb-8 flex-wrap">
+            <Link to="/" className="inline-flex items-center gap-2 text-sm text-navy/70 hover:text-orange transition-colors font-medium">
+              <ArrowLeft className="h-4 w-4" /> Back to home
+            </Link>
+            {user && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5">
+                  <Link to="/dashboard">Customer Dashboard</Link>
+                </Button>
+                <Button
+                  onClick={handleSignOut}
+                  disabled={isSigningOut}
+                  variant="outline"
+                  className="border-navy/20 text-navy hover:bg-navy/5"
+                >
+                  <LogOut className="h-4 w-4 mr-2" /> {isSigningOut ? "Signing out..." : "Sign Out"}
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <Card className="border-navy/15 shadow-card bg-white/95 mb-6">
+            <CardHeader>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-navy/10 border border-navy/20 text-navy text-sm uppercase tracking-widest font-semibold mb-3 w-fit">
+                <ShieldCheck className="h-3.5 w-3.5" /> Admin Dashboard
+              </div>
+              <CardTitle className="font-display uppercase text-3xl text-navy">Welcome, {displayName}</CardTitle>
+              <CardDescription>
+                Manage customer operations and monitor storefront activity from one control surface.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card className="border-navy/15 shadow-card bg-white/95 mb-6">
+            <CardHeader>
+              <CardTitle className="text-lg text-navy">Admin Menu</CardTitle>
+              <CardDescription>Each area now has its own page.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-2">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5">
+                <Link to="/admin/metrics">Metrics</Link>
+              </Button>
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5">
+                <Link to="/admin/products">Products</Link>
+              </Button>
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5">
+                <Link to="/admin/orders">Orders</Link>
+              </Button>
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5">
+                <Link to="/admin/users">Users</Link>
+              </Button>
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5">
+                <Link to="/admin/insights">Insights</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {isOverview && (
+            <Card className="border-navy/15 bg-white/95 mb-6">
+              <CardHeader>
+                <CardTitle className="text-lg text-navy">Choose an Admin Page</CardTitle>
+                <CardDescription>
+                  Select a menu button to manage one area at a time: metrics, products, orders, users, or insights.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          )}
+
+          {isMetricsSection && (
+          <div className="grid md:grid-cols-3 gap-5 mb-6">
+            <Card className="border-navy/15 bg-white/95">
+              <CardHeader>
+                <CardTitle className="text-lg text-navy">Sales</CardTitle>
+                <CardDescription>Total processed revenue</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="font-display text-3xl text-orange">
+                  {metrics.currencyCode} {metrics.totalSales.toFixed(2)}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-navy/15 bg-white/95">
+              <CardHeader>
+                <CardTitle className="text-lg text-navy">Total Orders</CardTitle>
+                <CardDescription>Completed checkout records</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="font-display text-3xl text-orange">{metrics.totalOrders}</p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-navy/15 bg-white/95">
+              <CardHeader>
+                <CardTitle className="text-lg text-navy">Active Users</CardTitle>
+                <CardDescription>Unique customers with completed orders</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="font-display text-3xl text-orange">{metrics.activeUsers}</p>
+              </CardContent>
+            </Card>
+          </div>
+          )}
+
+          {isProductsSection && (
+          <Card className="border-navy/15 bg-white/95 mb-6">
+            <CardHeader>
+              <CardTitle className="text-lg text-navy">Products List</CardTitle>
+              <CardDescription>
+                View all products on one page, then open a separate page to edit a specific product.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {isLoadingData ? (
+                <p className="text-sm text-navy/60">Loading products...</p>
+              ) : products.length === 0 ? (
+                <p className="text-sm text-navy/60">No products found in inventory_products.</p>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm uppercase tracking-wide text-navy/60">
+                    Drag products by the grip icon to reorder. {isSavingSortOrder ? "Saving order..." : ""}
+                  </p>
+                  {paginatedProducts.map((product, index) => (
+                    <div
+                      key={product.id}
+                      className={`border rounded-lg p-4 bg-white/80 transition-colors ${draggingProductId === product.id ? "border-orange/60 bg-orange/5" : "border-navy/10"}`}
+                      onDragOver={handleDragOver}
+                      onDrop={() => void handleDropOnProduct(product.id)}
+                    >
+                      <div className="flex items-center justify-between gap-3 flex-wrap">
+                        <div className="flex items-start gap-3">
+                          <button
+                            type="button"
+                            draggable
+                            onDragStart={() => handleDragStart(product.id)}
+                            onDragEnd={() => setDraggingProductId(null)}
+                            className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-md border border-navy/20 text-navy/60 hover:text-navy hover:border-navy/40 cursor-grab active:cursor-grabbing"
+                            title="Drag to reorder"
+                            aria-label="Drag to reorder"
+                          >
+                            <GripVertical className="h-4 w-4" />
+                          </button>
+                          <div>
+                          <p className="font-semibold text-navy">{product.title || "Untitled Product"}</p>
+                          <p className="text-sm text-navy/60">Handle: {product.handle}</p>
+                          <p className="text-sm text-navy/60">Position: {(productsPage - 1) * productsPerPage + index + 1}</p>
+                          <p className="text-sm text-navy/60">{product.currency_code} {Number(product.price).toFixed(2)}</p>
+                          <p className="text-sm text-navy/70 mt-1">{product.description || "No short description."}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5">
+                            <Link to={`/admin/product-edit/${product.handle}`}>Edit Product</Link>
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            onClick={() => void handleDeleteProduct(product)}
+                            disabled={isDeletingProduct === product.id}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            {isDeletingProduct === product.id ? "Deleting..." : "Delete"}
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="mt-3">
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-sm font-medium ${
+                          product.available_for_sale ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"
+                        }`}>
+                          {product.available_for_sale ? "Available" : "Unavailable"}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {totalProductPages > 1 && (
+                    <div className="flex items-center justify-between gap-3 pt-2">
+                      <p className="text-sm text-navy/60">
+                        Page {productsPage} of {totalProductPages}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          className="border-navy/20 text-navy hover:bg-navy/5"
+                          disabled={productsPage === 1}
+                          onClick={() => setProductsPage((prev) => Math.max(1, prev - 1))}
+                        >
+                          Previous
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="border-navy/20 text-navy hover:bg-navy/5"
+                          disabled={productsPage >= totalProductPages}
+                          onClick={() => setProductsPage((prev) => Math.min(totalProductPages, prev + 1))}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              <div>
+                <Button asChild className="bg-orange text-white hover:opacity-90 shadow-cta font-display uppercase tracking-wider">
+                  <Link to="/admin/product-edit/new">Add New Product</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+          )}
+
+          {isProductEditSection && (
+          <Card className="border-navy/15 bg-white/95 mb-6">
+            <CardHeader>
+              <CardTitle className="text-lg text-navy">Product Edit</CardTitle>
+              <CardDescription>
+                Edit one product on this page. Return to Products List for all products.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5">
+                <Link to="/admin/products">Back to Products List</Link>
+              </Button>
+
+              {isEditingNewProduct ? (
+                <>
+                  <div className="rounded-md border border-navy/10 p-3 space-y-3">
+                    <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Core Info</p>
+                    <div className="grid md:grid-cols-5 gap-3">
+                      <div className="space-y-1">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">Handle</p>
+                        <Input
+                          placeholder="creatine-hardbody"
+                          value={newProduct.handle}
+                          onChange={(e) => setNewProduct((prev) => ({ ...prev, handle: e.target.value }))}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">Title</p>
+                        <Input
+                          placeholder="Product title"
+                          value={newProduct.title}
+                          onChange={(e) => setNewProduct((prev) => ({ ...prev, title: e.target.value }))}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">Variant ID</p>
+                        <Input
+                          placeholder="var-product-default"
+                          value={newProduct.variantId}
+                          onChange={(e) => setNewProduct((prev) => ({ ...prev, variantId: e.target.value }))}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">Price</p>
+                        <Input
+                          placeholder="0.00"
+                          value={newProduct.price}
+                          onChange={(e) => setNewProduct((prev) => ({ ...prev, price: e.target.value }))}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">Currency</p>
+                        <Input
+                          placeholder="USD"
+                          value={newProduct.currencyCode}
+                          onChange={(e) => setNewProduct((prev) => ({ ...prev, currencyCode: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="rounded-md border border-navy/10 p-3 space-y-3">
+                    <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Descriptions</p>
+                    <div className="space-y-1">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Short Description</p>
+                      <Input
+                        placeholder="Short summary shown under product title"
+                        value={newProduct.description}
+                        onChange={(e) => setNewProduct((prev) => ({ ...prev, description: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Full Description</p>
+                      <RichTextEditor
+                        value={newProduct.fullDescription}
+                        onChange={(nextValue) => setNewProduct((prev) => ({ ...prev, fullDescription: nextValue }))}
+                        placeholder="Full product description with formatting"
+                      />
+                    </div>
+                  </div>
+                  <div className="rounded-md border border-navy/10 p-3 space-y-3">
+                    <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Visuals</p>
+                    <div className="grid md:grid-cols-3 gap-3">
+                      <div className="space-y-1">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">Cap Color</p>
+                        <HexColorInput
+                          placeholder="#f5f5f5"
+                          value={newProduct.capColor}
+                          onChange={(capColor) => setNewProduct((prev) => ({ ...prev, capColor }))}
+                          fallbackColor="#f5f5f5"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">Fill Color</p>
+                        <HexColorInput
+                          placeholder="#7a86b8 or blank"
+                          value={newProduct.fillColor}
+                          onChange={(fillColor) => setNewProduct((prev) => ({ ...prev, fillColor }))}
+                          fallbackColor="#7a86b8"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">3D Model URL (.glb)</p>
+                        <Input
+                          placeholder="https://.../model.glb"
+                          value={newProduct.model3dUrl}
+                          onChange={(e) => setNewProduct((prev) => ({ ...prev, model3dUrl: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-3 flex-wrap">
+                      <label className="inline-flex items-center gap-2">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            void handleUploadNewProductImage(e.target.files?.[0] ?? null);
+                            e.currentTarget.value = "";
+                          }}
+                        />
+                        <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                          {isUploadingImageFor === "new" ? "Uploading image..." : "Upload Image"}
+                        </span>
+                      </label>
+                      <label className="inline-flex items-center gap-2">
+                        <input
+                          type="file"
+                          accept=".glb,model/gltf-binary"
+                          className="hidden"
+                          onChange={(e) => {
+                            void handleUploadNewProductModel(e.target.files?.[0] ?? null);
+                            e.currentTarget.value = "";
+                          }}
+                        />
+                        <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                          {isUploadingModelFor === "new" ? "Uploading .glb..." : "Upload 360 .glb"}
+                        </span>
+                      </label>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Images JSON</p>
+                      <Textarea
+                        placeholder='[{"url":"...","altText":"..."}]'
+                        value={newProduct.imagesJson}
+                        onChange={(e) => setNewProduct((prev) => ({ ...prev, imagesJson: e.target.value }))}
+                        className="min-h-24"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-4 pt-2">
+                    <label className="inline-flex items-center gap-2 text-sm text-navy/70">
+                      <input
+                        type="checkbox"
+                        checked={newProduct.availableForSale}
+                        onChange={(e) => setNewProduct((prev) => ({ ...prev, availableForSale: e.target.checked }))}
+                      />
+                      Available for sale
+                    </label>
+                    <Button onClick={handleAddProduct} disabled={isAddingProduct} className="w-full md:w-auto">
+                      {isAddingProduct ? "Adding..." : "Add Product"}
+                    </Button>
+                  </div>
+                </>
+              ) : !productHandle ? (
+                <p className="text-sm text-navy/60">No product selected. Pick one from Products List.</p>
+              ) : isLoadingData ? (
+                <p className="text-sm text-navy/60">Loading product...</p>
+              ) : !editingProduct ? (
+                <p className="text-sm text-navy/60">Product not found for handle: {productHandle}</p>
+              ) : (
+                <>
+                  <p className="text-sm uppercase tracking-wide text-navy/60">Product: {editingProduct.title || editingProduct.handle}</p>
+                  <div className="rounded-md border border-navy/10 p-3 space-y-3">
+                    <p className="text-sm uppercase tracking-wide text-navy/60">Core Info</p>
+                    <div className="grid md:grid-cols-5 gap-3">
+                      <div className="space-y-1">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">Handle</p>
+                        <Input
+                          value={editingProduct.handle}
+                          onChange={(e) => {
+                            const handle = e.target.value;
+                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, handle } : p)));
+                          }}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">Title</p>
+                        <Input
+                          value={editingProduct.title}
+                          onChange={(e) => {
+                            const title = e.target.value;
+                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, title } : p)));
+                          }}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">Variant ID</p>
+                        <Input
+                          value={editingProduct.variant_id ?? ""}
+                          onChange={(e) => {
+                            const variant_id = e.target.value;
+                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, variant_id } : p)));
+                          }}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">Price</p>
+                        <Input
+                          value={String(editingProduct.price)}
+                          onChange={(e) => {
+                            const price = Number.parseFloat(e.target.value || "0");
+                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, price: Number.isNaN(price) ? 0 : price } : p)));
+                          }}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">Currency</p>
+                        <Input
+                          value={editingProduct.currency_code}
+                          onChange={(e) => {
+                            const currency_code = e.target.value.toUpperCase();
+                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, currency_code } : p)));
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="rounded-md border border-navy/10 p-3 space-y-3">
+                    <p className="text-sm uppercase tracking-wide text-navy/60">Descriptions</p>
+                    <div className="space-y-1">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Short Description</p>
+                      <Input
+                        placeholder="Short description shown under product title"
+                        value={editingProduct.description}
+                        onChange={(e) => {
+                          const description = e.target.value;
+                          setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, description } : p)));
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Full Description</p>
+                      <RichTextEditor
+                        value={editingProduct.full_description ?? ""}
+                        onChange={(e) => {
+                          const full_description = e;
+                          setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, full_description } : p)));
+                        }}
+                        placeholder="Full product description with formatting"
+                      />
+                    </div>
+                    <div className="rounded-md border border-navy/10 bg-secondary/20 p-3">
+                      <p className="text-sm uppercase tracking-wide text-navy/60 mb-2">Description Preview</p>
+                      <p className="text-sm text-navy/80 mb-3">{editingProduct.description || "No short description."}</p>
+                      <div
+                        className="text-sm text-navy/80 [&_b]:font-semibold [&_i]:italic [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1"
+                        dangerouslySetInnerHTML={{ __html: editingProduct.full_description || "" }}
+                      />
+                    </div>
+                  </div>
+                  <div className="rounded-md border border-navy/10 p-3 space-y-3">
+                    <p className="text-sm uppercase tracking-wide text-navy/60">Media and Visuals</p>
+                    <div className="space-y-1">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Images JSON</p>
+                      <Textarea
+                        value={JSON.stringify(editingProduct.images, null, 2)}
+                        onChange={(e) => {
+                          const parsed = parseImagesInput(e.target.value);
+                          if (!parsed) return;
+                          setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, images: parsed } : p)));
+                        }}
+                        className="min-h-24 font-mono text-sm"
+                      />
+                    </div>
+                    <div className="grid md:grid-cols-5 gap-3 items-end">
+                      <div className="space-y-1">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">Cap Color</p>
+                        <HexColorInput
+                          placeholder="#f5f5f5"
+                          value={editingProduct.cap_color ?? ""}
+                          onChange={(cap_color) => {
+                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, cap_color } : p)));
+                          }}
+                          fallbackColor="#f5f5f5"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">Fill Color</p>
+                        <HexColorInput
+                          placeholder="#7a86b8 or blank"
+                          value={editingProduct.fill_color ?? ""}
+                          onChange={(fill_color) => {
+                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, fill_color } : p)));
+                          }}
+                          fallbackColor="#7a86b8"
+                        />
+                      </div>
+                      <div className="space-y-1 md:col-span-2">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">3D Model URL</p>
+                        <Input
+                          value={editingProduct.model_3d_url ?? ""}
+                          onChange={(e) => {
+                            const model_3d_url = e.target.value;
+                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, model_3d_url } : p)));
+                          }}
+                        />
+                      </div>
+                      <label className="inline-flex items-center gap-2 text-sm text-navy/70">
+                        <input
+                          type="checkbox"
+                          checked={editingProduct.available_for_sale}
+                          onChange={(e) => {
+                            const available_for_sale = e.target.checked;
+                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, available_for_sale } : p)));
+                          }}
+                        />
+                        Available
+                      </label>
+                    </div>
+                    <div className="flex gap-3 flex-wrap">
+                      <label className="inline-flex items-center gap-2">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            void handleUploadProductImage(editingProduct, e.target.files?.[0] ?? null);
+                            e.currentTarget.value = "";
+                          }}
+                        />
+                        <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                          {isUploadingImageFor === editingProduct.id ? "Uploading image..." : "Upload Image"}
+                        </span>
+                      </label>
+                      <label className="inline-flex items-center gap-2">
+                        <input
+                          type="file"
+                          accept=".glb,model/gltf-binary"
+                          className="hidden"
+                          onChange={(e) => {
+                            void handleUploadProductModel(editingProduct, e.target.files?.[0] ?? null);
+                            e.currentTarget.value = "";
+                          }}
+                        />
+                        <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                          {isUploadingModelFor === editingProduct.id ? "Uploading .glb..." : "Upload 360 .glb"}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      onClick={() => void handleSaveProduct(editingProduct)}
+                      disabled={isSavingProduct === editingProduct.id}
+                    >
+                      {isSavingProduct === editingProduct.id ? "Saving..." : "Save"}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={() => void handleDeleteProduct(editingProduct)}
+                      disabled={isDeletingProduct === editingProduct.id}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {isDeletingProduct === editingProduct.id ? "Deleting..." : "Delete"}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+          )}
+
+          {isOrdersSection && (
+          <Card className="border-navy/15 bg-white/95 mb-6">
+            <CardHeader>
+              <CardTitle className="text-lg text-navy">Order Tracking</CardTitle>
+              <CardDescription>
+                View orders, mark fulfillment, and update statuses.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingData ? (
+                <p className="text-sm text-navy/60">Loading orders...</p>
+              ) : orders.length === 0 ? (
+                <p className="text-sm text-navy/60">No orders found yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {paginatedOrders.map((order) => (
+                    <div key={order.id} className="border border-navy/10 rounded-lg p-4 space-y-4 bg-white/80">
+                      <div className="grid gap-3 lg:grid-cols-4">
+                        <div className="text-sm text-navy/70 min-w-0">
+                          <p className="font-semibold text-navy break-words">
+                            {customerNameByEmail.get(order.customer_email ?? "") ?? order.customer_email ?? "Guest"}
+                          </p>
+                          {order.customer_email && (
+                            <p className="text-sm break-words">{order.customer_email}</p>
+                          )}
+                          <p className="text-sm break-words">{new Date(order.created_at).toLocaleString()}</p>
+                          {order.tracking_sent_at && (
+                            <p className="text-[11px] text-emerald-700 mt-1 break-words">
+                              Tracking sent: {new Date(order.tracking_sent_at).toLocaleString()}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-sm text-navy/70 min-w-0">
+                          <p className="font-semibold text-navy">{order.currency_code} {Number(order.total_amount).toFixed(2)}</p>
+                          <p className="text-sm">Items: {order.item_count}</p>
+                        </div>
+                        <div className="text-sm text-navy/70 min-w-0">
+                          <p className="text-sm uppercase tracking-wide text-navy/50 mb-1">Order ID</p>
+                          <Input value={order.external_id ?? "N/A"} disabled className="bg-secondary/40 w-full" />
+                        </div>
+                        <div className="text-sm text-navy/70 min-w-0">
+                          <p className="text-sm uppercase tracking-wide text-navy/50 mb-1">Status</p>
+                          <select
+                            value={order.status}
+                            onChange={(e) => {
+                              const status = e.target.value;
+                              setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status } : o)));
+                            }}
+                            className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          >
+                            <option value="pending">pending</option>
+                            <option value="processing">processing</option>
+                            <option value="fulfilled">fulfilled</option>
+                            <option value="cancelled">cancelled</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="rounded-md border border-navy/10 bg-secondary/20 p-3 space-y-2">
+                        <p className="text-sm uppercase tracking-wide text-navy/50">Ordered Products</p>
+                        {orderItemsByOrderId[order.id]?.length ? (
+                          <div className="space-y-2">
+                            {orderItemsByOrderId[order.id].map((item) => (
+                              <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 text-sm text-navy/70">
+                                <div className="min-w-0">
+                                  <p className="font-medium text-navy break-words">{item.product_title}</p>
+                                  <p className="text-sm break-words">{item.product_handle}{item.variant_id ? ` • ${item.variant_id}` : ""}</p>
+                                </div>
+                                <div className="text-right text-sm text-navy/60">
+                                  <p>Qty {item.quantity}</p>
+                                  <p>
+                                    {item.currency_code} {Number(item.line_total).toFixed(2)}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-navy/60">No line items stored yet for this order.</p>
+                        )}
+                      </div>
+
+                      <div className="grid gap-3 lg:grid-cols-[1.2fr_1fr_1fr_1.4fr] items-end">
+                        <Input
+                          placeholder="Tracking #"
+                          value={order.tracking_number ?? ""}
+                          onChange={(e) => {
+                            const tracking_number = e.target.value;
+                            setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, tracking_number } : o)));
+                          }}
+                        />
+                        <Input
+                          placeholder="Carrier"
+                          value={order.tracking_carrier ?? ""}
+                          onChange={(e) => {
+                            const tracking_carrier = e.target.value;
+                            setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, tracking_carrier } : o)));
+                          }}
+                        />
+                        <Input
+                          placeholder="https://tracking-link"
+                          value={order.tracking_url ?? ""}
+                          onChange={(e) => {
+                            const tracking_url = e.target.value;
+                            setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, tracking_url } : o)));
+                          }}
+                        />
+                        <div className="flex flex-wrap gap-2 justify-start lg:justify-end">
+                          <Button
+                            variant="outline"
+                            onClick={() => void handleMarkFulfilled(order)}
+                            disabled={isSavingOrder === order.id || order.status === "fulfilled"}
+                          >
+                            Fulfill Shipment
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            onClick={() => void handleCancelAndRefundOrder(order)}
+                            disabled={isSavingOrder === order.id || order.status === "cancelled"}
+                          >
+                            {order.status === "cancelled" ? "Cancelled" : "Cancel & Refund"}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => void handleSendTrackingEmail(order)}
+                            disabled={isSavingOrder === order.id || !order.customer_email}
+                          >
+                            Send Tracking via Email
+                          </Button>
+                          <Button
+                            onClick={() => void handleSaveOrderStatus(order)}
+                            disabled={isSavingOrder === order.id}
+                          >
+                            {isSavingOrder === order.id ? "Saving..." : "Update"}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {totalOrderPages > 1 && (
+                    <div className="flex items-center justify-between gap-3 pt-2">
+                      <p className="text-sm text-navy/60">
+                        Page {ordersPage} of {totalOrderPages}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          className="border-navy/20 text-navy hover:bg-navy/5"
+                          disabled={ordersPage === 1}
+                          onClick={() => setOrdersPage((prev) => Math.max(1, prev - 1))}
+                        >
+                          Previous
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="border-navy/20 text-navy hover:bg-navy/5"
+                          disabled={ordersPage >= totalOrderPages}
+                          onClick={() => setOrdersPage((prev) => Math.min(totalOrderPages, prev + 1))}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          )}
+
+          {isUsersSection && (
+          <Card className="border-navy/15 bg-white/95 mb-6">
+            <CardHeader>
+              <CardTitle className="text-lg text-navy">User Management</CardTitle>
+              <CardDescription>
+                View registered customer profiles synced from authenticated sessions.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingData ? (
+                <p className="text-sm text-navy/60">Loading customer profiles...</p>
+              ) : customerProfiles.length === 0 ? (
+                <p className="text-sm text-navy/60">No customer profiles found yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {customerProfiles.map((profile) => {
+                    const fullName = [profile.first_name, profile.last_name]
+                      .filter(Boolean)
+                      .join(" ")
+                      .trim() || "Customer";
+
+                    return (
+                      <div key={profile.id} className="grid md:grid-cols-4 gap-3 border border-navy/10 rounded-lg p-3 items-center">
+                        <div className="text-sm text-navy/70">
+                          <p className="font-semibold text-navy">{fullName}</p>
+                          <p className="text-sm">{profile.email}</p>
+                        </div>
+                        <div className="text-sm text-navy/70">
+                          <p className="text-sm uppercase tracking-wide text-navy/50">Registered</p>
+                          <p>{new Date(profile.created_at).toLocaleString()}</p>
+                        </div>
+                        <div className="text-sm text-navy/70">
+                          <p className="text-sm uppercase tracking-wide text-navy/50">Last Sign In</p>
+                          <p>{profile.last_sign_in_at ? new Date(profile.last_sign_in_at).toLocaleString() : "N/A"}</p>
+                        </div>
+                        <Input value={profile.id} disabled className="bg-secondary/40" />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          )}
+
+          {isInsightsSection && (
+          <div className="grid md:grid-cols-3 gap-5">
+            <Card className="border-navy/15 bg-white/95">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2 text-navy">
+                  <UsersRound className="h-5 w-5 text-orange" /> Customer Access
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-navy/70 space-y-2">
+                <p>
+                  <span className="font-semibold text-navy">Total profiles:</span> {insights.totalCustomers}
+                </p>
+                <p>
+                  <span className="font-semibold text-navy">Signed in last 30 days:</span> {insights.customersWithRecentSignIn}
+                </p>
+                <p className="text-sm text-navy/60">
+                  Active sign-ins are based on `last_sign_in_at` in customer profiles.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-navy/15 bg-white/95">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2 text-navy">
+                  <BarChart3 className="h-5 w-5 text-orange" /> Sales Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-navy/70 space-y-2">
+                <p>
+                  <span className="font-semibold text-navy">Orders (7d):</span> {insights.ordersLast7Days}
+                </p>
+                <p>
+                  <span className="font-semibold text-navy">Revenue (7d):</span> {metrics.currencyCode} {insights.revenueLast7Days.toFixed(2)}
+                </p>
+                <p>
+                  <span className="font-semibold text-navy">AOV (7d):</span> {metrics.currencyCode} {insights.averageOrderValue.toFixed(2)}
+                </p>
+                <p>
+                  <span className="font-semibold text-navy">Top product:</span>{" "}
+                  {insights.topProduct ? `${insights.topProduct.title} (${insights.topProduct.qty} sold)` : "No item data yet"}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-navy/15 bg-white/95">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2 text-navy">
+                  <ShieldAlert className="h-5 w-5 text-orange" /> Security Monitor
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-navy/70 space-y-2">
+                <p>
+                  <span className="font-semibold text-navy">Cancelled orders:</span> {insights.cancelledOrders}
+                </p>
+                <p>
+                  <span className="font-semibold text-navy">Fulfilled without tracking:</span> {insights.fulfilledWithoutTracking}
+                </p>
+                <p className="text-sm text-navy/60">
+                  Use this panel as an operational risk checklist while deeper security logs are added.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+          )}
+        </div>
+      </main>
+      <SiteFooter />
+    </div>
+  );
+};
+
+export default AdminDashboard;
