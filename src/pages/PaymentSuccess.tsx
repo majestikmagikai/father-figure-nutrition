@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CheckCircle2, Loader2 } from "lucide-react";
+import { loadStripe } from "@stripe/stripe-js";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +14,8 @@ import { toast } from "sonner";
 const REDIRECT_DELAY_MS = 5000;
 const CHECKOUT_SNAPSHOT_KEY = "ff-checkout-cart-snapshot";
 const CHECKOUT_ORDER_TOKEN_KEY = "ff-checkout-order-token";
+const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 const PaymentSuccess = () => {
   const navigate = useNavigate();
@@ -22,6 +25,7 @@ const PaymentSuccess = () => {
   useEffect(() => {
     const url = new URL(window.location.href);
     const paymentIntentId = url.searchParams.get("payment_intent") ?? undefined;
+    const paymentIntentClientSecret = url.searchParams.get("payment_intent_client_secret") ?? undefined;
     const clientOrderToken = sessionStorage.getItem(CHECKOUT_ORDER_TOKEN_KEY) ?? undefined;
     const dedupeKey = paymentIntentId ? `ff-order-saved-${paymentIntentId}` : null;
     const snapshotItems = (() => {
@@ -39,9 +43,64 @@ const PaymentSuccess = () => {
     let isActive = true;
 
     const saveOrderIfNeeded = async () => {
-      if (sourceItems.length === 0) return;
-
       if (dedupeKey && sessionStorage.getItem(dedupeKey)) {
+        return;
+      }
+
+      let normalizedItems = sourceItems;
+
+      if (normalizedItems.length === 0 && paymentIntentClientSecret && stripePromise) {
+        const stripe = await stripePromise;
+        if (stripe) {
+          const result = await stripe.retrievePaymentIntent(paymentIntentClientSecret);
+          const intent = result.paymentIntent;
+
+          if (intent?.status === "succeeded") {
+            const metadata = (intent as unknown as { metadata?: Record<string, string> }).metadata ?? {};
+            const cartItemsRaw = metadata.cart_items ?? "[]";
+
+            try {
+              const parsed = JSON.parse(cartItemsRaw) as Array<{
+                h?: unknown;
+                t?: unknown;
+                v?: unknown;
+                q?: unknown;
+                p?: unknown;
+                c?: unknown;
+                i?: unknown;
+              }>;
+
+              if (Array.isArray(parsed)) {
+                normalizedItems = parsed
+                  .filter((entry) =>
+                    typeof entry?.h === "string" &&
+                    typeof entry?.t === "string" &&
+                    typeof entry?.q === "number" &&
+                    typeof entry?.p === "number" &&
+                    typeof entry?.c === "string",
+                  )
+                  .map((entry) => ({
+                    productId: `prod-${String(entry.h)}`,
+                    handle: String(entry.h),
+                    title: String(entry.t),
+                    image: {
+                      url: typeof entry.i === "string" ? entry.i : "",
+                      altText: String(entry.t),
+                    },
+                    variantId: typeof entry.v === "string" ? entry.v : "",
+                    price: (Number(entry.p) / 100).toFixed(2),
+                    currencyCode: String(entry.c).toUpperCase(),
+                    quantity: Number(entry.q),
+                  }));
+              }
+            } catch {
+              normalizedItems = [];
+            }
+          }
+        }
+      }
+
+      if (normalizedItems.length === 0) {
         return;
       }
 
@@ -51,9 +110,9 @@ const PaymentSuccess = () => {
         customerEmail = data.session?.user?.email ?? null;
       }
 
-      const totalAmount = sourceItems.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
-      const itemCount = sourceItems.reduce((sum, item) => sum + item.quantity, 0);
-      const currencyCode = sourceItems[0]?.currencyCode ?? "USD";
+      const totalAmount = normalizedItems.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
+      const itemCount = normalizedItems.reduce((sum, item) => sum + item.quantity, 0);
+      const currencyCode = normalizedItems[0]?.currencyCode ?? "USD";
 
       let orderId: string | null = null;
 
@@ -101,7 +160,7 @@ const PaymentSuccess = () => {
       try {
         await upsertOrderItems(
           orderId,
-          sourceItems.map((item) => ({
+          normalizedItems.map((item) => ({
             productHandle: item.handle,
             productTitle: item.title,
             variantId: item.variantId,
