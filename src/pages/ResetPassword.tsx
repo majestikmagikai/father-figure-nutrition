@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -39,6 +40,7 @@ type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
 const ResetPassword = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isReady, setIsReady] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
 
@@ -64,6 +66,36 @@ const ResetPassword = () => {
     let isMounted = true;
 
     const checkRecoverySession = async () => {
+      const searchParams = new URLSearchParams(location.search);
+      const hashParams = new URLSearchParams((location.hash || "").replace(/^#/, ""));
+      const code = searchParams.get("code");
+      const accessToken = hashParams.get("access_token");
+      const refreshToken = hashParams.get("refresh_token");
+
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (!isMounted) return;
+
+        if (error) {
+          toast.error("Recovery link is invalid or expired. Request a new reset email.");
+          navigate("/forgot-password", { replace: true });
+          return;
+        }
+      } else if (accessToken && refreshToken) {
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+
+        if (!isMounted) return;
+
+        if (error) {
+          toast.error("Recovery link is invalid or expired. Request a new reset email.");
+          navigate("/forgot-password", { replace: true });
+          return;
+        }
+      }
+
       const { data } = await supabase.auth.getSession();
       if (!isMounted) return;
 
@@ -81,7 +113,7 @@ const ResetPassword = () => {
     return () => {
       isMounted = false;
     };
-  }, [navigate]);
+  }, [location.hash, location.search, navigate]);
 
   const onSubmit = async (values: ResetPasswordFormValues) => {
     if (!supabase) return;
