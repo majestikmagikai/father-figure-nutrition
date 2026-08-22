@@ -10,6 +10,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { isAdminUser } from "@/lib/auth";
+import {
+  getSessionIdFromAccessToken,
+  revokeAllSessionsForUser,
+  revokeUserSessionRecord,
+  type UserSessionRecord,
+} from "@/lib/sessionManager";
 import { toast } from "sonner";
 import type { User } from "@supabase/supabase-js";
 
@@ -50,6 +56,11 @@ const Dashboard = () => {
   const [newRoutineNotes, setNewRoutineNotes] = useState("");
   const [newRoutineTime, setNewRoutineTime] = useState("08:00");
   const [newRoutineDays, setNewRoutineDays] = useState<string[]>(["Mon", "Tue", "Wed", "Thu", "Fri"]);
+  const [sessions, setSessions] = useState<UserSessionRecord[]>([]);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(true);
+  const [isRevokingSessionId, setIsRevokingSessionId] = useState<string | null>(null);
+  const [isRevokingAllSessions, setIsRevokingAllSessions] = useState(false);
+  const [currentAuthSessionId, setCurrentAuthSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!supabase) return;
@@ -60,6 +71,7 @@ const Dashboard = () => {
       const { data } = await supabase.auth.getSession();
       if (!isMounted) return;
       setUser(data.session?.user ?? null);
+      setCurrentAuthSessionId(getSessionIdFromAccessToken(data.session?.access_token));
     };
 
     syncUser();
@@ -166,6 +178,103 @@ const Dashboard = () => {
       isMounted = false;
     };
   }, [user?.id]);
+
+  useEffect(() => {
+    if (!supabase || !user?.id) {
+      setSessions([]);
+      setIsLoadingSessions(false);
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadSessions = async () => {
+      setIsLoadingSessions(true);
+      const { data, error } = await supabase
+        .from("user_sessions")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("last_seen_at", { ascending: false });
+
+      if (!isMounted) return;
+
+      if (error) {
+        setSessions([]);
+        toast.error("Could not load active sessions.");
+      } else {
+        setSessions(data ?? []);
+      }
+
+      setIsLoadingSessions(false);
+    };
+
+    void loadSessions();
+
+    const interval = window.setInterval(() => {
+      void loadSessions();
+    }, 15000);
+
+    return () => {
+      isMounted = false;
+      window.clearInterval(interval);
+    };
+  }, [user?.id]);
+
+  const handleRevokeSession = async (sessionRecord: UserSessionRecord) => {
+    if (!user?.id) return;
+
+    const isCurrentSession = sessionRecord.auth_session_id === currentAuthSessionId;
+    const accepted = window.confirm(
+      isCurrentSession
+        ? "Revoke this current session and sign out now?"
+        : "Revoke this session?",
+    );
+    if (!accepted) return;
+
+    setIsRevokingSessionId(sessionRecord.id);
+    try {
+      await revokeUserSessionRecord(sessionRecord.id, "Revoked by account owner");
+      toast.success("Session revoked.");
+      setSessions((prev) =>
+        prev.map((entry) =>
+          entry.id === sessionRecord.id
+            ? { ...entry, revoked_at: new Date().toISOString(), revoked_by: user.id }
+            : entry,
+        ),
+      );
+    } catch {
+      toast.error("Could not revoke session.");
+    } finally {
+      setIsRevokingSessionId(null);
+    }
+  };
+
+  const handleRevokeOtherSessions = async () => {
+    if (!user?.id) return;
+
+    const accepted = window.confirm("Revoke all other active sessions on this account?");
+    if (!accepted) return;
+
+    setIsRevokingAllSessions(true);
+    try {
+      const revokedCount = await revokeAllSessionsForUser(user.id, "Revoked by account owner");
+      toast.success(`Revoked ${revokedCount} session${revokedCount === 1 ? "" : "s"}.`);
+      setSessions((prev) =>
+        prev.map((entry) => {
+          if (entry.auth_session_id === currentAuthSessionId || entry.revoked_at) return entry;
+          return {
+            ...entry,
+            revoked_at: new Date().toISOString(),
+            revoked_by: user.id,
+          };
+        }),
+      );
+    } catch {
+      toast.error("Could not revoke other sessions.");
+    } finally {
+      setIsRevokingAllSessions(false);
+    }
+  };
 
   const toggleNewRoutineDay = (day: string) => {
     setNewRoutineDays((prev) => {
@@ -619,6 +728,72 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           </div>
+
+          <Card className="border-navy/15 bg-white/95 mt-5">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2 text-navy">
+                <ShieldCheck className="h-5 w-5 text-orange" /> Session Security
+              </CardTitle>
+              <CardDescription>
+                Review where your account is signed in and revoke old or unrecognized sessions.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm text-navy/70">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <p>Current session is marked below.</p>
+                <Button
+                  variant="outline"
+                  className="border-navy/20 text-navy hover:bg-navy/5"
+                  onClick={() => void handleRevokeOtherSessions()}
+                  disabled={isRevokingAllSessions || sessions.length === 0}
+                >
+                  {isRevokingAllSessions ? "Revoking..." : "Revoke Other Sessions"}
+                </Button>
+              </div>
+
+              {isLoadingSessions ? (
+                <p>Loading sessions...</p>
+              ) : sessions.length === 0 ? (
+                <p>No session records yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {sessions.map((sessionRecord) => {
+                    const isCurrent = sessionRecord.auth_session_id === currentAuthSessionId;
+                    const isRevoked = Boolean(sessionRecord.revoked_at);
+
+                    return (
+                      <div key={sessionRecord.id} className="rounded-md border border-navy/10 p-3 bg-white/80">
+                        <div className="flex items-start justify-between gap-3 flex-wrap">
+                          <div className="space-y-1">
+                            <p className="font-medium text-navy">
+                              {isCurrent ? "Current Device" : "Signed-in Device"}
+                              {isRevoked ? " (Revoked)" : ""}
+                            </p>
+                            <p className="text-sm break-words">{sessionRecord.user_agent ?? "Unknown device"}</p>
+                            <p className="text-sm">
+                              Last active: {new Date(sessionRecord.last_seen_at).toLocaleString()}
+                            </p>
+                            {isRevoked && (
+                              <p className="text-sm text-rose-700">
+                                Revoked: {new Date(sessionRecord.revoked_at as string).toLocaleString()}
+                              </p>
+                            )}
+                          </div>
+                          <Button
+                            variant={isRevoked ? "outline" : "destructive"}
+                            onClick={() => void handleRevokeSession(sessionRecord)}
+                            disabled={isRevokingSessionId === sessionRecord.id || isRevoked}
+                          >
+                            {isRevoked ? "Revoked" : isRevokingSessionId === sessionRecord.id ? "Revoking..." : "Revoke"}
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </main>
       <SiteFooter />

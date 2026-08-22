@@ -6,6 +6,7 @@ export type InventoryProduct = Database["public"]["Tables"]["inventory_products"
 export type OrderRecord = Database["public"]["Tables"]["orders"]["Row"];
 export type OrderItemRecord = Database["public"]["Tables"]["order_items"]["Row"];
 export type CustomerProfile = Database["public"]["Tables"]["customer_profiles"]["Row"];
+export type UserSessionRecord = Database["public"]["Tables"]["user_sessions"]["Row"];
 
 export type DashboardMetrics = {
   totalSales: number;
@@ -184,6 +185,19 @@ export const fetchCustomerProfiles = async (): Promise<CustomerProfile[]> => {
   return data ?? [];
 };
 
+export const fetchUserSessions = async (): Promise<UserSessionRecord[]> => {
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("user_sessions")
+    .select("*")
+    .order("last_seen_at", { ascending: false });
+
+  if (error) throw error;
+
+  return data ?? [];
+};
+
 export const upsertOwnCustomerProfile = async (user: User) => {
   if (!supabase) return;
 
@@ -208,6 +222,30 @@ export const upsertOwnCustomerProfile = async (user: User) => {
     );
 
   if (error) throw error;
+};
+
+export const revokeUserSession = async (input: { sessionRecordId: string; reason?: string | null }) => {
+  if (!supabase) return;
+
+  const { error } = await supabase.rpc("revoke_user_session", {
+    p_session_record_id: input.sessionRecordId,
+    p_reason: input.reason ?? null,
+  });
+
+  if (error) throw error;
+};
+
+export const revokeAllUserSessions = async (input: { userId: string; reason?: string | null }) => {
+  if (!supabase) return 0;
+
+  const { data, error } = await supabase.rpc("revoke_all_user_sessions", {
+    p_target_user_id: input.userId,
+    p_reason: input.reason ?? null,
+  });
+
+  if (error) throw error;
+
+  return typeof data === "number" ? data : 0;
 };
 
 export const updateOrderStatus = async (input: {

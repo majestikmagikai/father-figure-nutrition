@@ -16,6 +16,7 @@ import AdminDashboard from "./pages/AdminDashboard.tsx";
 import Checkout from "./pages/Checkout.tsx";
 import PaymentSuccess from "./pages/PaymentSuccess.tsx";
 import { RequireAdmin, RequireAuth } from "@/components/auth/RouteGuards";
+import { startSessionRevocationMonitor } from "@/lib/sessionManager";
 
 const queryClient = new QueryClient();
 
@@ -64,34 +65,41 @@ const StripeReturnBridge = () => {
   return null;
 };
 
-const AppRoutes = () => (
-  <>
-    <ScrollToTop />
-    <OAuthHashBridge />
-    <StripeReturnBridge />
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/product/:handle" element={<ProductDetail />} /> 
-      <Route path="/login" element={<Login />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/auth/callback" element={<AuthCallback />} />
-      <Route path="/signup" element={<SignUp />} />
-      <Route element={<RequireAuth />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-      </Route>
-      <Route element={<RequireAdmin />}>
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/:section" element={<AdminDashboard />} />
-        <Route path="/admin/:section/:productHandle" element={<AdminDashboard />} />
-      </Route>
-      <Route path="/checkout" element={<Checkout />} />
-      <Route path="/checkout/success" element={<PaymentSuccess />} />
-      <Route path="/payment-success" element={<PaymentSuccess />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-  </>
-);
+const AppRoutes = () => {
+  useEffect(() => {
+    const cleanup = startSessionRevocationMonitor();
+    return cleanup;
+  }, []);
+
+  return (
+    <>
+      <ScrollToTop />
+      <OAuthHashBridge />
+      <StripeReturnBridge />
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/product/:handle" element={<ProductDetail />} /> 
+        <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route element={<RequireAuth />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+        </Route>
+        <Route element={<RequireAdmin />}>
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/:section" element={<AdminDashboard />} />
+          <Route path="/admin/:section/:productHandle" element={<AdminDashboard />} />
+        </Route>
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/checkout/success" element={<PaymentSuccess />} />
+        <Route path="/payment-success" element={<PaymentSuccess />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

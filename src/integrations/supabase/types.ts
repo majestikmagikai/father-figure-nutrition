@@ -224,6 +224,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_sessions: {
+        Row: {
+          auth_session_id: string
+          created_at: string
+          email: string | null
+          id: string
+          last_seen_at: string
+          revoke_reason: string | null
+          revoked_at: string | null
+          revoked_by: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth_session_id: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          last_seen_at?: string
+          revoke_reason?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth_session_id?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          last_seen_at?: string
+          revoke_reason?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       ingredients: {
         Row: {
           benefits: Json | null
@@ -400,7 +439,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin_user: {
+        Args: { target_user_id?: string }
+        Returns: boolean
+      }
+      revoke_all_user_sessions: {
+        Args: { p_reason?: string; p_target_user_id: string }
+        Returns: number
+      }
+      revoke_user_session: {
+        Args: { p_reason?: string; p_session_record_id: string }
+        Returns: string
+      }
+      upsert_current_session: {
+        Args: { p_email?: string; p_user_agent?: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

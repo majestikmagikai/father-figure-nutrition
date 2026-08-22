@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+const RECOVERY_COOLDOWN_MS = 60 * 1000;
 
 const normalizeInput = (value: string) =>
   value
@@ -38,6 +40,20 @@ type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
 const ForgotPassword = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [cooldownUntil, setCooldownUntil] = useState<number>(0);
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const saved = Number(localStorage.getItem("ff-forgot-password-cooldown-until") ?? "0");
+    if (Number.isFinite(saved) && saved > Date.now()) {
+      setCooldownUntil(saved);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const {
     register,
@@ -50,6 +66,12 @@ const ForgotPassword = () => {
   });
 
   const onSubmit = async (values: ForgotPasswordFormValues) => {
+    if (cooldownUntil > Date.now()) {
+      const seconds = Math.max(1, Math.ceil((cooldownUntil - Date.now()) / 1000));
+      toast.error(`Please wait ${seconds}s before requesting another recovery email.`);
+      return;
+    }
+
     if (!isSupabaseConfigured || !supabase) {
       toast.error("Password reset is unavailable right now. Please contact support.");
       return;
@@ -62,12 +84,24 @@ const ForgotPassword = () => {
     if (error) {
       const detail = error.message?.trim() || "Unknown error";
       toast.error(`Could not start password recovery: ${detail}`);
+
+      if (/rate limit/i.test(detail)) {
+        const nextCooldown = Date.now() + RECOVERY_COOLDOWN_MS;
+        setCooldownUntil(nextCooldown);
+        localStorage.setItem("ff-forgot-password-cooldown-until", String(nextCooldown));
+      }
       return;
     }
+
+    const nextCooldown = Date.now() + RECOVERY_COOLDOWN_MS;
+    setCooldownUntil(nextCooldown);
+    localStorage.setItem("ff-forgot-password-cooldown-until", String(nextCooldown));
 
     setIsSubmitted(true);
     toast.success("Recovery email sent. Check your inbox.");
   };
+
+  const cooldownRemainingSeconds = Math.max(0, Math.ceil((cooldownUntil - now) / 1000));
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -110,10 +144,14 @@ const ForgotPassword = () => {
                   <Button
                     type="submit"
                     size="lg"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || cooldownRemainingSeconds > 0}
                     className="w-full bg-orange text-white hover:opacity-90 shadow-cta font-display uppercase tracking-wider"
                   >
-                    {isSubmitting ? "Sending..." : "Send Recovery Email"}
+                    {isSubmitting
+                      ? "Sending..."
+                      : cooldownRemainingSeconds > 0
+                        ? `Retry in ${cooldownRemainingSeconds}s`
+                        : "Send Recovery Email"}
                   </Button>
                 </form>
               )}

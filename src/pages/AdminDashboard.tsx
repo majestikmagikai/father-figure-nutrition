@@ -18,9 +18,13 @@ import {
   fetchInventoryProducts,
   fetchOrderItems,
   fetchOrders,
+  fetchUserSessions,
   type InventoryProduct,
   type OrderItemRecord,
   type OrderRecord,
+  type UserSessionRecord,
+  revokeAllUserSessions,
+  revokeUserSession,
   uploadProductAsset,
   updateInventoryProductSortOrders,
   updateOrderTracking,
@@ -212,6 +216,9 @@ const AdminDashboard = () => {
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItemRecord[]>([]);
   const [customerProfiles, setCustomerProfiles] = useState<CustomerProfile[]>([]);
+  const [userSessions, setUserSessions] = useState<UserSessionRecord[]>([]);
+  const [isRevokingSessionId, setIsRevokingSessionId] = useState<string | null>(null);
+  const [isRevokingAllForUserId, setIsRevokingAllForUserId] = useState<string | null>(null);
   const [metrics, setMetrics] = useState({
     totalSales: 0,
     totalOrders: 0,
@@ -258,12 +265,13 @@ const AdminDashboard = () => {
       setIsLoadingData(true);
     }
     try {
-      const [nextMetrics, nextProductsRaw, nextOrders, nextOrderItems, nextCustomerProfiles] = await Promise.all([
+      const [nextMetrics, nextProductsRaw, nextOrders, nextOrderItems, nextCustomerProfiles, nextUserSessions] = await Promise.all([
         fetchDashboardMetrics(),
         fetchInventoryProducts(),
         fetchOrders(),
         fetchOrderItems(),
         fetchCustomerProfiles(),
+        fetchUserSessions(),
       ]);
 
       setMetrics(nextMetrics);
@@ -271,6 +279,7 @@ const AdminDashboard = () => {
       setOrders(nextOrders);
       setOrderItems(nextOrderItems);
       setCustomerProfiles(nextCustomerProfiles);
+      setUserSessions(nextUserSessions);
     } catch {
       if (!silent) {
         toast.error("Could not load dashboard data from Supabase.");
@@ -410,6 +419,44 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleRevokeSession = async (sessionRecord: UserSessionRecord) => {
+    const accepted = window.confirm("Revoke this session?");
+    if (!accepted) return;
+
+    setIsRevokingSessionId(sessionRecord.id);
+    try {
+      await revokeUserSession({
+        sessionRecordId: sessionRecord.id,
+        reason: "Revoked by admin",
+      });
+      toast.success("Session revoked.");
+      await reloadAdminData({ silent: true });
+    } catch {
+      toast.error("Could not revoke session.");
+    } finally {
+      setIsRevokingSessionId(null);
+    }
+  };
+
+  const handleRevokeAllSessionsForUser = async (userId: string, email: string) => {
+    const accepted = window.confirm(`Revoke all active sessions for ${email}?`);
+    if (!accepted) return;
+
+    setIsRevokingAllForUserId(userId);
+    try {
+      const revokedCount = await revokeAllUserSessions({
+        userId,
+        reason: "Revoked by admin",
+      });
+      toast.success(`Revoked ${revokedCount} session${revokedCount === 1 ? "" : "s"}.`);
+      await reloadAdminData({ silent: true });
+    } catch {
+      toast.error("Could not revoke user sessions.");
+    } finally {
+      setIsRevokingAllForUserId(null);
+    }
+  };
+
   useEffect(() => {
     void reloadAdminData();
   }, []);
@@ -444,6 +491,14 @@ const AdminDashboard = () => {
       }),
     );
   }, [customerProfiles]);
+
+  const sessionsByUserId = useMemo(() => {
+    return userSessions.reduce<Record<string, UserSessionRecord[]>>((accumulator, sessionRecord) => {
+      accumulator[sessionRecord.user_id] ||= [];
+      accumulator[sessionRecord.user_id].push(sessionRecord);
+      return accumulator;
+    }, {});
+  }, [userSessions]);
 
   const orderItemsByOrderId = useMemo(() => {
     return orderItems.reduce<Record<string, OrderItemRecord[]>>((accumulator, item) => {
@@ -1753,22 +1808,78 @@ const AdminDashboard = () => {
                       .filter(Boolean)
                       .join(" ")
                       .trim() || "Customer";
+                    const profileSessions = sessionsByUserId[profile.id] ?? [];
+                    const activeSessionCount = profileSessions.filter((sessionRecord) => !sessionRecord.revoked_at).length;
 
                     return (
-                      <div key={profile.id} className="grid md:grid-cols-4 gap-3 border border-navy/10 rounded-lg p-3 items-center">
-                        <div className="text-sm text-navy/70">
-                          <p className="font-semibold text-navy">{fullName}</p>
-                          <p className="text-sm">{profile.email}</p>
+                      <div key={profile.id} className="space-y-3 border border-navy/10 rounded-lg p-3">
+                        <div className="grid md:grid-cols-4 gap-3 items-center">
+                          <div className="text-sm text-navy/70">
+                            <p className="font-semibold text-navy">{fullName}</p>
+                            <p className="text-sm">{profile.email}</p>
+                          </div>
+                          <div className="text-sm text-navy/70">
+                            <p className="text-sm uppercase tracking-wide text-navy/50">Registered</p>
+                            <p>{new Date(profile.created_at).toLocaleString()}</p>
+                          </div>
+                          <div className="text-sm text-navy/70">
+                            <p className="text-sm uppercase tracking-wide text-navy/50">Last Sign In</p>
+                            <p>{profile.last_sign_in_at ? new Date(profile.last_sign_in_at).toLocaleString() : "N/A"}</p>
+                          </div>
+                          <Input value={profile.id} disabled className="bg-secondary/40" />
                         </div>
-                        <div className="text-sm text-navy/70">
-                          <p className="text-sm uppercase tracking-wide text-navy/50">Registered</p>
-                          <p>{new Date(profile.created_at).toLocaleString()}</p>
+
+                        <div className="rounded-md border border-navy/10 bg-secondary/20 p-3 space-y-2">
+                          <div className="flex items-center justify-between gap-3 flex-wrap">
+                            <p className="text-sm text-navy/70">
+                              Active sessions: <span className="font-semibold text-navy">{activeSessionCount}</span>
+                            </p>
+                            <Button
+                              variant="outline"
+                              className="border-navy/20 text-navy hover:bg-navy/5"
+                              onClick={() => void handleRevokeAllSessionsForUser(profile.id, profile.email)}
+                              disabled={isRevokingAllForUserId === profile.id || activeSessionCount === 0}
+                            >
+                              {isRevokingAllForUserId === profile.id ? "Revoking..." : "Revoke All Sessions"}
+                            </Button>
+                          </div>
+
+                          {profileSessions.length === 0 ? (
+                            <p className="text-sm text-navy/60">No session records for this user yet.</p>
+                          ) : (
+                            <div className="space-y-2">
+                              {profileSessions.map((sessionRecord) => (
+                                <div key={sessionRecord.id} className="rounded-md border border-navy/10 bg-white/80 p-2.5">
+                                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                                    <div className="text-sm text-navy/70 space-y-0.5">
+                                      <p className="font-medium text-navy">
+                                        {sessionRecord.revoked_at ? "Revoked session" : "Active session"}
+                                      </p>
+                                      <p className="break-words">{sessionRecord.user_agent ?? "Unknown device"}</p>
+                                      <p>Last active: {new Date(sessionRecord.last_seen_at).toLocaleString()}</p>
+                                      {sessionRecord.revoked_at && (
+                                        <p className="text-rose-700">
+                                          Revoked: {new Date(sessionRecord.revoked_at).toLocaleString()}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <Button
+                                      variant={sessionRecord.revoked_at ? "outline" : "destructive"}
+                                      onClick={() => void handleRevokeSession(sessionRecord)}
+                                      disabled={isRevokingSessionId === sessionRecord.id || Boolean(sessionRecord.revoked_at)}
+                                    >
+                                      {sessionRecord.revoked_at
+                                        ? "Revoked"
+                                        : isRevokingSessionId === sessionRecord.id
+                                          ? "Revoking..."
+                                          : "Revoke"}
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                        <div className="text-sm text-navy/70">
-                          <p className="text-sm uppercase tracking-wide text-navy/50">Last Sign In</p>
-                          <p>{profile.last_sign_in_at ? new Date(profile.last_sign_in_at).toLocaleString() : "N/A"}</p>
-                        </div>
-                        <Input value={profile.id} disabled className="bg-secondary/40" />
                       </div>
                     );
                   })}
