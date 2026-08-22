@@ -63,6 +63,13 @@ const normalizeRuntimeAssetUrl = (value: string) => {
   return url;
 };
 
+const isAdminUploadedProductAssetUrl = (value: string) => {
+  const url = value.trim();
+  if (!url) return false;
+
+  return /\/storage\/v1\/object\/public\/product-assets\//i.test(url);
+};
+
 const parseImages = (images: Json) => {
   if (!Array.isArray(images)) return [] as Array<{ url: string; altText: string }>;
   const parsed = images
@@ -71,7 +78,12 @@ const parseImages = (images: Json) => {
       url: normalizeRuntimeAssetUrl(entry.url),
       altText: entry.altText.trim(),
     }))
-    .filter((entry) => entry.altText.length > 0 && isRuntimeAssetUrl(entry.url));
+    .filter(
+      (entry) =>
+        entry.altText.length > 0 &&
+        isRuntimeAssetUrl(entry.url) &&
+        isAdminUploadedProductAssetUrl(entry.url),
+    );
   return parsed;
 };
 
