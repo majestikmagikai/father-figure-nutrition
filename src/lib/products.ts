@@ -145,8 +145,21 @@ const isRuntimeAssetUrl = (value: string) => {
   if (/^https?:\/\//i.test(url)) return true;
   if (url.startsWith("/")) return true;
   if (url.startsWith("assets/")) return true;
+  if (url.startsWith("./assets/")) return true;
 
   return false;
+};
+
+const normalizeRuntimeAssetUrl = (value: string) => {
+  const url = value.trim();
+  if (!url) return "";
+
+  if (/^https?:\/\//i.test(url)) return url;
+  if (url.startsWith("/")) return url;
+  if (url.startsWith("./assets/")) return `/${url.replace(/^\.\//, "")}`;
+  if (url.startsWith("assets/")) return `/${url}`;
+
+  return url;
 };
 
 const parseImages = (images: Json, fallback: Array<{ url: string; altText: string }>) => {
@@ -154,7 +167,7 @@ const parseImages = (images: Json, fallback: Array<{ url: string; altText: strin
   const parsed = images
     .filter(isImageEntry)
     .map((entry) => ({
-      url: entry.url.trim(),
+      url: normalizeRuntimeAssetUrl(entry.url),
       altText: entry.altText.trim(),
     }))
     .filter((entry) => entry.altText.length > 0 && isRuntimeAssetUrl(entry.url));
@@ -162,11 +175,17 @@ const parseImages = (images: Json, fallback: Array<{ url: string; altText: strin
 };
 
 const normalizeModelUrl = (modelUrl: string | null | undefined, fallbackModelUrl: string | null | undefined) => {
+  const looksLikeModelFile = (value: string) => /\.(glb|gltf)(\?|#|$)/i.test(value);
+
   const candidate = modelUrl?.trim();
-  if (candidate && isRuntimeAssetUrl(candidate)) return candidate;
+  if (candidate && isRuntimeAssetUrl(candidate) && looksLikeModelFile(candidate)) {
+    return normalizeRuntimeAssetUrl(candidate);
+  }
 
   const fallback = fallbackModelUrl?.trim();
-  if (fallback && isRuntimeAssetUrl(fallback)) return fallback;
+  if (fallback && isRuntimeAssetUrl(fallback) && looksLikeModelFile(fallback)) {
+    return normalizeRuntimeAssetUrl(fallback);
+  }
 
   return null;
 };
