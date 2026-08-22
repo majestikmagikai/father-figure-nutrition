@@ -325,8 +325,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-        {/* The site header */}
+    <div className="min-h-screen flex flex-col">       
       <SiteHeader />
       <main className="flex-1 bg-gradient-to-b from-sky/20 via-secondary to-background px-6 py-12">
         <div className="max-w-6xl mx-auto">
