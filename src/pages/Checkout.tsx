@@ -141,7 +141,10 @@ const Checkout = () => {
       if (!isMounted) return;
 
       if (error || !data?.clientSecret) {
-        toast.error("Could not initialize payment form.");
+        const detail = (data && typeof data === "object" && "details" in data)
+          ? String((data as { details?: unknown }).details ?? "")
+          : "";
+        toast.error(detail ? `Could not initialize payment form: ${detail}` : "Could not initialize payment form.");
         setIsPreparingPayment(false);
         return;
       }

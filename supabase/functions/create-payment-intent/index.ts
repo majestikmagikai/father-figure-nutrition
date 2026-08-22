@@ -1,4 +1,4 @@
-import Stripe from "npm:stripe@16.8.0";
+import Stripe from "https://esm.sh/stripe@16.8.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -20,6 +20,16 @@ type EnrichedCartItem = {
   p: number;
   c: string;
   i: string;
+};
+
+type ProductRow = {
+  handle: string;
+  variant_id: string | null;
+  title: string | null;
+  price: number;
+  currency_code: string | null;
+  available_for_sale: boolean;
+  images?: Array<{ url?: unknown }> | null;
 };
 
 const toMinorUnits = (value: string | number) => {
@@ -87,7 +97,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const handles = [...new Set(items.map((item) => String(item.handle ?? "").trim().toLowerCase()).filter(Boolean))];
+    const handles = [...new Set(items.map((item) => String(item.handle ?? "").trim()).filter(Boolean))];
     if (handles.length === 0) {
       return new Response(JSON.stringify({ error: "Invalid cart items" }), {
         status: 400,
@@ -97,7 +107,7 @@ Deno.serve(async (req) => {
 
     const { data: products, error: productError } = await supabase
       .from("inventory_products")
-      .select("handle, variant_id, title, price, currency_code, available_for_sale")
+      .select("handle, variant_id, title, price, currency_code, available_for_sale, images")
       .in("handle", handles);
 
     if (productError) {
@@ -107,7 +117,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    const byHandle = new Map((products ?? []).map((product) => [product.handle, product]));
+    const normalizedRequested = new Set(handles.map((handle) => handle.toLowerCase()));
+    const byHandle = new Map(
+      ((products ?? []) as ProductRow[])
+        .filter((product) => normalizedRequested.has(String(product.handle ?? "").trim().toLowerCase()))
+        .map((product) => [String(product.handle ?? "").trim().toLowerCase(), product]),
+    );
     const enrichedCartItems: EnrichedCartItem[] = [];
 
     let totalMinor = 0;
@@ -206,29 +221,6 @@ Deno.serve(async (req) => {
       },
     });
 
-    // Persist a pending order row immediately so dashboards can show the order
-    // even if webhook delivery or signature verification is delayed.
-    const { error: orderError } = await supabase
-      .from("orders")
-      .upsert(
-        {
-          external_id: paymentIntent.id,
-          stripe_payment_intent_id: paymentIntent.id,
-          client_order_token: clientOrderToken || null,
-          customer_email: userData.user.email ?? null,
-          total_amount: Number((totalMinor / 100).toFixed(2)),
-          currency_code: currency.toUpperCase(),
-          item_count: itemCount,
-          status: "pending",
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "external_id" },
-      );
-
-    if (orderError) {
-      console.error("create-payment-intent order upsert error", orderError);
-    }
-
     return new Response(
       JSON.stringify({
         clientSecret: paymentIntent.client_secret,
@@ -240,7 +232,8 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error("create-payment-intent error", error);
-    return new Response(JSON.stringify({ error: "Unable to create payment intent" }), {
+    const details = error instanceof Error ? error.message : String(error);
+    return new Response(JSON.stringify({ error: "Unable to create payment intent", details }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

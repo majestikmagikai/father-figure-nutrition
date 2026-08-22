@@ -1,4 +1,4 @@
-import Stripe from "npm:stripe@16.8.0";
+import Stripe from "https://esm.sh/stripe@16.8.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
