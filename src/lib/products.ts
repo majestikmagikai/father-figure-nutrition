@@ -129,10 +129,46 @@ const isImageEntry = (value: unknown): value is { url: string; altText: string }
   return typeof entry.url === "string" && typeof entry.altText === "string";
 };
 
+const isRuntimeAssetUrl = (value: string) => {
+  const url = value.trim();
+  if (!url) return false;
+
+  const lowered = url.toLowerCase();
+  if (lowered.startsWith("http://localhost") || lowered.startsWith("https://localhost")) return false;
+  if (lowered.startsWith("http://127.0.0.1") || lowered.startsWith("https://127.0.0.1")) return false;
+  if (lowered.startsWith("http://0.0.0.0") || lowered.startsWith("https://0.0.0.0")) return false;
+  if (lowered.startsWith("src/")) return false;
+  if (lowered.startsWith("./src/")) return false;
+  if (lowered.includes("/storage/v1/object/sign/")) return false;
+  if (lowered.includes("token=") && lowered.includes("expires=")) return false;
+
+  if (/^https?:\/\//i.test(url)) return true;
+  if (url.startsWith("/")) return true;
+  if (url.startsWith("assets/")) return true;
+
+  return false;
+};
+
 const parseImages = (images: Json, fallback: Array<{ url: string; altText: string }>) => {
   if (!Array.isArray(images)) return fallback;
-  const parsed = images.filter(isImageEntry);
+  const parsed = images
+    .filter(isImageEntry)
+    .map((entry) => ({
+      url: entry.url.trim(),
+      altText: entry.altText.trim(),
+    }))
+    .filter((entry) => entry.altText.length > 0 && isRuntimeAssetUrl(entry.url));
   return parsed.length > 0 ? parsed : fallback;
+};
+
+const normalizeModelUrl = (modelUrl: string | null | undefined, fallbackModelUrl: string | null | undefined) => {
+  const candidate = modelUrl?.trim();
+  if (candidate && isRuntimeAssetUrl(candidate)) return candidate;
+
+  const fallback = fallbackModelUrl?.trim();
+  if (fallback && isRuntimeAssetUrl(fallback)) return fallback;
+
+  return null;
 };
 
 export const toProductRecordInput = (product: LocalProduct) => ({
@@ -171,7 +207,7 @@ const mapInventoryRowToProduct = (row: InventoryProductRow): LocalProduct | null
     variantId: row.variant_id || fallback?.variantId || `variant-${row.handle}`,
     cap: row.cap_color || fallback?.cap || "#f5f5f5",
     fill: row.fill_color ?? fallback?.fill ?? null,
-    model3dUrl: row.model_3d_url ?? fallback?.model3dUrl ?? null,
+    model3dUrl: normalizeModelUrl(row.model_3d_url, fallback?.model3dUrl),
   };
 };
 

@@ -23,6 +23,8 @@ const AuthCallback = () => {
       const urlHash = window.location.hash.replace(/^#/, "");
       const hashParams = new URLSearchParams(urlHash);
       const authError = hashParams.get("error_description") ?? hashParams.get("error");
+      const accessToken = hashParams.get("access_token");
+      const refreshToken = hashParams.get("refresh_token");
 
       if (authError) {
         toast.error("Google sign-in could not be completed.");
@@ -31,6 +33,22 @@ const AuthCallback = () => {
         }
         navigate("/login", { replace: true });
         return;
+      }
+
+      if (accessToken && refreshToken) {
+        const { error: setSessionError } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+
+        if (!isMounted) return;
+
+        if (setSessionError) {
+          toast.error("Could not establish session. Please try again.");
+          setStatus("Session could not be established. Redirecting to login...");
+          navigate("/login", { replace: true });
+          return;
+        }
       }
 
       const { data, error } = await supabase.auth.getSession();

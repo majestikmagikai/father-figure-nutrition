@@ -80,6 +80,14 @@ function Bottle({ labelUrl, modelUrl }: { labelUrl?: string; modelUrl?: string |
   );
 }
 
+const ViewerLoaded = ({ onLoaded }: { onLoaded: () => void }) => {
+  useLayoutEffect(() => {
+    onLoaded();
+  }, [onLoaded]);
+
+  return null;
+};
+
 export const BottleSpin360 = ({ labelUrl, modelUrl }: BottleSpin360Props) => {
   const [loaded, setLoaded] = useState(false);
 
@@ -99,11 +107,12 @@ export const BottleSpin360 = ({ labelUrl, modelUrl }: BottleSpin360Props) => {
         </div>
       )}
 
-      <Canvas camera={{ position: [0, 0.1, 18], fov: 35 }} shadows onCreated={() => setLoaded(true)} style={{ width: "100%", height: "100%" }} resize={{ scroll: false, debounce: { scroll: 50, resize: 0 } }}>
+      <Canvas camera={{ position: [0, 0.1, 18], fov: 35 }} shadows style={{ width: "100%", height: "100%" }} resize={{ scroll: false, debounce: { scroll: 50, resize: 0 } }}>
         <ambientLight intensity={0.25} />
         <directionalLight position={[4, 6, 4]} intensity={0.05} />
         <directionalLight position={[-4, 2, -2]} intensity={0.1} />
         <Suspense fallback={null}>
+          <ViewerLoaded onLoaded={() => setLoaded(true)} />
           <Bottle labelUrl={labelUrl} modelUrl={modelUrl} />
           <ContactShadows position={[0, -2, 0]} opacity={0.5} scale={5} blur={2} />
           <Environment files={studioHdr} background />
