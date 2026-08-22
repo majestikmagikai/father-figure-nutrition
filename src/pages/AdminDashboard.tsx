@@ -7,6 +7,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import {
   type CustomerProfile,
@@ -46,6 +55,10 @@ type HexColorInputProps = {
   placeholder: string;
   fallbackColor: string;
 };
+
+type RevokeAccessTarget =
+  | { kind: "session"; sessionRecord: UserSessionRecord }
+  | { kind: "user"; userId: string; email: string; activeSessionCount: number };
 
 const isHexColor = (value: string) => /^#[0-9a-fA-F]{6}$/.test(value.trim());
 
@@ -219,6 +232,7 @@ const AdminDashboard = () => {
   const [userSessions, setUserSessions] = useState<UserSessionRecord[]>([]);
   const [isRevokingSessionId, setIsRevokingSessionId] = useState<string | null>(null);
   const [isRevokingAllForUserId, setIsRevokingAllForUserId] = useState<string | null>(null);
+  const [revokeAccessTarget, setRevokeAccessTarget] = useState<RevokeAccessTarget | null>(null);
   const [metrics, setMetrics] = useState({
     totalSales: 0,
     totalOrders: 0,
@@ -420,9 +434,6 @@ const AdminDashboard = () => {
   };
 
   const handleRevokeSession = async (sessionRecord: UserSessionRecord) => {
-    const accepted = window.confirm("Revoke this session?");
-    if (!accepted) return;
-
     setIsRevokingSessionId(sessionRecord.id);
     try {
       await revokeUserSession({
@@ -439,9 +450,6 @@ const AdminDashboard = () => {
   };
 
   const handleRevokeAllSessionsForUser = async (userId: string, email: string) => {
-    const accepted = window.confirm(`Revoke all active sessions for ${email}?`);
-    if (!accepted) return;
-
     setIsRevokingAllForUserId(userId);
     try {
       const revokedCount = await revokeAllUserSessions({
@@ -455,6 +463,28 @@ const AdminDashboard = () => {
     } finally {
       setIsRevokingAllForUserId(null);
     }
+  };
+
+  const openRevokeSessionModal = (sessionRecord: UserSessionRecord) => {
+    setRevokeAccessTarget({ kind: "session", sessionRecord });
+  };
+
+  const openRevokeAllSessionsModal = (userId: string, email: string, activeSessionCount: number) => {
+    setRevokeAccessTarget({ kind: "user", userId, email, activeSessionCount });
+  };
+
+  const confirmRevokeAccess = async () => {
+    if (!revokeAccessTarget) return;
+
+    const target = revokeAccessTarget;
+    setRevokeAccessTarget(null);
+
+    if (target.kind === "session") {
+      await handleRevokeSession(target.sessionRecord);
+      return;
+    }
+
+    await handleRevokeAllSessionsForUser(target.userId, target.email);
   };
 
   useEffect(() => {
@@ -1837,7 +1867,7 @@ const AdminDashboard = () => {
                             <Button
                               variant="outline"
                               className="border-navy/20 text-navy hover:bg-navy/5"
-                              onClick={() => void handleRevokeAllSessionsForUser(profile.id, profile.email)}
+                              onClick={() => openRevokeAllSessionsModal(profile.id, profile.email, activeSessionCount)}
                               disabled={isRevokingAllForUserId === profile.id || activeSessionCount === 0}
                             >
                               {isRevokingAllForUserId === profile.id ? "Revoking..." : "Revoke All Sessions"}
@@ -1865,7 +1895,7 @@ const AdminDashboard = () => {
                                     </div>
                                     <Button
                                       variant={sessionRecord.revoked_at ? "outline" : "destructive"}
-                                      onClick={() => void handleRevokeSession(sessionRecord)}
+                                      onClick={() => openRevokeSessionModal(sessionRecord)}
                                       disabled={isRevokingSessionId === sessionRecord.id || Boolean(sessionRecord.revoked_at)}
                                     >
                                       {sessionRecord.revoked_at
@@ -1956,6 +1986,46 @@ const AdminDashboard = () => {
         </div>
       </main>
       <SiteFooter />
+
+      <AlertDialog open={Boolean(revokeAccessTarget)} onOpenChange={(open) => { if (!open) setRevokeAccessTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Revoke Access</AlertDialogTitle>
+            <AlertDialogDescription>
+              {revokeAccessTarget?.kind === "session"
+                ? "This will immediately revoke this device session. The user will be signed out automatically on their next session check."
+                : revokeAccessTarget?.kind === "user"
+                  ? `This will revoke ${revokeAccessTarget.activeSessionCount} active session${revokeAccessTarget.activeSessionCount === 1 ? "" : "s"} for ${revokeAccessTarget.email}.`
+                  : "Confirm access revocation."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={
+                (revokeAccessTarget?.kind === "session" && isRevokingSessionId === revokeAccessTarget.sessionRecord.id) ||
+                (revokeAccessTarget?.kind === "user" && isRevokingAllForUserId === revokeAccessTarget.userId)
+              }
+            >
+              Cancel
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={() => void confirmRevokeAccess()}
+              disabled={
+                !revokeAccessTarget ||
+                (revokeAccessTarget.kind === "session" && isRevokingSessionId === revokeAccessTarget.sessionRecord.id) ||
+                (revokeAccessTarget.kind === "user" && isRevokingAllForUserId === revokeAccessTarget.userId)
+              }
+            >
+              {revokeAccessTarget?.kind === "session" && isRevokingSessionId === revokeAccessTarget.sessionRecord.id
+                ? "Revoking..."
+                : revokeAccessTarget?.kind === "user" && isRevokingAllForUserId === revokeAccessTarget.userId
+                  ? "Revoking..."
+                  : "Revoke Access"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
