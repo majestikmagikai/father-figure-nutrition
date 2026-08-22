@@ -1000,7 +1000,7 @@ const AdminDashboard = () => {
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-navy/10 border border-navy/20 text-navy text-sm uppercase tracking-widest font-semibold mb-3 w-fit">
                 <ShieldCheck className="h-3.5 w-3.5" /> Admin Dashboard
               </div>
-              <CardTitle className="font-display uppercase text-3xl text-navy">Welcome, {displayName}</CardTitle>
+              <CardTitle className="font-display uppercase text-xl text-navy">Welcome, {displayName}</CardTitle>
               <CardDescription>
                 Manage customer operations and monitor storefront activity from one control surface.
               </CardDescription>
