@@ -60,7 +60,8 @@ const ForgotPassword = () => {
     });
 
     if (error) {
-      toast.error("Could not start password recovery. Please try again.");
+      const detail = error.message?.trim() || "Unknown error";
+      toast.error(`Could not start password recovery: ${detail}`);
       return;
     }
 
