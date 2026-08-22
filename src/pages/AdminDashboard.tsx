@@ -64,6 +64,10 @@ type CancelRefundTarget = {
   order: OrderRecord;
 };
 
+type ProductDeleteTarget = {
+  product: InventoryProduct;
+};
+
 const isHexColor = (value: string) => /^#[0-9a-fA-F]{6}$/.test(value.trim());
 
 const HexColorInput = ({ value, onChange, placeholder, fallbackColor }: HexColorInputProps) => {
@@ -241,6 +245,7 @@ const AdminDashboard = () => {
   const [isRevokingAllForUserId, setIsRevokingAllForUserId] = useState<string | null>(null);
   const [revokeAccessTarget, setRevokeAccessTarget] = useState<RevokeAccessTarget | null>(null);
   const [cancelRefundTarget, setCancelRefundTarget] = useState<CancelRefundTarget | null>(null);
+  const [productDeleteTarget, setProductDeleteTarget] = useState<ProductDeleteTarget | null>(null);
   const [metrics, setMetrics] = useState({
     totalSales: 0,
     totalOrders: 0,
@@ -759,10 +764,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleDeleteProduct = async (product: InventoryProduct) => {
-    const accepted = window.confirm(`Delete ${product.title}? This cannot be undone.`);
-    if (!accepted) return;
-
+  const performDeleteProduct = async (product: InventoryProduct) => {
     setIsDeletingProduct(product.id);
     try {
       await deleteInventoryProduct(product.id);
@@ -773,6 +775,25 @@ const AdminDashboard = () => {
     } finally {
       setIsDeletingProduct(null);
     }
+  };
+
+  const handleDeleteProduct = async (product: InventoryProduct) => {
+    const accepted = window.confirm(`Delete ${product.title}? This cannot be undone.`);
+    if (!accepted) return;
+
+    await performDeleteProduct(product);
+  };
+
+  const openProductDeleteModal = (product: InventoryProduct) => {
+    setProductDeleteTarget({ product });
+  };
+
+  const confirmDeleteProduct = async () => {
+    if (!productDeleteTarget) return;
+
+    const target = productDeleteTarget;
+    setProductDeleteTarget(null);
+    await performDeleteProduct(target.product);
   };
 
   const handleUploadNewProductImage = async (file: File | null) => {
@@ -1199,7 +1220,7 @@ const AdminDashboard = () => {
                           </Button>
                           <Button
                             variant="destructive"
-                            onClick={() => void handleDeleteProduct(product)}
+                            onClick={() => openProductDeleteModal(product)}
                             disabled={isDeletingProduct === product.id}
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
@@ -2099,6 +2120,29 @@ const AdminDashboard = () => {
               disabled={!cancelRefundTarget || isSavingOrder === cancelRefundTarget.order.id}
             >
               {cancelRefundTarget && isSavingOrder === cancelRefundTarget.order.id ? "Processing..." : "Cancel & Refund"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={Boolean(productDeleteTarget)} onOpenChange={(open) => { if (!open) setProductDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Product</AlertDialogTitle>
+            <AlertDialogDescription>
+              {`Delete ${productDeleteTarget?.product.title || "this product"}? This cannot be undone.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={Boolean(productDeleteTarget?.product && isDeletingProduct === productDeleteTarget.product.id)}>
+              Keep Product
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={() => void confirmDeleteProduct()}
+              disabled={!productDeleteTarget || isDeletingProduct === productDeleteTarget.product.id}
+            >
+              {productDeleteTarget && isDeletingProduct === productDeleteTarget.product.id ? "Deleting..." : "Delete Product"}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
