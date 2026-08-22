@@ -27,7 +27,6 @@ import {
   updateOrderStatus,
   updateInventoryProduct,
 } from "@/lib/adminData";
-import { PRODUCTS, toProductRecordInput } from "@/lib/products";
 import { toast } from "sonner";
 import type { User } from "@supabase/supabase-js";
 
@@ -267,67 +266,8 @@ const AdminDashboard = () => {
         fetchCustomerProfiles(),
       ]);
 
-      let nextProducts = nextProductsRaw;
-      const existingHandles = new Set(nextProductsRaw.map((product) => product.handle));
-      const missingLocalProducts = PRODUCTS.filter((product) => !existingHandles.has(product.handle));
-
-      if (missingLocalProducts.length > 0) {
-        await Promise.all(
-          missingLocalProducts.map((product) => {
-            const mapped = toProductRecordInput(product);
-            return createInventoryProduct(mapped);
-          }),
-        );
-
-        nextProducts = await fetchInventoryProducts();
-      }
-
-      const fallbackByHandle = new Map(PRODUCTS.map((product) => [product.handle, product]));
-      const productsNeedingBackfill = nextProducts.filter((product) => {
-        const fallback = fallbackByHandle.get(product.handle);
-        if (!fallback) return false;
-
-        const hasDescription = Boolean(product.description?.trim());
-        const hasFullDescription = Boolean(product.full_description?.trim());
-        const hasVariant = Boolean(product.variant_id?.trim());
-        const hasCapColor = Boolean(product.cap_color?.trim());
-        const hasImages = Array.isArray(product.images) && product.images.length > 0;
-
-        return !hasDescription || !hasFullDescription || !hasVariant || !hasCapColor || !hasImages;
-      });
-
-      if (productsNeedingBackfill.length > 0) {
-        await Promise.all(
-          productsNeedingBackfill.map((product) => {
-            const fallback = fallbackByHandle.get(product.handle);
-            if (!fallback) return Promise.resolve();
-
-            const mapped = toProductRecordInput(fallback);
-            const parsedImages = parseImagesInput(JSON.stringify(product.images));
-
-            return updateInventoryProduct({
-              id: product.id,
-              handle: product.handle,
-              title: product.title || mapped.title,
-              description: product.description?.trim() ? product.description : mapped.description,
-              fullDescription: product.full_description?.trim() ? product.full_description : mapped.fullDescription,
-              price: Number(product.price),
-              availableForSale: product.available_for_sale,
-              currencyCode: product.currency_code || mapped.currencyCode,
-              images: parsedImages && parsedImages.length > 0 ? parsedImages : mapped.images,
-              variantId: product.variant_id?.trim() ? product.variant_id : mapped.variantId,
-              capColor: product.cap_color?.trim() ? product.cap_color : mapped.capColor,
-              fillColor: product.fill_color ?? mapped.fillColor,
-              model3dUrl: product.model_3d_url ?? mapped.model3dUrl ?? null,
-            });
-          }),
-        );
-
-        nextProducts = await fetchInventoryProducts();
-      }
-
       setMetrics(nextMetrics);
-      setProducts(nextProducts);
+      setProducts(nextProductsRaw);
       setOrders(nextOrders);
       setOrderItems(nextOrderItems);
       setCustomerProfiles(nextCustomerProfiles);
