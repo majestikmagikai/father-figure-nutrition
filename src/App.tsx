@@ -31,9 +31,15 @@ const OAuthHashBridge = () => {
 
   useEffect(() => {
     const hasOAuthHash = hash.includes("access_token=") || hash.includes("refresh_token=");
-    if (!hasOAuthHash || pathname === "/auth/callback") return;
+    if (!hasOAuthHash) return;
 
-    navigate({ pathname: "/auth/callback", hash }, { replace: true });
+    const hashParams = new URLSearchParams(hash.replace(/^#/, ""));
+    const isRecoveryFlow = hashParams.get("type") === "recovery";
+    const targetPath = isRecoveryFlow ? "/reset-password" : "/auth/callback";
+
+    if (pathname === targetPath) return;
+
+    navigate({ pathname: targetPath, hash }, { replace: true });
   }, [hash, navigate, pathname]);
 
   return null;
