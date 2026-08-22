@@ -478,7 +478,7 @@ const Dashboard = () => {
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-navy/10 border border-navy/20 text-navy text-xs uppercase tracking-widest font-semibold mb-3 w-fit">
                 <ShieldCheck className="h-3.5 w-3.5" /> Customer Dashboard
               </div>
-              <CardTitle className="font-display uppercase text-3xl text-navy">Welcome, {displayName}</CardTitle>
+              <CardTitle className="font-display uppercase text-xl text-navy">Welcome, {displayName}</CardTitle>
               <CardDescription>
                 Manage your account and stay on top of your nutrition routine in one place.
               </CardDescription>
