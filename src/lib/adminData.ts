@@ -311,6 +311,7 @@ export const cancelAndRefundOrder = async (input: { id: string }) => {
     paymentIntentId?: string | null;
     orderId?: string;
     status?: string;
+    refundStatus?: "refunded" | "already_refunded" | "payment_cancelled" | "not_attempted";
     warning?: string | null;
   };
 };

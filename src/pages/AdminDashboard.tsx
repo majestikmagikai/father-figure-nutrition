@@ -60,6 +60,10 @@ type RevokeAccessTarget =
   | { kind: "session"; sessionRecord: UserSessionRecord }
   | { kind: "user"; userId: string; email: string; activeSessionCount: number };
 
+type CancelRefundTarget = {
+  order: OrderRecord;
+};
+
 const isHexColor = (value: string) => /^#[0-9a-fA-F]{6}$/.test(value.trim());
 
 const HexColorInput = ({ value, onChange, placeholder, fallbackColor }: HexColorInputProps) => {
@@ -230,9 +234,13 @@ const AdminDashboard = () => {
   const [orderItems, setOrderItems] = useState<OrderItemRecord[]>([]);
   const [customerProfiles, setCustomerProfiles] = useState<CustomerProfile[]>([]);
   const [userSessions, setUserSessions] = useState<UserSessionRecord[]>([]);
+  const [refundOutcomeByOrderId, setRefundOutcomeByOrderId] = useState<
+    Record<string, { label: string; tone: "success" | "warning" | "danger" | "neutral" }>
+  >({});
   const [isRevokingSessionId, setIsRevokingSessionId] = useState<string | null>(null);
   const [isRevokingAllForUserId, setIsRevokingAllForUserId] = useState<string | null>(null);
   const [revokeAccessTarget, setRevokeAccessTarget] = useState<RevokeAccessTarget | null>(null);
+  const [cancelRefundTarget, setCancelRefundTarget] = useState<CancelRefundTarget | null>(null);
   const [metrics, setMetrics] = useState({
     totalSales: 0,
     totalOrders: 0,
@@ -407,16 +415,31 @@ const AdminDashboard = () => {
   };
 
   const handleCancelAndRefundOrder = async (order: OrderRecord) => {
-    const confirmed = window.confirm(
-      `Cancel and refund this order for ${order.customer_email ?? "this customer"}? This action cannot be undone.`,
-    );
-
-    if (!confirmed) return;
-
     setIsSavingOrder(order.id);
     try {
       const result = await cancelAndRefundOrder({ id: order.id });
       setOrders((prev) => prev.map((currentOrder) => (currentOrder.id === order.id ? { ...currentOrder, status: "cancelled" } : currentOrder)));
+
+      const nextOutcome = (() => {
+        if (result?.refundStatus === "refunded") {
+          return { label: "Refunded in Stripe", tone: "success" as const };
+        }
+        if (result?.refundStatus === "already_refunded") {
+          return { label: "Already refunded", tone: "neutral" as const };
+        }
+        if (result?.refundStatus === "payment_cancelled") {
+          return { label: "Authorization cancelled", tone: "warning" as const };
+        }
+        if (result?.warning) {
+          return { label: "Refund warning", tone: "danger" as const };
+        }
+        return { label: "Refund status unknown", tone: "neutral" as const };
+      })();
+
+      setRefundOutcomeByOrderId((prev) => ({
+        ...prev,
+        [order.id]: nextOutcome,
+      }));
 
       if (result?.warning) {
         toast.error(result.warning);
@@ -426,11 +449,27 @@ const AdminDashboard = () => {
 
       await reloadAdminData();
     } catch {
+      setRefundOutcomeByOrderId((prev) => ({
+        ...prev,
+        [order.id]: { label: "Refund failed", tone: "danger" },
+      }));
       toast.error("Could not cancel and refund order.");
       await reloadAdminData({ silent: true });
     } finally {
       setIsSavingOrder(null);
     }
+  };
+
+  const openCancelRefundModal = (order: OrderRecord) => {
+    setCancelRefundTarget({ order });
+  };
+
+  const confirmCancelAndRefund = async () => {
+    if (!cancelRefundTarget) return;
+
+    const target = cancelRefundTarget;
+    setCancelRefundTarget(null);
+    await handleCancelAndRefundOrder(target.order);
   };
 
   const handleRevokeSession = async (sessionRecord: UserSessionRecord) => {
@@ -1679,6 +1718,21 @@ const AdminDashboard = () => {
                               Tracking sent: {new Date(order.tracking_sent_at).toLocaleString()}
                             </p>
                           )}
+                          {refundOutcomeByOrderId[order.id] && (
+                            <span
+                              className={`inline-flex mt-2 items-center rounded-full px-2.5 py-1 text-sm font-medium ${
+                                refundOutcomeByOrderId[order.id].tone === "success"
+                                  ? "bg-emerald-100 text-emerald-800"
+                                  : refundOutcomeByOrderId[order.id].tone === "warning"
+                                    ? "bg-amber-100 text-amber-800"
+                                    : refundOutcomeByOrderId[order.id].tone === "danger"
+                                      ? "bg-rose-100 text-rose-800"
+                                      : "bg-slate-200 text-slate-700"
+                              }`}
+                            >
+                              {refundOutcomeByOrderId[order.id].label}
+                            </span>
+                          )}
                         </div>
                         <div className="text-sm text-navy/70 min-w-0">
                           <p className="font-semibold text-navy">{order.currency_code} {Number(order.total_amount).toFixed(2)}</p>
@@ -1765,7 +1819,7 @@ const AdminDashboard = () => {
                           </Button>
                           <Button
                             variant="destructive"
-                            onClick={() => void handleCancelAndRefundOrder(order)}
+                            onClick={() => openCancelRefundModal(order)}
                             disabled={isSavingOrder === order.id || order.status === "cancelled"}
                           >
                             {order.status === "cancelled" ? "Cancelled" : "Cancel & Refund"}
@@ -2022,6 +2076,29 @@ const AdminDashboard = () => {
                 : revokeAccessTarget?.kind === "user" && isRevokingAllForUserId === revokeAccessTarget.userId
                   ? "Revoking..."
                   : "Revoke Access"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={Boolean(cancelRefundTarget)} onOpenChange={(open) => { if (!open) setCancelRefundTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel And Refund Order</AlertDialogTitle>
+            <AlertDialogDescription>
+              {`Cancel and refund this order for ${cancelRefundTarget?.order.customer_email ?? "this customer"}? This action cannot be undone.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={Boolean(cancelRefundTarget?.order && isSavingOrder === cancelRefundTarget.order.id)}>
+              Keep Order
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={() => void confirmCancelAndRefund()}
+              disabled={!cancelRefundTarget || isSavingOrder === cancelRefundTarget.order.id}
+            >
+              {cancelRefundTarget && isSavingOrder === cancelRefundTarget.order.id ? "Processing..." : "Cancel & Refund"}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -116,6 +116,82 @@ Deno.serve(async (req) => {
       }
     }
 
+    let refundId: string | null = null;
+    let refundErrorMessage: string | null = null;
+    let refundStatus: "refunded" | "already_refunded" | "payment_cancelled" | "not_attempted" = "not_attempted";
+
+    if (!paymentIntentId) {
+      return new Response(JSON.stringify({ error: "No Stripe payment reference found on this order. Refund in Stripe Dashboard." }), {
+        status: 409,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    let intent: Stripe.PaymentIntent;
+    try {
+      intent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return new Response(JSON.stringify({ error: `Could not load Stripe payment intent: ${message}` }), {
+        status: 409,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // If payment was authorized but never captured, canceling the intent is the correct no-refund path.
+    if (intent.status === "requires_capture") {
+      try {
+        await stripe.paymentIntents.cancel(paymentIntentId);
+        refundStatus = "payment_cancelled";
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return new Response(JSON.stringify({ error: `Could not cancel uncaptured payment: ${message}` }), {
+          status: 409,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } else if ((intent.amount_received ?? 0) > 0) {
+      try {
+        const refund = await stripe.refunds.create(
+          {
+            payment_intent: paymentIntentId,
+            reason: "requested_by_customer",
+            metadata: {
+              order_id: order.id,
+              order_external_id: order.external_id ?? "",
+            },
+          },
+          {
+            idempotencyKey: `order-refund-${order.id}`,
+          },
+        );
+
+        refundId = refund.id;
+        refundStatus = "refunded";
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const normalized = message.toLowerCase();
+
+        if (normalized.includes("already refunded") || normalized.includes("charge_already_refunded")) {
+          refundStatus = "already_refunded";
+        } else {
+          refundErrorMessage = message;
+        }
+      }
+    } else {
+      return new Response(JSON.stringify({ error: "Payment has no captured amount to refund in Stripe." }), {
+        status: 409,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (refundErrorMessage) {
+      return new Response(JSON.stringify({ error: `Stripe refund failed: ${refundErrorMessage}` }), {
+        status: 409,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const now = new Date().toISOString();
     const { error: updateError } = await serviceClient
       .from("orders")
@@ -133,45 +209,28 @@ Deno.serve(async (req) => {
       });
     }
 
-    let refundId: string | null = null;
-    let refundErrorMessage: string | null = null;
-
-    if (paymentIntentId) {
-      try {
-        const refund = await stripe.refunds.create({
-          payment_intent: paymentIntentId,
-          reason: "requested_by_customer",
-          metadata: {
-            order_id: order.id,
-            order_external_id: order.external_id ?? "",
-          },
-        });
-
-        refundId = refund.id;
-      } catch (error) {
-        refundErrorMessage = error instanceof Error ? error.message : String(error);
-      }
-    }
-
     const { error: eventError } = await serviceClient.from("order_status_events").insert({
       order_id: order.id,
       previous_status: order.status,
       next_status: "cancelled",
       note: refundErrorMessage
         ? `Cancelled. Stripe refund failed: ${refundErrorMessage}`
-        : paymentIntentId
-          ? `Refunded via Stripe${refundId ? ` (${refundId})` : ""}`
-          : "Cancelled without a Stripe payment reference",
+        : refundStatus === "payment_cancelled"
+          ? "Payment authorization was cancelled before capture"
+          : refundStatus === "already_refunded"
+            ? "Already refunded in Stripe"
+            : `Refunded via Stripe${refundId ? ` (${refundId})` : ""}`,
       changed_by: userData.user.id,
     });
 
     return new Response(
       JSON.stringify({
-        refunded: Boolean(paymentIntentId && !refundErrorMessage),
+        refunded: refundStatus === "refunded" || refundStatus === "already_refunded",
         refundId,
         paymentIntentId,
         orderId: order.id,
         status: "cancelled",
+        refundStatus,
         warning: refundErrorMessage || (eventError ? "Order cancelled but status event logging failed" : null),
       }),
       {
