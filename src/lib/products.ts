@@ -138,6 +138,7 @@ const isRuntimeAssetUrl = (value: string) => {
   if (lowered.startsWith("http://127.0.0.1") || lowered.startsWith("https://127.0.0.1")) return false;
   if (lowered.startsWith("http://0.0.0.0") || lowered.startsWith("https://0.0.0.0")) return false;
   if (lowered.startsWith("src/")) return false;
+  if (lowered.startsWith("/src/")) return false;
   if (lowered.startsWith("./src/")) return false;
   if (lowered.includes("/storage/v1/object/sign/")) return false;
   if (lowered.includes("token=") && lowered.includes("expires=")) return false;
@@ -153,6 +154,10 @@ const isRuntimeAssetUrl = (value: string) => {
 const normalizeRuntimeAssetUrl = (value: string) => {
   const url = value.trim();
   if (!url) return "";
+
+  if (url.startsWith("/src/assets/")) return url.replace(/^\/src\//, "/");
+  if (url.startsWith("src/assets/")) return `/${url.replace(/^src\//, "")}`;
+  if (url.startsWith("./src/assets/")) return `/${url.replace(/^\.\/src\//, "")}`;
 
   if (/^https?:\/\//i.test(url)) return url;
   if (url.startsWith("/")) return url;
