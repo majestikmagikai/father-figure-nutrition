@@ -40,6 +40,7 @@ const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [orderItemsByOrderId, setOrderItemsByOrderId] = useState<Record<string, OrderItemRecord[]>>({});
+  const [ordersPage, setOrdersPage] = useState(1);
   const [isLoadingOrders, setIsLoadingOrders] = useState(true);
   const [routines, setRoutines] = useState<RoutineRecord[]>([]);
   const [isLoadingRoutines, setIsLoadingRoutines] = useState(true);
@@ -308,6 +309,17 @@ const Dashboard = () => {
     return full || user?.email || "Customer";
   }, [user]);
 
+  const ordersPerPage = 3;
+  const totalOrderPages = Math.max(1, Math.ceil(orders.length / ordersPerPage));
+  const paginatedOrders = useMemo(() => {
+    const start = (ordersPage - 1) * ordersPerPage;
+    return orders.slice(start, start + ordersPerPage);
+  }, [orders, ordersPage]);
+
+  useEffect(() => {
+    setOrdersPage(1);
+  }, [user?.id]);
+
   const handleSignOut = async () => {
     if (!supabase) return;
 
@@ -389,7 +401,8 @@ const Dashboard = () => {
                 ) : orders.length === 0 ? (
                   <p>No orders yet.</p>
                 ) : (
-                  orders.map((order) => (
+                  <div className="space-y-3">
+                    {paginatedOrders.map((order) => (
                     <div key={order.id} className="rounded-md border border-navy/10 p-3 space-y-1">
                       <p className="font-semibold text-navy">
                         {order.currency_code} {Number(order.total_amount).toFixed(2)}
@@ -431,7 +444,34 @@ const Dashboard = () => {
                         <p className="text-sm">Tracking not available yet.</p>
                       )}
                     </div>
-                  ))
+                    ))}
+
+                    {totalOrderPages > 1 && (
+                      <div className="flex items-center justify-between gap-3 pt-2">
+                        <p className="text-sm text-navy/60">
+                          Page {ordersPage} of {totalOrderPages}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            className="border-navy/20 text-navy hover:bg-navy/5"
+                            disabled={ordersPage === 1}
+                            onClick={() => setOrdersPage((prev) => Math.max(1, prev - 1))}
+                          >
+                            Previous
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="border-navy/20 text-navy hover:bg-navy/5"
+                            disabled={ordersPage >= totalOrderPages}
+                            onClick={() => setOrdersPage((prev) => Math.min(totalOrderPages, prev + 1))}
+                          >
+                            Next
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
               </CardContent>
             </Card>
