@@ -753,6 +753,33 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleMoveProductImage = (product: InventoryProduct, fromIndex: number, toIndex: number) => {
+    const images = parseImagesInput(JSON.stringify(product.images)) ?? [];
+    if (fromIndex < 0 || toIndex < 0 || fromIndex >= images.length || toIndex >= images.length) return;
+
+    const reordered = [...images];
+    const [moved] = reordered.splice(fromIndex, 1);
+    reordered.splice(toIndex, 0, moved);
+
+    setProducts((prev) =>
+      prev.map((p) => (p.id === product.id ? { ...p, images: reordered } : p)),
+    );
+  };
+
+  const handleSetProductImageFirst = (product: InventoryProduct, index: number) => {
+    handleMoveProductImage(product, index, 0);
+  };
+
+  const handleRemoveProductImage = (product: InventoryProduct, index: number) => {
+    const images = parseImagesInput(JSON.stringify(product.images)) ?? [];
+    if (index < 0 || index >= images.length) return;
+
+    const nextImages = images.filter((_, currentIndex) => currentIndex !== index);
+    setProducts((prev) =>
+      prev.map((p) => (p.id === product.id ? { ...p, images: nextImages } : p)),
+    );
+  };
+
   const handleAddProduct = async () => {
     const handle = newProduct.handle.trim().toLowerCase();
     const title = newProduct.title.trim();
@@ -1363,6 +1390,68 @@ const AdminDashboard = () => {
                   </div>
                   <div className="rounded-md border border-navy/10 p-3 space-y-3">
                     <p className="text-sm uppercase tracking-wide text-navy/60">Media and Visuals</p>
+                    <div className="space-y-2">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Image Order</p>
+                      <p className="text-sm text-navy/60">The first image is used in Product Grid and as the default image in Product Detail.</p>
+                      {(parseImagesInput(JSON.stringify(editingProduct.images)) ?? []).length === 0 ? (
+                        <p className="text-sm text-navy/60">No images yet. Upload one below.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {(parseImagesInput(JSON.stringify(editingProduct.images)) ?? []).map((image, index, allImages) => (
+                            <div key={`${image.url}-${index}`} className="rounded-md border border-navy/10 bg-secondary/20 p-2.5">
+                              <div className="flex items-center gap-3">
+                                <img
+                                  src={image.url}
+                                  alt={image.altText}
+                                  className="h-14 w-14 rounded-md border border-navy/10 object-cover bg-white"
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-medium text-navy">Image {index + 1}{index === 0 ? " (Primary)" : ""}</p>
+                                  <p className="text-sm text-navy/70 truncate">{image.altText}</p>
+                                  <p className="text-sm text-navy/50 truncate">{image.url}</p>
+                                </div>
+                              </div>
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className="border-navy/20 text-navy hover:bg-navy/5"
+                                  disabled={index === 0}
+                                  onClick={() => handleMoveProductImage(editingProduct, index, index - 1)}
+                                >
+                                  Move Up
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className="border-navy/20 text-navy hover:bg-navy/5"
+                                  disabled={index === allImages.length - 1}
+                                  onClick={() => handleMoveProductImage(editingProduct, index, index + 1)}
+                                >
+                                  Move Down
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className="border-navy/20 text-navy hover:bg-navy/5"
+                                  disabled={index === 0}
+                                  onClick={() => handleSetProductImageFirst(editingProduct, index)}
+                                >
+                                  Set First
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  onClick={() => handleRemoveProductImage(editingProduct, index)}
+                                >
+                                  Remove
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <div className="space-y-1">
                       <p className="text-sm uppercase tracking-wide text-navy/60">Images JSON</p>
                       <Textarea
