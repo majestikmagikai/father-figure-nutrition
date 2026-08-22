@@ -7,6 +7,8 @@ import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 import { isAdminUser } from "@/lib/auth";
 import { toast } from "sonner";
 
+const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
 const AuthCallback = () => {
   const navigate = useNavigate();
   const [status, setStatus] = useState("Finalizing sign-in...");
@@ -18,10 +20,13 @@ const AuthCallback = () => {
     }
 
     let isMounted = true;
+    let timedOut = false;
 
     const finishSignIn = async () => {
+      const searchParams = new URLSearchParams(window.location.search);
       const urlHash = window.location.hash.replace(/^#/, "");
       const hashParams = new URLSearchParams(urlHash);
+      const code = searchParams.get("code");
       const authError = hashParams.get("error_description") ?? hashParams.get("error");
       const accessToken = hashParams.get("access_token");
       const refreshToken = hashParams.get("refresh_token");
@@ -33,6 +38,18 @@ const AuthCallback = () => {
         }
         navigate("/login", { replace: true });
         return;
+      }
+
+      if (code) {
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (!isMounted) return;
+
+        if (exchangeError) {
+          toast.error("Could not complete secure sign-in exchange.");
+          setStatus("Sign-in exchange failed. Redirecting to login...");
+          navigate("/login", { replace: true });
+          return;
+        }
       }
 
       if (accessToken && refreshToken) {
@@ -64,24 +81,44 @@ const AuthCallback = () => {
 
       const sessionUser = data.session?.user;
       if (sessionUser) {
+        window.history.replaceState(null, "", "/auth/callback");
         const target = isAdminUser(sessionUser) ? "/admin" : "/dashboard";
         navigate(target, { replace: true });
         return;
       }
 
-      // If session persistence is still catching up, listen once for auth change.
+      // If session persistence is still catching up, listen and poll for a few seconds.
       const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-        if (!isMounted || !session?.user) return;
+        if (!isMounted || timedOut || !session?.user) return;
+        window.history.replaceState(null, "", "/auth/callback");
         const target = isAdminUser(session.user) ? "/admin" : "/dashboard";
         navigate(target, { replace: true });
       });
 
-      window.setTimeout(() => {
-        listener.subscription.unsubscribe();
-        if (!isMounted) return;
-        setStatus("Session not found. Please sign in again.");
-        navigate("/login", { replace: true });
-      }, 2500);
+      for (let attempt = 0; attempt < 16; attempt += 1) {
+        if (!isMounted) {
+          listener.subscription.unsubscribe();
+          return;
+        }
+
+        const { data: polledData } = await supabase.auth.getSession();
+        const user = polledData.session?.user;
+        if (user) {
+          listener.subscription.unsubscribe();
+          window.history.replaceState(null, "", "/auth/callback");
+          const target = isAdminUser(user) ? "/admin" : "/dashboard";
+          navigate(target, { replace: true });
+          return;
+        }
+
+        await wait(500);
+      }
+
+      timedOut = true;
+      listener.subscription.unsubscribe();
+      if (!isMounted) return;
+      setStatus("Session not found. Please sign in again.");
+      navigate("/login", { replace: true });
     };
 
     void finishSignIn();
