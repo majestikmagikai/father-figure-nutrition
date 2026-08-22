@@ -1535,6 +1535,7 @@ const AdminDashboard = () => {
 
           {isOrdersSection && (
           <Card className="border-navy/15 bg-white/95 mb-6">
+            {/* Order Tracking Section */}
             <CardHeader>
               <CardTitle className="text-lg text-navy">Order Tracking</CardTitle>
               <CardDescription>
