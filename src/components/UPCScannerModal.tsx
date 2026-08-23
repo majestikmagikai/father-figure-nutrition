@@ -138,9 +138,6 @@ export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: 
 
         streamRef.current = stream;
         setHasPermission(true);
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
       } catch (err) {
         console.error('Camera access failed:', err);
         if (active) {
@@ -190,6 +187,13 @@ export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: 
       }
     };
   }, [isDetectorSupported]);
+
+  // Bind stream to video element when permission is granted and ref is mounted
+  useEffect(() => {
+    if (hasPermission && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [hasPermission]);
 
   // Fallback compatibility path: Load html5-qrcode dynamically on Firefox
   useEffect(() => {
@@ -337,13 +341,11 @@ export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: 
                           <p className="text-xs text-gray-500">Please unlock permission access inside your browser settings for fallback scanner.</p>
                         </div>
                       )}
-                      {hasPermission === true && (
-                        <>
-                          {/* html5-qrcode renders into this div */}
-                          <div id="fallback-reader" className="w-full h-full" />
-                          {lastScanned && <span className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[11px] font-mono px-3 py-0.5 rounded-full">Scanned: {lastScanned}</span>}
-                        </>
+                      {hasPermission === true && lastScanned && (
+                        <span className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[11px] font-mono px-3 py-0.5 rounded-full">Scanned: {lastScanned}</span>
                       )}
+                      {/* Keep fallback-reader always rendered in DOM once script loaded so html5-qrcode can target it */}
+                      <div id="fallback-reader" className={`w-full h-full ${hasPermission === true ? 'block' : 'hidden'}`} />
                     </>
                   )}
                 </>
