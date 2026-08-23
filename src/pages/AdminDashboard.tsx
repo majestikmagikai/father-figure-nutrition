@@ -77,7 +77,7 @@ type CancelRefundTarget = {
   order: OrderRecord;
 };
 
-type AdminInventoryProduct = InventoryProduct & { enable_3d_viewer?: boolean };
+type AdminInventoryProduct = InventoryProduct & { enable_3d_viewer?: boolean; upc?: string | null };
 
 type ProductDeleteTarget = {
   product: AdminInventoryProduct;
@@ -1422,6 +1422,7 @@ const AdminDashboard = () => {
                           <p className="text-sm text-navy/60">Position: {(productsPage - 1) * productsPerPage + index + 1}</p>
                           <p className="text-sm text-navy/60">{product.currency_code} {Number(product.price).toFixed(2)}</p>
                           <p className="text-sm text-navy/70 mt-1">{product.description || "No short description."}</p>
+                          {product.upc && <p className="text-xs font-mono text-navy/60 mt-1">UPC: {product.upc}</p>}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -1793,8 +1794,11 @@ const AdminDashboard = () => {
                         <p className="text-sm uppercase tracking-wide text-navy/60">UPC</p>
                         <Input
                           placeholder="e.g. 199874431949"
-                          value={newProduct.upc}
-                          onChange={(e) => setNewProduct((prev) => ({ ...prev, upc: e.target.value }))}
+                          value={editingProduct.upc ?? ""}
+                          onChange={(e) => {
+                            const upc = e.target.value;
+                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, upc } : p)));
+                          }}
                         />
                       </div>
                     </div>
