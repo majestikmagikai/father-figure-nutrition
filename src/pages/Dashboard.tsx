@@ -571,19 +571,19 @@ const Dashboard = () => {
             </CardHeader>
           </Card>
 
-          <div className="grid md:grid-cols-2 gap-5">
-            <Card className="border-navy/15 bg-white/95">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2 text-navy">
-                  <UserRound className="h-5 w-5 text-orange" /> Account
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-navy/70 space-y-2">
-                <p><span className="font-semibold text-navy">Email:</span> {user?.email}</p>
-                <p><span className="font-semibold text-navy">Status:</span> Verified Customer</p>
-              </CardContent>
-            </Card>
+          <Card className="border-navy/15 bg-white/95 mb-5">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2 text-navy">
+                <UserRound className="h-5 w-5 text-orange" /> Account
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-navy/70 space-y-2">
+              <p><span className="font-semibold text-navy">Email:</span> {user?.email}</p>
+              <p><span className="font-semibold text-navy">Status:</span> Verified Customer</p>
+            </CardContent>
+          </Card>
 
+          <div className="grid md:grid-cols-2 gap-5">
             <Card className="border-navy/15 bg-white/95">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2 text-navy">
