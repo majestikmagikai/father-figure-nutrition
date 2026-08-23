@@ -278,37 +278,74 @@ export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: 
         </CardHeader>
         <CardContent className="grid md:grid-cols-2 gap-6">
           <div>
-            <div className="relative aspect-video rounded-lg overflow-hidden bg-black flex items-center justify-center border border-gray-200 shadow-inner">
-              {isDetectorSupported === false && (
-                <div className="p-4 text-center text-red-600 space-y-2">
-                  <ShieldAlert className="mx-auto h-8 w-8" />
-                  <p className="text-sm font-semibold">Native Barcode API Unsupported</p>
-                  <p className="text-xs text-gray-500 leading-relaxed">
-                    Please switch to Chrome or another modern Chromium-based browser to activate native device scanning.
-                  </p>
-                </div>
-              )}
-
-              {isDetectorSupported === true && hasPermission === null && (
+            <div className="relative aspect-video rounded-lg overflow-hidden bg-black flex items-center justify-center border border-gray-200 shadow-inner text-navy/60">
+              {/* Initial state: still checking for native detector support */}
+              {isDetectorSupported === null && (
                 <div className="text-center text-gray-400 space-y-2">
                   <Camera className="mx-auto h-8 w-8 animate-pulse" />
-                  <p className="text-xs">Requesting camera access...</p>
+                  <p className="text-xs">Initializing scanner...</p>
                 </div>
               )}
 
-              {isDetectorSupported === true && hasPermission === false && (
-                <div className="p-4 text-center text-red-600 space-y-2">
-                  <ShieldAlert className="mx-auto h-8 w-8" />
-                  <p className="text-sm font-semibold">Camera Access Denied</p>
-                  <p className="text-xs text-gray-500">Please unlock permission access inside your browser settings.</p>
-                </div>
-              )}
-
-              {isDetectorSupported === true && hasPermission === true && (
+              {/* Native BarcodeDetector is supported */}
+              {isDetectorSupported === true && (
                 <>
-                  <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 border-2 border-dashed border-orange/40 rounded-lg pointer-events-none m-6 flex items-center justify-center" />
-                  {lastScanned && <span className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[11px] font-mono px-3 py-0.5 rounded-full">Scanned: {lastScanned}</span>}
+                  {hasPermission === null && (
+                    <div className="text-center text-gray-400 space-y-2">
+                      <Camera className="mx-auto h-8 w-8 animate-pulse" />
+                      <p className="text-xs">Requesting camera access...</p>
+                    </div>
+                  )}
+                  {hasPermission === false && (
+                    <div className="p-4 text-center text-red-600 space-y-2">
+                      <ShieldAlert className="mx-auto h-8 w-8" />
+                      <p className="text-sm font-semibold">Camera Access Denied</p>
+                      <p className="text-xs text-gray-500">Please unlock permission access inside your browser settings.</p>
+                    </div>
+                  )}
+                  {hasPermission === true && (
+                    <>
+                      <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 border-2 border-dashed border-orange/40 rounded-lg pointer-events-none m-6 flex items-center justify-center" />
+                      {lastScanned && <span className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[11px] font-mono px-3 py-0.5 rounded-full">Scanned: {lastScanned}</span>}
+                    </>
+                  )}
+                </>
+              )}
+
+              {/* Native BarcodeDetector is NOT supported (fallback path) */}
+              {isDetectorSupported === false && (
+                <>
+                  {!scriptLoaded && (
+                    <div className="text-center text-gray-400 space-y-2">
+                      <Camera className="mx-auto h-8 w-8 animate-pulse" />
+                      <p className="text-xs">Loading fallback scanner...</p>
+                    </div>
+                  )}
+                  {scriptLoaded && (
+                    <>
+                      {hasPermission === null && (
+                        <div className="text-center text-gray-400 space-y-2">
+                          <Camera className="mx-auto h-8 w-8 animate-pulse" />
+                          <p className="text-xs">Requesting camera access for fallback...</p>
+                        </div>
+                      )}
+                      {hasPermission === false && (
+                        <div className="p-4 text-center text-red-600 space-y-2">
+                          <ShieldAlert className="mx-auto h-8 w-8" />
+                          <p className="text-sm font-semibold">Camera Access Denied</p>
+                          <p className="text-xs text-gray-500">Please unlock permission access inside your browser settings for fallback scanner.</p>
+                        </div>
+                      )}
+                      {hasPermission === true && (
+                        <>
+                          {/* html5-qrcode renders into this div */}
+                          <div id="fallback-reader" className="w-full h-full" />
+                          {lastScanned && <span className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[11px] font-mono px-3 py-0.5 rounded-full">Scanned: {lastScanned}</span>}
+                        </>
+                      )}
+                    </>
+                  )}
                 </>
               )}
             </div>
