@@ -262,6 +262,8 @@ const AdminDashboard = () => {
   const [isRevokingAllForUserId, setIsRevokingAllForUserId] = useState<string | null>(null);
   const [isDeletingSessionId, setIsDeletingSessionId] = useState<string | null>(null);
   const [deleteSessionTarget, setDeleteSessionTarget] = useState<UserSessionRecord | null>(null);
+  const [isDeletingOrderId, setIsDeletingOrderId] = useState<string | null>(null);
+  const [deleteOrderTarget, setDeleteOrderTarget] = useState<OrderRecord | null>(null);
   const [revokeAccessTarget, setRevokeAccessTarget] = useState<RevokeAccessTarget | null>(null);
   const [cancelRefundTarget, setCancelRefundTarget] = useState<CancelRefundTarget | null>(null);
   const [productDeleteTarget, setProductDeleteTarget] = useState<ProductDeleteTarget | null>(null);
@@ -285,6 +287,32 @@ const AdminDashboard = () => {
     fillColor: "",
     model3dUrl: "",
   });
+
+  const openDeleteOrderModal = (order: OrderRecord) => {
+    setDeleteOrderTarget(order);
+  };
+
+  const confirmDeleteOrder = async () => {
+    if (!deleteOrderTarget) return;
+
+    const target = deleteOrderTarget;
+    setDeleteOrderTarget(null);
+    setIsDeletingOrderId(target.id);
+
+    try {
+      await supabase.from("order_items").delete().eq("order_id", target.id);
+      const { error } = await supabase.from("orders").delete().eq("id", target.id);
+
+      if (error) throw error;
+
+      toast.success("Order record deleted.");
+      await reloadAdminData({ silent: true });
+    } catch {
+      toast.error("Could not delete order record.");
+    } finally {
+      setIsDeletingOrderId(null);
+    }
+  };
 
   const openDeleteSessionModal = (sessionRecord: UserSessionRecord) => {
     setDeleteSessionTarget(sessionRecord);
@@ -1977,6 +2005,14 @@ const AdminDashboard = () => {
                         >
                           {order.status === "cancelled" ? "Cancelled" : "Cancel & Refund"}
                         </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => openDeleteOrderModal(order)}
+                          disabled={isDeletingOrderId === order.id}
+                          className="border-navy/20 text-navy hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" /> Delete Order
+                        </Button>
                       </div>      
 
                       <hr className="border-t border-navy/10 my-4" />                
@@ -2341,6 +2377,29 @@ const AdminDashboard = () => {
               disabled={!deleteSessionTarget || isDeletingSessionId !== null}
             >
               {isDeletingSessionId === deleteSessionTarget?.id ? "Deleting..." : "Delete Session"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={Boolean(deleteOrderTarget)} onOpenChange={(open) => { if (!open) setDeleteOrderTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Order Record</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete this order record? This will also delete all associated product line items from the database. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingOrderId !== null}>
+              Cancel
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={() => void confirmDeleteOrder()}
+              disabled={!deleteOrderTarget || isDeletingOrderId !== null}
+            >
+              {isDeletingOrderId === deleteOrderTarget?.id ? "Deleting..." : "Delete Order"}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
