@@ -260,6 +260,8 @@ const AdminDashboard = () => {
   >({});
   const [isRevokingSessionId, setIsRevokingSessionId] = useState<string | null>(null);
   const [isRevokingAllForUserId, setIsRevokingAllForUserId] = useState<string | null>(null);
+  const [isDeletingSessionId, setIsDeletingSessionId] = useState<string | null>(null);
+  const [deleteSessionTarget, setDeleteSessionTarget] = useState<UserSessionRecord | null>(null);
   const [revokeAccessTarget, setRevokeAccessTarget] = useState<RevokeAccessTarget | null>(null);
   const [cancelRefundTarget, setCancelRefundTarget] = useState<CancelRefundTarget | null>(null);
   const [productDeleteTarget, setProductDeleteTarget] = useState<ProductDeleteTarget | null>(null);
@@ -283,6 +285,34 @@ const AdminDashboard = () => {
     fillColor: "",
     model3dUrl: "",
   });
+
+  const openDeleteSessionModal = (sessionRecord: UserSessionRecord) => {
+    setDeleteSessionTarget(sessionRecord);
+  };
+
+  const confirmDeleteSession = async () => {
+    if (!deleteSessionTarget) return;
+
+    const target = deleteSessionTarget;
+    setDeleteSessionTarget(null);
+    setIsDeletingSessionId(target.id);
+
+    try {
+      const { error } = await supabase
+        .from("user_sessions")
+        .delete()
+        .eq("id", target.id);
+
+      if (error) throw error;
+
+      toast.success("Session record deleted.");
+      await reloadAdminData({ silent: true });
+    } catch {
+      toast.error("Could not delete session record.");
+    } finally {
+      setIsDeletingSessionId(null);
+    }
+  };
 
   useEffect(() => {
     if (!supabase) return;
@@ -2099,17 +2129,27 @@ const AdminDashboard = () => {
                                         </p>
                                       )}
                                     </div>
-                                    <Button
-                                      variant={sessionRecord.revoked_at ? "outline" : "destructive"}
-                                      onClick={() => openRevokeSessionModal(sessionRecord)}
-                                      disabled={isRevokingSessionId === sessionRecord.id || Boolean(sessionRecord.revoked_at)}
-                                    >
-                                      {sessionRecord.revoked_at
-                                        ? "Revoked"
-                                        : isRevokingSessionId === sessionRecord.id
-                                          ? "Revoking..."
-                                          : "Revoke"}
-                                    </Button>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        variant={sessionRecord.revoked_at ? "outline" : "destructive"}
+                                        onClick={() => openRevokeSessionModal(sessionRecord)}
+                                        disabled={isRevokingSessionId === sessionRecord.id || Boolean(sessionRecord.revoked_at)}
+                                      >
+                                        {sessionRecord.revoked_at
+                                          ? "Revoked"
+                                          : isRevokingSessionId === sessionRecord.id
+                                            ? "Revoking..."
+                                            : "Revoke"}
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        onClick={() => openDeleteSessionModal(sessionRecord)}
+                                        disabled={isDeletingSessionId === sessionRecord.id}
+                                        className="border-navy/20 text-navy hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200"
+                                      >
+                                        <Trash2 className="h-4 w-4 mr-1" /> Delete
+                                      </Button>
+                                    </div>
                                   </div>
                                 </div>
                               ))}
@@ -2274,6 +2314,29 @@ const AdminDashboard = () => {
               disabled={!productDeleteTarget || isDeletingProduct === productDeleteTarget.product.id}
             >
               {productDeleteTarget && isDeletingProduct === productDeleteTarget.product.id ? "Deleting..." : "Delete Product"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={Boolean(deleteSessionTarget)} onOpenChange={(open) => { if (!open) setDeleteSessionTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Session Record</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete this session record from this user's history? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingSessionId !== null}>
+              Cancel
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={() => void confirmDeleteSession()}
+              disabled={!deleteSessionTarget || isDeletingSessionId !== null}
+            >
+              {isDeletingSessionId === deleteSessionTarget?.id ? "Deleting..." : "Delete Session"}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
