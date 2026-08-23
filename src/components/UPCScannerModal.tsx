@@ -326,7 +326,7 @@ export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: 
           <X size={24} />
         </button>
         <CardHeader>
-          <CardTitle>Scan Items for Order #{order.id.slice(0, 8)}</CardTitle>
+          <CardTitle>Scan Items for Order #{order.external_id || order.stripe_payment_intent_id || order.id.slice(0, 8)}</CardTitle>
         </CardHeader>
         <CardContent className="grid md:grid-cols-2 gap-6">
           <div>
