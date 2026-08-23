@@ -40,6 +40,7 @@ import {
   updateOrderStatus,
   updateInventoryProduct,
 } from "@/lib/adminData";
+import { convertImageFileToWebp } from "@/lib/imageUtils";
 import { toast } from "sonner";
 import type { User } from "@supabase/supabase-js";
 
@@ -946,14 +947,15 @@ const AdminDashboard = () => {
 
     setIsUploadingImageFor("new");
     try {
-      const url = await uploadProductAsset({ productHandle: handle, file, kind: "image" });
+      const webpFile = await convertImageFileToWebp(file);
+      const url = await uploadProductAsset({ productHandle: handle, file: webpFile, kind: "image" });
       const existingImages = parseImagesInput(newProduct.imagesJson) ?? [];
       const altText = `${newProduct.title || handle} image`;
       const nextImages = [...existingImages, { url, altText }];
       setNewProduct((prev) => ({ ...prev, imagesJson: JSON.stringify(nextImages, null, 2) }));
       toast.success("Image uploaded and added to product images.");
-    } catch {
-      toast.error("Could not upload image.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not upload image.");
     } finally {
       setIsUploadingImageFor(null);
     }
@@ -996,14 +998,15 @@ const AdminDashboard = () => {
 
     setIsUploadingImageFor(product.id);
     try {
-      const url = await uploadProductAsset({ productHandle: product.handle, file, kind: "image" });
+      const webpFile = await convertImageFileToWebp(file);
+      const url = await uploadProductAsset({ productHandle: product.handle, file: webpFile, kind: "image" });
       const existingImages = parseImagesInput(JSON.stringify(product.images)) ?? [];
       const next = { ...product, images: [...existingImages, { url, altText: `${product.title} image` }] };
       setProducts((prev) => prev.map((p) => (p.id === product.id ? next : p)));
       await handleSaveProduct(next);
       toast.success("Image uploaded.");
-    } catch {
-      toast.error("Could not upload image.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not upload image.");
     } finally {
       setIsUploadingImageFor(null);
     }
@@ -1559,7 +1562,7 @@ const AdminDashboard = () => {
                           }}
                         />
                         <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
-                          {isUploadingImageFor === "new" ? "Uploading image..." : "Upload Image"}
+                          {isUploadingImageFor === "new" ? "Converting & uploading..." : "Upload Image (auto .webp)"}
                         </span>
                       </label>
                       <label className="inline-flex items-center gap-2">
@@ -1836,7 +1839,7 @@ const AdminDashboard = () => {
                           }}
                         />
                         <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
-                          {isUploadingImageFor === editingProduct.id ? "Uploading image..." : "Upload Image"}
+                          {isUploadingImageFor === editingProduct.id ? "Converting & uploading..." : "Upload Image (auto .webp)"}
                         </span>
                       </label>
                       <label className="inline-flex items-center gap-2">
