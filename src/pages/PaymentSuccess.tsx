@@ -57,43 +57,59 @@ const PaymentSuccess = () => {
 
           if (intent?.status === "succeeded") {
             const metadata = (intent as unknown as { metadata?: Record<string, string> }).metadata ?? {};
-            const cartItemsRaw = metadata.cart_items ?? "[]";
+            const cartLinesRaw = metadata.cart_lines ?? "";
 
-            try {
-              const parsed = JSON.parse(cartItemsRaw) as Array<{
-                h?: unknown;
-                t?: unknown;
-                v?: unknown;
-                q?: unknown;
-                p?: unknown;
-                c?: unknown;
-                i?: unknown;
-              }>;
+            type ParsedCartLine = { h: string; v: string; q: number; p: number; c: string };
 
-              if (Array.isArray(parsed)) {
-                normalizedItems = parsed
-                  .filter((entry) =>
-                    typeof entry?.h === "string" &&
-                    typeof entry?.t === "string" &&
-                    typeof entry?.q === "number" &&
-                    typeof entry?.p === "number" &&
-                    typeof entry?.c === "string",
-                  )
-                  .map((entry) => ({
-                    productId: `prod-${String(entry.h)}`,
-                    handle: String(entry.h),
-                    title: String(entry.t),
-                    image: {
-                      url: typeof entry.i === "string" ? entry.i : "",
-                      altText: String(entry.t),
-                    },
-                    variantId: typeof entry.v === "string" ? entry.v : "",
-                    price: (Number(entry.p) / 100).toFixed(2),
-                    currencyCode: String(entry.c).toUpperCase(),
-                    quantity: Number(entry.q),
-                  }));
-              }
-            } catch {
+            const cartLines: ParsedCartLine[] = cartLinesRaw
+              ? cartLinesRaw
+                  .split("|")
+                  .map((line): ParsedCartLine | null => {
+                    const [h, v, q, p, c] = line.split(":");
+                    const quantity = Number.parseInt(q ?? "", 10);
+                    const unitMinor = Number.parseInt(p ?? "", 10);
+                    if (!h || !c || !Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(unitMinor) || unitMinor <= 0) {
+                      return null;
+                    }
+                    return { h, v: v ?? "", q: quantity, p: unitMinor, c };
+                  })
+                  .filter((line): line is ParsedCartLine => line !== null)
+              : [];
+
+            if (cartLines.length > 0 && supabase) {
+              const { data: lineProducts } = await supabase
+                .from("inventory_products")
+                .select("handle, title, images")
+                .in("handle", cartLines.map((line) => line.h));
+
+              const productByHandle = new Map(
+                (lineProducts ?? []).map((product) => [product.handle, product]),
+              );
+
+              normalizedItems = cartLines.map((line) => {
+                const product = productByHandle.get(line.h);
+                const images = product?.images as Array<{ url?: unknown }> | null | undefined;
+                const firstImage = Array.isArray(images) && images.length > 0 ? images[0] : null;
+                const imageUrl = firstImage && typeof firstImage === "object" && firstImage !== null && "url" in firstImage
+                  ? String((firstImage as { url?: unknown }).url ?? "")
+                  : "";
+                const title = product?.title ?? line.h;
+
+                return {
+                  productId: `prod-${line.h}`,
+                  handle: line.h,
+                  title,
+                  image: {
+                    url: imageUrl,
+                    altText: title,
+                  },
+                  variantId: line.v,
+                  price: (line.p / 100).toFixed(2),
+                  currencyCode: line.c.toUpperCase(),
+                  quantity: line.q,
+                };
+              });
+            } else {
               normalizedItems = [];
             }
           }

@@ -216,7 +216,10 @@ Deno.serve(async (req) => {
         customer_email: userData.user.email ?? "",
         item_count: String(itemCount),
         cart_handles: handles.join(","),
-        cart_items: JSON.stringify(enrichedCartItems),
+        // Compact encoding to stay under Stripe's 500-character metadata value limit.
+        // Title and image URL are re-fetched from inventory_products by handle when needed
+        // (in the webhook and on the payment success page) instead of being stored here.
+        cart_lines: enrichedCartItems.map((item) => `${item.h}:${item.v}:${item.q}:${item.p}:${item.c}`).join("|"),
         client_order_token: clientOrderToken,
       },
     });

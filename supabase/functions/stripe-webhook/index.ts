@@ -97,32 +97,55 @@ Deno.serve(async (req) => {
       const itemCount = Number.parseInt(intent.metadata?.item_count ?? "0", 10) || 0;
       const customerEmail = intent.metadata?.customer_email ?? intent.receipt_email ?? null;
       const clientOrderToken = intent.metadata?.client_order_token ?? null;
-      const cartItemsRaw = intent.metadata?.cart_items ?? "[]";
+      const cartLinesRaw = intent.metadata?.cart_lines ?? "";
+
+      type ParsedCartLine = { h: string; v: string; q: number; p: number; c: string };
+
+      const cartLines: ParsedCartLine[] = cartLinesRaw
+        ? cartLinesRaw
+            .split("|")
+            .map((line): ParsedCartLine | null => {
+              const [h, v, q, p, c] = line.split(":");
+              const quantity = Number.parseInt(q ?? "", 10);
+              const unitMinor = Number.parseInt(p ?? "", 10);
+              if (!h || !c || !Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(unitMinor) || unitMinor <= 0) {
+                return null;
+              }
+              return { h, v: v ?? "", q: quantity, p: unitMinor, c };
+            })
+            .filter((line): line is ParsedCartLine => line !== null)
+        : [];
+
       let cartItems: Array<{ h: string; t: string; v: string; q: number; p: number; c: string; i: string }> = [];
 
-      try {
-        const parsed = JSON.parse(cartItemsRaw) as Array<{ h?: unknown; t?: unknown; v?: unknown; q?: unknown; p?: unknown; c?: unknown; i?: unknown }>;
-        if (Array.isArray(parsed)) {
-          cartItems = parsed
-            .filter((item) =>
-              typeof item?.h === "string" &&
-              typeof item?.t === "string" &&
-              typeof item?.q === "number" &&
-              typeof item?.p === "number" &&
-              typeof item?.c === "string"
-            )
-            .map((item) => ({
-              h: String(item.h),
-              t: String(item.t),
-              v: typeof item.v === "string" ? item.v : "",
-              q: Number(item.q),
-              p: Number(item.p),
-              c: String(item.c),
-              i: typeof item.i === "string" ? item.i : "",
-            }));
-        }
-      } catch {
-        cartItems = [];
+      if (cartLines.length > 0) {
+        const { data: lineProducts } = await supabase
+          .from("inventory_products")
+          .select("handle, title, images")
+          .in("handle", cartLines.map((line) => line.h));
+
+        const productByHandle = new Map(
+          ((lineProducts ?? []) as Array<{ handle: string; title: string | null; images: Array<{ url?: unknown }> | null }>)
+            .map((product) => [product.handle, product]),
+        );
+
+        cartItems = cartLines.map((line) => {
+          const product = productByHandle.get(line.h);
+          const firstImage = Array.isArray(product?.images) && product.images.length > 0 ? product.images[0] : null;
+          const imageUrl = firstImage && typeof firstImage === "object" && firstImage !== null && "url" in firstImage
+            ? String((firstImage as { url?: unknown }).url ?? "")
+            : "";
+
+          return {
+            h: line.h,
+            t: product?.title ?? line.h,
+            v: line.v,
+            q: line.q,
+            p: line.p,
+            c: line.c,
+            i: imageUrl,
+          };
+        });
       }
 
       const { error } = await supabase
