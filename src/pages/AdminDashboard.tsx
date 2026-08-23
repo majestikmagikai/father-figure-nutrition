@@ -1421,18 +1421,8 @@ const AdminDashboard = () => {
                           <p className="text-sm text-navy/60">Position: {(productsPage - 1) * productsPerPage + index + 1}</p>
                           <p className="text-sm text-navy/60">{product.currency_code} {Number(product.price).toFixed(2)}</p>
                           <p className="text-sm text-navy/70 mt-1">{product.description || "No short description."}</p>
+                          {product.upc && <p className="text-xs font-mono text-navy/60 mt-1">UPC: {product.upc}</p>}
                           </div>
-                                      <div className="space-y-1">
-                                        <p className="text-sm uppercase tracking-wide text-navy/60">UPC</p>
-                                        <Input
-                                          value={editingProduct.upc ?? ""}
-                                          onChange={(e) => {
-                                            const upc = e.target.value;
-                                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, upc } : p)));
-                                          }}
-                                          placeholder="e.g. 199874431949"
-                                        />
-                                      </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5">
@@ -1797,14 +1787,6 @@ const AdminDashboard = () => {
                         <div
                           className="text-sm text-navy/80 [&_b]:font-semibold [&_i]:italic [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1"
                           dangerouslySetInnerHTML={{ __html: editingProduct.full_description || "" }}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">UPC</p>
-                        <Input
-                          placeholder="e.g. 199874431949"
-                          value={newProduct.upc}
-                          onChange={(e) => setNewProduct((prev) => ({ ...prev, upc: e.target.value }))}
                         />
                       </div>
                     </div>
