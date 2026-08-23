@@ -2,8 +2,9 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import type { OrderRecord, OrderItemRecord, InventoryProduct } from '@/lib/adminData';
 import { Button } from './ui/button';
+import { Input } from './ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { X, Camera, ShieldAlert } from 'lucide-react';
+import { X, Camera, ShieldAlert, Barcode } from 'lucide-react';
 
 // Web Audio API helper to generate programmatic beeps
 const playBeep = (freq = 1800, duration = 150, type: OscillatorType = 'sine') => {
@@ -48,6 +49,7 @@ export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [manualCode, setManualCode] = useState('');
 
   const lastCodeRef = useRef('');
   const lastTimeRef = useRef(0);
@@ -56,7 +58,7 @@ export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: 
     const map = new Map<string, string>();
     for (const p of products) {
       if (p.handle) {
-        map.set(p.handle.toLowerCase(), p.handle);
+        map.set(p.handle.toLowerCase(), p.handle.toLowerCase());
       }
       if (p.variant_id) {
         map.set(p.variant_id.toLowerCase(), p.handle);
@@ -71,7 +73,8 @@ export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: 
   const requiredItems = useMemo(() => {
     const map = new Map<string, number>();
     for (const item of items) {
-        map.set(item.product_handle, (map.get(item.product_handle) || 0) + item.quantity);
+        const lowerHandle = item.product_handle.toLowerCase();
+        map.set(lowerHandle, (map.get(lowerHandle) || 0) + item.quantity);
     }
     return map;
   }, [items]);
@@ -140,6 +143,12 @@ export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: 
     }
   };
 
+  // Keep a mutable ref to handleCodeScanned to prevent stale closures in active frame processing loops
+  const handleCodeScannedRef = useRef(handleCodeScanned);
+  useEffect(() => {
+    handleCodeScannedRef.current = handleCodeScanned;
+  }, [handleCodeScanned]);
+
   // Check native browser BarcodeDetector API support
   useEffect(() => {
     setIsDetectorSupported('BarcodeDetector' in window);
@@ -195,7 +204,7 @@ export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: 
         try {
           const detectedBarcodes = await barcodeDetector.detect(video);
           if (detectedBarcodes.length > 0 && active) {
-            handleCodeScanned(detectedBarcodes[0].rawValue);
+            handleCodeScannedRef.current(detectedBarcodes[0].rawValue);
           }
         } catch (err) {
           // Silence transient black-frame processing errors
@@ -266,7 +275,7 @@ export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: 
           },
           (decodedText: string) => {
             if (active) {
-              handleCodeScanned(decodedText);
+              handleCodeScannedRef.current(decodedText);
             }
           },
           () => {
@@ -299,6 +308,14 @@ export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: 
       onClose();
     } finally {
       setIsFulfilling(false);
+    }
+  };
+
+  const handleManualSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (manualCode.trim()) {
+      handleCodeScannedRef.current(manualCode.trim());
+      setManualCode('');
     }
   };
 
@@ -382,20 +399,37 @@ export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: 
                 </>
               )}
             </div>
+
+            {/* Manual input form fallback */}
+            <form onSubmit={handleManualSubmit} className="mt-4 flex gap-2">
+              <Input
+                type="text"
+                placeholder="Type UPC or variant ID..."
+                value={manualCode}
+                onChange={(e) => setManualCode(e.target.value)}
+                className="flex-1 text-sm h-10 border-navy/20 bg-white"
+              />
+              <Button type="submit" variant="secondary" className="h-10 px-4 bg-navy/10 hover:bg-navy/15 text-navy">
+                <Barcode className="h-4 w-4 mr-1" /> Enter
+              </Button>
+            </form>
           </div>
           <div>
             <h3 className="text-lg font-semibold mb-2">Order Items</h3>
             <ul className="space-y-2">
-              {items.map(item => (
-                <li key={item.id} className="flex justify-between items-center p-2 rounded-md bg-gray-50">
-                  <span>{item.product_title}</span>
-                  <span className={`font-mono px-2 py-1 rounded ${
-                    (scannedItems[item.product_handle] || 0) >= item.quantity ? 'bg-green-200 text-green-800' : 'bg-gray-200'
-                  }`}>
-                    {scannedItems[item.product_handle] || 0} / {item.quantity}
-                  </span>
-                </li>
-              ))}
+              {items.map(item => {
+                const lowerHandle = item.product_handle.toLowerCase();
+                return (
+                  <li key={item.id} className="flex justify-between items-center p-2 rounded-md bg-gray-50 text-sm">
+                    <span>{item.product_title}</span>
+                    <span className={`font-mono px-2 py-1 rounded text-xs ${
+                      (scannedItems[lowerHandle] || 0) >= item.quantity ? 'bg-green-200 text-green-800' : 'bg-gray-200'
+                    }`}>
+                      {scannedItems[lowerHandle] || 0} / {item.quantity}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
             <Button
               onClick={handleFulfill}
