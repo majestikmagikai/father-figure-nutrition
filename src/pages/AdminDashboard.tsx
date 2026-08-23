@@ -476,12 +476,13 @@ const AdminDashboard = () => {
       }
 
       await reloadAdminData();
-    } catch {
+    } catch (error) {
       setRefundOutcomeByOrderId((prev) => ({
         ...prev,
         [order.id]: { label: "Refund failed", tone: "danger" },
       }));
-      toast.error("Could not cancel and refund order.");
+      const message = error instanceof Error ? error.message : "Could not cancel and refund order.";
+      toast.error(message);
       await reloadAdminData({ silent: true });
     } finally {
       setIsSavingOrder(null);

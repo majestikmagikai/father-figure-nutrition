@@ -300,7 +300,23 @@ export const cancelAndRefundOrder = async (input: { id: string }) => {
     body: { orderId: input.id },
   });
 
-  if (error) throw error;
+  if (error) {
+    let message = error.message;
+
+    const response = (error as { context?: Response }).context;
+    if (response) {
+      try {
+        const payload = await response.clone().json() as { error?: unknown };
+        if (payload?.error) {
+          message = String(payload.error);
+        }
+      } catch {
+        // Fall back to the generic invoke error message.
+      }
+    }
+
+    throw new Error(message);
+  }
   if (data && typeof data === "object" && "error" in data && data.error) {
     throw new Error(String(data.error));
   }

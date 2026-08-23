@@ -105,10 +105,15 @@ Deno.serve(async (req) => {
     }
 
     let paymentIntentId: string | null = null;
+    let chargeId: string | null = null;
     if (order.stripe_payment_intent_id?.startsWith("pi_")) {
       paymentIntentId = order.stripe_payment_intent_id;
+    } else if (order.stripe_payment_intent_id?.startsWith("ch_")) {
+      chargeId = order.stripe_payment_intent_id;
     } else if (order.external_id?.startsWith("pi_")) {
       paymentIntentId = order.external_id;
+    } else if (order.external_id?.startsWith("ch_")) {
+      chargeId = order.external_id;
     } else if (order.external_id?.startsWith("cs_")) {
       const session = await stripe.checkout.sessions.retrieve(order.external_id);
       if (typeof session.payment_intent === "string") {
@@ -120,26 +125,28 @@ Deno.serve(async (req) => {
     let refundErrorMessage: string | null = null;
     let refundStatus: "refunded" | "already_refunded" | "payment_cancelled" | "not_attempted" = "not_attempted";
 
-    if (!paymentIntentId) {
+    if (!paymentIntentId && !chargeId) {
       return new Response(JSON.stringify({ error: "No Stripe payment reference found on this order. Refund in Stripe Dashboard." }), {
         status: 409,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    let intent: Stripe.PaymentIntent;
-    try {
-      intent = await stripe.paymentIntents.retrieve(paymentIntentId);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return new Response(JSON.stringify({ error: `Could not load Stripe payment intent: ${message}` }), {
-        status: 409,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    let intent: Stripe.PaymentIntent | null = null;
+    if (paymentIntentId) {
+      try {
+        intent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return new Response(JSON.stringify({ error: `Could not load Stripe payment intent: ${message}` }), {
+          status: 409,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // If payment was authorized but never captured, canceling the intent is the correct no-refund path.
-    if (intent.status === "requires_capture") {
+    if (intent?.status === "requires_capture" && paymentIntentId) {
       try {
         await stripe.paymentIntents.cancel(paymentIntentId);
         refundStatus = "payment_cancelled";
@@ -150,7 +157,7 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-    } else if ((intent.amount_received ?? 0) > 0) {
+    } else if (intent && (intent.amount_received ?? 0) > 0 && paymentIntentId) {
       try {
         const refund = await stripe.refunds.create(
           {
@@ -162,7 +169,7 @@ Deno.serve(async (req) => {
             },
           },
           {
-            idempotencyKey: `order-refund-${order.id}`,
+            idempotencyKey: `order-refund-pi-${order.id}`,
           },
         );
 
@@ -178,12 +185,19 @@ Deno.serve(async (req) => {
           refundErrorMessage = message;
         }
       }
-    } else if (intent.latest_charge) {
+    } else if (chargeId || intent?.latest_charge) {
       // Some payment methods can have a refundable charge even when amount_received is not populated on PI.
       try {
-        const charge = typeof intent.latest_charge === "string"
-          ? await stripe.charges.retrieve(intent.latest_charge)
-          : intent.latest_charge;
+        const resolvedChargeId = chargeId ?? (typeof intent?.latest_charge === "string" ? intent.latest_charge : intent?.latest_charge?.id ?? null);
+
+        if (!resolvedChargeId) {
+          return new Response(JSON.stringify({ error: "No Stripe charge reference found to refund." }), {
+            status: 409,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        const charge = await stripe.charges.retrieve(resolvedChargeId);
 
         const refundableAmount = Math.max((charge.amount_captured ?? charge.amount ?? 0) - (charge.amount_refunded ?? 0), 0);
 
@@ -200,7 +214,7 @@ Deno.serve(async (req) => {
               },
             },
             {
-              idempotencyKey: `order-refund-${order.id}`,
+              idempotencyKey: `order-refund-charge-${order.id}`,
             },
           );
 
@@ -267,6 +281,7 @@ Deno.serve(async (req) => {
         refunded: refundStatus === "refunded" || refundStatus === "already_refunded",
         refundId,
         paymentIntentId,
+        chargeId,
         orderId: order.id,
         status: "cancelled",
         refundStatus,
