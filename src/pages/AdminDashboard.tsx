@@ -69,6 +69,12 @@ type ProductDeleteTarget = {
   product: InventoryProduct;
 };
 
+type RemoveImageTarget = {
+  product: InventoryProduct;
+  index: number;
+  url: string;
+};
+
 const isHexColor = (value: string) => /^#[0-9a-fA-F]{6}$/.test(value.trim());
 
 const HexColorInput = ({ value, onChange, placeholder, fallbackColor }: HexColorInputProps) => {
@@ -267,6 +273,7 @@ const AdminDashboard = () => {
   const [revokeAccessTarget, setRevokeAccessTarget] = useState<RevokeAccessTarget | null>(null);
   const [cancelRefundTarget, setCancelRefundTarget] = useState<CancelRefundTarget | null>(null);
   const [productDeleteTarget, setProductDeleteTarget] = useState<ProductDeleteTarget | null>(null);
+  const [removeImageTarget, setRemoveImageTarget] = useState<RemoveImageTarget | null>(null);
   const [metrics, setMetrics] = useState({
     totalSales: 0,
     totalOrders: 0,
@@ -911,13 +918,6 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleDeleteProduct = async (product: InventoryProduct) => {
-    const accepted = window.confirm(`Delete ${product.title}? This cannot be undone.`);
-    if (!accepted) return;
-
-    await performDeleteProduct(product);
-  };
-
   const openProductDeleteModal = (product: InventoryProduct) => {
     setProductDeleteTarget({ product });
   };
@@ -1057,6 +1057,21 @@ const AdminDashboard = () => {
     setProducts((prev) =>
       prev.map((p) => (p.id === product.id ? { ...p, images: nextImages } : p)),
     );
+  };
+
+  const openRemoveImageModal = (product: InventoryProduct, index: number) => {
+    const images = parseImagesInput(JSON.stringify(product.images)) ?? [];
+    const image = images[index];
+    if (!image) return;
+    setRemoveImageTarget({ product, index, url: image.url });
+  };
+
+  const confirmRemoveImage = () => {
+    if (!removeImageTarget) return;
+
+    const target = removeImageTarget;
+    setRemoveImageTarget(null);
+    handleRemoveProductImage(target.product, target.index);
   };
 
   const handleAddProduct = async () => {
@@ -1742,7 +1757,7 @@ const AdminDashboard = () => {
                                 <Button
                                   type="button"
                                   variant="destructive"
-                                  onClick={() => handleRemoveProductImage(editingProduct, index)}
+                                  onClick={() => openRemoveImageModal(editingProduct, index)}
                                 >
                                   Remove
                                 </Button>
@@ -1849,7 +1864,7 @@ const AdminDashboard = () => {
                     </Button>
                     <Button
                       variant="destructive"
-                      onClick={() => void handleDeleteProduct(editingProduct)}
+                      onClick={() => openProductDeleteModal(editingProduct)}
                       disabled={isDeletingProduct === editingProduct.id}
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
@@ -2354,6 +2369,30 @@ const AdminDashboard = () => {
               disabled={!productDeleteTarget || isDeletingProduct === productDeleteTarget.product.id}
             >
               {productDeleteTarget && isDeletingProduct === productDeleteTarget.product.id ? "Deleting..." : "Delete Product"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={Boolean(removeImageTarget)} onOpenChange={(open) => { if (!open) setRemoveImageTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Image</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this image from the product? This change is not saved until you click Save.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {removeImageTarget && (
+            <img
+              src={removeImageTarget.url}
+              alt="Image to remove"
+              className="h-20 w-20 rounded-md border border-navy/10 object-cover bg-white"
+            />
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Image</AlertDialogCancel>
+            <Button variant="destructive" onClick={confirmRemoveImage}>
+              Remove Image
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
