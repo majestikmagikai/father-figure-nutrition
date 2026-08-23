@@ -47,6 +47,10 @@ export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: 
   const [lastScanned, setLastScanned] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
+
+  const lastCodeRef = useRef('');
+  const lastTimeRef = useRef(0);
 
   const productUPCs = useMemo(() => {
     return new Map(products.map(p => [p.upc, p.handle]));
@@ -75,6 +79,35 @@ export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: 
   useEffect(() => {
     scanStateRef.current = { productUPCs, requiredItems, scannedItems };
   }, [productUPCs, requiredItems, scannedItems]);
+
+  // Shared business logic to handle dynamic scanned codes
+  const handleCodeScanned = (code: string) => {
+    const now = Date.now();
+
+    // Throttles successive duplicate scans of the same code within 1.5 seconds
+    if (code !== lastCodeRef.current || now - lastTimeRef.current > 1500) {
+      lastCodeRef.current = code;
+      lastTimeRef.current = now;
+      setLastScanned(code);
+
+      const { productUPCs: upcMap, requiredItems: reqMap, scannedItems: scanMap } = scanStateRef.current;
+      const handle = upcMap.get(code);
+
+      if (handle && reqMap.has(handle)) {
+        const requiredQty = reqMap.get(handle) ?? 0;
+        const currentCount = scanMap[handle] || 0;
+
+        if (currentCount < requiredQty) {
+          setScannedItems(prev => ({ ...prev, [handle]: (prev[handle] || 0) + 1 }));
+          playBeep(880, 120, 'sine');
+        } else {
+          playBeep(330, 200, 'triangle');
+        }
+      } else {
+        playBeep(180, 300, 'sawtooth');
+      }
+    }
+  };
 
   // Check native browser BarcodeDetector API support
   useEffect(() => {
@@ -134,32 +167,7 @@ export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: 
         try {
           const detectedBarcodes = await barcodeDetector.detect(video);
           if (detectedBarcodes.length > 0 && active) {
-            const code = detectedBarcodes[0].rawValue;
-            const now = Date.now();
-
-            // Throttles successive duplicate scans of the same code within 1.5 seconds
-            if (code !== lastCode || now - lastTime > 1500) {
-              lastCode = code;
-              lastTime = now;
-              setLastScanned(code);
-
-              const { productUPCs: upcMap, requiredItems: reqMap, scannedItems: scanMap } = scanStateRef.current;
-              const handle = upcMap.get(code);
-
-              if (handle && reqMap.has(handle)) {
-                const requiredQty = reqMap.get(handle) ?? 0;
-                const currentCount = scanMap[handle] || 0;
-
-                if (currentCount < requiredQty) {
-                  setScannedItems(prev => ({ ...prev, [handle]: (prev[handle] || 0) + 1 }));
-                  playBeep(880, 120, 'sine');
-                } else {
-                  playBeep(330, 200, 'triangle');
-                }
-              } else {
-                playBeep(180, 300, 'sawtooth');
-              }
-            }
+            handleCodeScanned(detectedBarcodes[0].rawValue);
           }
         } catch (err) {
           // Silence transient black-frame processing errors
@@ -182,6 +190,71 @@ export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: 
       }
     };
   }, [isDetectorSupported]);
+
+  // Fallback compatibility path: Load html5-qrcode dynamically on Firefox
+  useEffect(() => {
+    if (isDetectorSupported !== false) return;
+
+    if ((window as any).Html5Qrcode) {
+      setScriptLoaded(true);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js';
+    script.async = true;
+    script.onload = () => setScriptLoaded(true);
+    document.body.appendChild(script);
+  }, [isDetectorSupported]);
+
+  // Initialize Fallback scanner once compatibility scripts are dynamically loaded
+  useEffect(() => {
+    if (isDetectorSupported !== false || !scriptLoaded) return;
+
+    let html5QrcodeScanner: any = null;
+    let active = true;
+
+    const startFallbackScanner = async () => {
+      try {
+        html5QrcodeScanner = new (window as any).Html5Qrcode("fallback-reader");
+        
+        await html5QrcodeScanner.start(
+          { facingMode: "environment" },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 150 },
+            formatsToSupport: [
+              (window as any).Html5QrcodeSupportedFormats.UPC_A,
+              (window as any).Html5QrcodeSupportedFormats.UPC_E,
+              (window as any).Html5QrcodeSupportedFormats.EAN_13,
+            ]
+          },
+          (decodedText: string) => {
+            if (active) {
+              handleCodeScanned(decodedText);
+            }
+          },
+          () => {
+            // Silence verbose frame-level parsing errors
+          }
+        );
+        setHasPermission(true);
+      } catch (err) {
+        console.error("Fallback scanner initialization failed:", err);
+        setHasPermission(false);
+      }
+    };
+
+    const timer = setTimeout(() => void startFallbackScanner(), 100);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+      if (html5QrcodeScanner && html5QrcodeScanner.isScanning) {
+        html5QrcodeScanner.stop().catch(() => {});
+      }
+    };
+  }, [isDetectorSupported, scriptLoaded]);
 
   const handleFulfill = async () => {
     if (!isOrderFulfilled) return;
