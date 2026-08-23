@@ -943,7 +943,8 @@ const AdminDashboard = () => {
         fillColor: fillColor || null,
         model3dUrl: model3dUrl || null,
         enable3dViewer: product.enable_3d_viewer,
-      });
+        upc: upc || null,
+      } as any);
       toast.success("Product updated.");
       await reloadAdminData();
     } catch {
@@ -1555,6 +1556,14 @@ const AdminDashboard = () => {
                           onChange={(e) => setNewProduct((prev) => ({ ...prev, currencyCode: e.target.value }))}
                         />
                       </div>
+                      <div className="space-y-1">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">UPC</p>
+                        <Input
+                          placeholder="e.g. 199874431949"
+                          value={newProduct.upc}
+                          onChange={(e) => setNewProduct((prev) => ({ ...prev, upc: e.target.value }))}
+                        />
+                      </div>
                     </div>
                   </div>
                   <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
@@ -1748,6 +1757,17 @@ const AdminDashboard = () => {
                           onChange={(e) => {
                             const currency_code = e.target.value.toUpperCase();
                             setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, currency_code } : p)));
+                          }}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">UPC</p>
+                        <Input
+                          placeholder="e.g. 199874431949"
+                          value={editingProduct.upc ?? ""}
+                          onChange={(e) => {
+                            const upc = e.target.value;
+                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, upc } : p)));
                           }}
                         />
                       </div>
