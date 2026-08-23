@@ -1193,14 +1193,12 @@ const AdminDashboard = () => {
 
           <Card className="border-navy/15 shadow-card mb-6 bg-white/95">
             <CardHeader>
-              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-navy text-sm uppercase tracking-widest font-semibold mb-3 w-fit ${isProductEditSection ? "bg-[#efe2c8] border-[#d8c7a1]" : "bg-navy/10 border-navy/20"}`}>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border bg-navy/10 border-navy/20 text-navy text-sm uppercase tracking-widest font-semibold mb-3 w-fit">
                 <ShieldCheck className="h-3.5 w-3.5" /> Admin Dashboard
               </div>
               <CardTitle className="font-display uppercase text-xl text-navy">Welcome, {displayName}</CardTitle>
               <CardDescription>
-                {isProductEditSection
-                  ? "Field Manual Mode: shape product story, tune visual language, and preview exactly how copy lands."
-                  : "Manage customer operations and monitor storefront activity from one control surface."}
+                Manage customer operations and monitor storefront activity from one control surface.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -1382,10 +1380,10 @@ const AdminDashboard = () => {
           )}
 
           {isProductEditSection && (
-          <Card className="border-[#d8c7a1] bg-[#fbf6eb] mb-6 shadow-[0_18px_45px_rgba(14,35,64,0.12)]">
+          <Card className="border-navy/15 bg-white/95 mb-6 shadow-card">
             <CardHeader>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#efe2c8] border border-[#d8c7a1] text-navy text-xs uppercase tracking-widest font-semibold w-fit">
-                Field Manual
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-navy/10 border border-navy/20 text-navy text-xs uppercase tracking-widest font-semibold w-fit">
+                Product Editor
               </div>
               <CardTitle className="text-lg text-navy">Product Edit Studio</CardTitle>
               <CardDescription>
@@ -1393,13 +1391,13 @@ const AdminDashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button asChild variant="outline" className="border-[#d8c7a1] bg-[#f7efdd] text-navy hover:bg-[#efe2c8]">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5">
                 <Link to="/admin/products">Back to Products List</Link>
               </Button>
 
               {isEditingNewProduct ? (
                 <>
-                  <div className="rounded-lg border border-[#d8c7a1] bg-[#f8f1e3] p-3 space-y-3">
+                  <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
                     <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Core Info</p>
                     <div className="grid md:grid-cols-5 gap-3">
                       <div className="space-y-1">
@@ -1444,10 +1442,10 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="rounded-lg border border-[#d8c7a1] bg-[#f8f1e3] p-3 space-y-3">
+                  <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
                     <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Descriptions</p>
                     <div className="grid lg:grid-cols-2 gap-4">
-                      <div className="rounded-lg border border-[#d8c7a1] bg-[#fff9ed] p-3 space-y-3">
+                      <div className="rounded-lg border border-navy/10 bg-white/90 p-3 space-y-3">
                         <p className="text-sm uppercase tracking-wide text-navy/60">Description Editor</p>
                         <div className="space-y-1">
                           <p className="text-sm uppercase tracking-wide text-navy/60">Short Description</p>
@@ -1463,11 +1461,10 @@ const AdminDashboard = () => {
                             value={newProduct.fullDescription}
                             onChange={(nextValue) => setNewProduct((prev) => ({ ...prev, fullDescription: nextValue }))}
                             placeholder="Full product description with formatting"
-                            variant="fieldManual"
                           />
                         </div>
                       </div>
-                      <div className="rounded-lg border border-[#d8c7a1] bg-[#f2e6d0] p-3">
+                      <div className="rounded-lg border border-navy/10 bg-sky/10 p-3">
                         <p className="text-sm uppercase tracking-wide text-navy/60 mb-2">Live Preview</p>
                         <p className="text-sm text-navy/80 mb-3">{newProduct.description || "No short description yet."}</p>
                         <div
@@ -1477,7 +1474,7 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="rounded-lg border border-[#d8c7a1] bg-[#f8f1e3] p-3 space-y-3">
+                  <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
                     <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Visuals</p>
                     <div className="grid md:grid-cols-3 gap-3">
                       <div className="space-y-1">
@@ -1570,7 +1567,7 @@ const AdminDashboard = () => {
               ) : (
                 <>
                   <p className="text-sm uppercase tracking-wide text-navy/60">Product: {editingProduct.title || editingProduct.handle}</p>
-                  <div className="rounded-lg border border-[#d8c7a1] bg-[#f8f1e3] p-3 space-y-3">
+                  <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
                     <p className="text-sm uppercase tracking-wide text-navy/60">Core Info</p>
                     <div className="grid md:grid-cols-5 gap-3">
                       <div className="space-y-1">
@@ -1625,10 +1622,10 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="rounded-lg border border-[#d8c7a1] bg-[#f8f1e3] p-3 space-y-3">
+                  <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
                     <p className="text-sm uppercase tracking-wide text-navy/60">Descriptions</p>
                     <div className="grid lg:grid-cols-2 gap-4">
-                      <div className="rounded-lg border border-[#d8c7a1] bg-[#fff9ed] p-3 space-y-3">
+                      <div className="rounded-lg border border-navy/10 bg-white/90 p-3 space-y-3">
                         <p className="text-sm uppercase tracking-wide text-navy/60">Description Editor</p>
                         <div className="space-y-1">
                           <p className="text-sm uppercase tracking-wide text-navy/60">Short Description</p>
@@ -1650,11 +1647,10 @@ const AdminDashboard = () => {
                               setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, full_description } : p)));
                             }}
                             placeholder="Full product description with formatting"
-                            variant="fieldManual"
                           />
                         </div>
                       </div>
-                      <div className="rounded-lg border border-[#d8c7a1] bg-[#f2e6d0] p-3">
+                      <div className="rounded-lg border border-navy/10 bg-sky/10 p-3">
                         <p className="text-sm uppercase tracking-wide text-navy/60 mb-2">Description Preview</p>
                         <p className="text-sm text-navy/80 mb-3">{editingProduct.description || "No short description."}</p>
                         <div
@@ -1664,7 +1660,7 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="rounded-lg border border-[#d8c7a1] bg-[#f8f1e3] p-3 space-y-3">
+                  <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
                     <p className="text-sm uppercase tracking-wide text-navy/60">Media and Visuals</p>
                     <div className="space-y-2">
                       <p className="text-sm uppercase tracking-wide text-navy/60">Image Order</p>
