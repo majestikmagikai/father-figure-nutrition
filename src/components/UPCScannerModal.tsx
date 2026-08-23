@@ -61,10 +61,10 @@ export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: 
         map.set(p.handle.toLowerCase(), p.handle.toLowerCase());
       }
       if (p.variant_id) {
-        map.set(p.variant_id.toLowerCase(), p.handle);
+        map.set(p.variant_id.toLowerCase(), p.handle.toLowerCase());
       }
       if ((p as any).upc) {
-        map.set(String((p as any).upc).toLowerCase(), p.handle);
+        map.set(String((p as any).upc).toLowerCase(), p.handle.toLowerCase());
       }
     }
     return map;
@@ -121,7 +121,7 @@ export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: 
             (item.variant_id && item.variant_id.toLowerCase() === normalizedCode) ||
             (item.variant_id && item.variant_id.toLowerCase() === normalizedCode.replace(/^0+/, ''))
           ) {
-            handle = item.product_handle;
+            handle = item.product_handle.toLowerCase();
             break;
           }
         }
