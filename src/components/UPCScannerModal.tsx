@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { X, Camera, ShieldAlert } from 'lucide-react';
 
 // Web Audio API helper to generate programmatic beeps
-const playBeep = (freq = 800, duration = 150, type: OscillatorType = 'sine') => {
+const playBeep = (freq = 1800, duration = 150, type: OscillatorType = 'sine') => {
   try {
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioContextClass) return;
@@ -53,7 +53,19 @@ export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: 
   const lastTimeRef = useRef(0);
 
   const productUPCs = useMemo(() => {
-    return new Map(products.map(p => [p.upc, p.handle]));
+    const map = new Map<string, string>();
+    for (const p of products) {
+      if (p.handle) {
+        map.set(p.handle.toLowerCase(), p.handle);
+      }
+      if (p.variant_id) {
+        map.set(p.variant_id.toLowerCase(), p.handle);
+      }
+      if ((p as any).upc) {
+        map.set(String((p as any).upc).toLowerCase(), p.handle);
+      }
+    }
+    return map;
   }, [products]);
 
   const requiredItems = useMemo(() => {
@@ -91,7 +103,26 @@ export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: 
       setLastScanned(code);
 
       const { productUPCs: upcMap, requiredItems: reqMap, scannedItems: scanMap } = scanStateRef.current;
-      const handle = upcMap.get(code);
+      const normalizedCode = code.trim().toLowerCase();
+
+      let handle = upcMap.get(normalizedCode);
+      if (!handle) {
+        const strippedCode = normalizedCode.replace(/^0+/, '');
+        handle = upcMap.get(strippedCode);
+      }
+      if (!handle) {
+        for (const item of items) {
+          if (
+            item.product_handle.toLowerCase() === normalizedCode ||
+            item.product_handle.toLowerCase() === normalizedCode.replace(/^0+/, '') ||
+            (item.variant_id && item.variant_id.toLowerCase() === normalizedCode) ||
+            (item.variant_id && item.variant_id.toLowerCase() === normalizedCode.replace(/^0+/, ''))
+          ) {
+            handle = item.product_handle;
+            break;
+          }
+        }
+      }
 
       if (handle && reqMap.has(handle)) {
         const requiredQty = reqMap.get(handle) ?? 0;
