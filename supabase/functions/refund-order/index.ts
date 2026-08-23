@@ -178,8 +178,47 @@ Deno.serve(async (req) => {
           refundErrorMessage = message;
         }
       }
+    } else if (intent.latest_charge) {
+      // Some payment methods can have a refundable charge even when amount_received is not populated on PI.
+      try {
+        const charge = typeof intent.latest_charge === "string"
+          ? await stripe.charges.retrieve(intent.latest_charge)
+          : intent.latest_charge;
+
+        const refundableAmount = Math.max((charge.amount_captured ?? charge.amount ?? 0) - (charge.amount_refunded ?? 0), 0);
+
+        if (charge.refunded || refundableAmount <= 0) {
+          refundStatus = "already_refunded";
+        } else {
+          const refund = await stripe.refunds.create(
+            {
+              charge: charge.id,
+              reason: "requested_by_customer",
+              metadata: {
+                order_id: order.id,
+                order_external_id: order.external_id ?? "",
+              },
+            },
+            {
+              idempotencyKey: `order-refund-${order.id}`,
+            },
+          );
+
+          refundId = refund.id;
+          refundStatus = "refunded";
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const normalized = message.toLowerCase();
+
+        if (normalized.includes("already refunded") || normalized.includes("charge_already_refunded")) {
+          refundStatus = "already_refunded";
+        } else {
+          refundErrorMessage = message;
+        }
+      }
     } else {
-      return new Response(JSON.stringify({ error: "Payment has no captured amount to refund in Stripe." }), {
+      return new Response(JSON.stringify({ error: "Payment has no captured Stripe funds to refund. If this payment was only authorized, canceling the authorization is the only available action." }), {
         status: 409,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
