@@ -1,6 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, BarChart3, GripVertical, LogOut, ShieldAlert, ShieldCheck, Trash2, UsersRound } from "lucide-react";
+import { UPCScannerModal } from "@/components/UPCScannerModal";
+import {
+  ArrowLeft,
+  BarChart3,
+  GripVertical,
+  LogOut,
+  Scan,
+  ShieldAlert,
+  ShieldCheck,
+  Trash2,
+  UsersRound,
+} from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -278,6 +289,7 @@ const AdminDashboard = () => {
   const [cancelRefundTarget, setCancelRefundTarget] = useState<CancelRefundTarget | null>(null);
   const [productDeleteTarget, setProductDeleteTarget] = useState<ProductDeleteTarget | null>(null);
   const [removeImageTarget, setRemoveImageTarget] = useState<RemoveImageTarget | null>(null);
+  const [scanningOrder, setScanningOrder] = useState<OrderRecord | null>(null);
   const [metrics, setMetrics] = useState({
     totalSales: 0,
     totalOrders: 0,
@@ -2100,13 +2112,33 @@ const AdminDashboard = () => {
                       </div>
 
                       <div className="flex flex-wrap gap-2 justify-start lg:justify-end pt-1">
-                        <Button
-                          variant="outline"
-                          onClick={() => void handleMarkFulfilled(order)}
-                          disabled={isSavingOrder === order.id || order.status === "fulfilled"}
-                        >
-                          Fulfill Shipment
-                        </Button>
+                        {order.status === "processing" && (
+                          <>
+                            <Button
+                              variant="outline"
+                              className="border-sky-300 bg-sky-50 text-sky-900"
+                              onClick={() => setScanningOrder(order)}
+                            >
+                              <Scan className="h-4 w-4 mr-2" />
+                              Scan & Fulfill
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => void handleMarkFulfilled(order)}
+                              disabled={isSavingOrder === order.id}
+                            >
+                              Fulfill Shipment
+                            </Button>
+                          </>
+                        )}
+                        {order.status === "fulfilled" && (
+                          <Button
+                            variant="outline"
+                            disabled
+                          >
+                            Fulfilled
+                          </Button>
+                        )}
                         <Button
                           variant="destructive"
                           onClick={() => openCancelRefundModal(order)}
@@ -2381,6 +2413,16 @@ const AdminDashboard = () => {
         </div>
       </main>
       <SiteFooter />
+
+      {scanningOrder && (
+        <UPCScannerModal
+          order={scanningOrder}
+          items={orderItemsByOrderId[scanningOrder.id] ?? []}
+          products={products}
+          onClose={() => setScanningOrder(null)}
+          onFulfill={handleMarkFulfilled}
+        />
+      )}
 
       <AlertDialog open={Boolean(revokeAccessTarget)} onOpenChange={(open) => { if (!open) setRevokeAccessTarget(null); }}>
         <AlertDialogContent>

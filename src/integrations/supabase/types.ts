@@ -10,7 +10,32 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.15"
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -47,93 +72,6 @@ export type Database = {
           entity_type?: string
           id?: string
           metadata?: Json
-        }
-        Relationships: []
-      }
-      customer_profiles: {
-        Row: {
-          created_at: string
-          email: string
-          first_name: string | null
-          id: string
-          last_name: string | null
-          last_sign_in_at: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          first_name?: string | null
-          id: string
-          last_name?: string | null
-          last_sign_in_at?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          first_name?: string | null
-          id?: string
-          last_name?: string | null
-          last_sign_in_at?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      inventory_products: {
-        Row: {
-          available_for_sale: boolean
-          cap_color: string | null
-          created_at: string
-          currency_code: string
-          description: string
-          fill_color: string | null
-          full_description: string | null
-          handle: string
-          id: string
-          images: Json
-          model_3d_url: string | null
-          price: number
-          sort_order: number
-          title: string
-          updated_at: string
-          variant_id: string | null
-        }
-        Insert: {
-          available_for_sale?: boolean
-          cap_color?: string | null
-          created_at?: string
-          currency_code?: string
-          description?: string
-          fill_color?: string | null
-          full_description?: string | null
-          handle: string
-          id?: string
-          images?: Json
-          model_3d_url?: string | null
-          price: number
-          sort_order?: number
-          title: string
-          updated_at?: string
-          variant_id?: string | null
-        }
-        Update: {
-          available_for_sale?: boolean
-          cap_color?: string | null
-          created_at?: string
-          currency_code?: string
-          description?: string
-          fill_color?: string | null
-          full_description?: string | null
-          handle?: string
-          id?: string
-          images?: Json
-          model_3d_url?: string | null
-          price?: number
-          sort_order?: number
-          title?: string
-          updated_at?: string
-          variant_id?: string | null
         }
         Relationships: []
       }
@@ -189,6 +127,44 @@ export type Database = {
           state_region?: string | null
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "customer_addresses_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_profiles: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          last_sign_in_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          last_sign_in_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          last_sign_in_at?: string | null
+          updated_at?: string
+        }
         Relationships: []
       }
       customer_routines: {
@@ -222,46 +198,15 @@ export type Database = {
           schedule?: Json
           updated_at?: string
         }
-        Relationships: []
-      }
-      user_sessions: {
-        Row: {
-          auth_session_id: string
-          created_at: string
-          email: string | null
-          id: string
-          last_seen_at: string
-          revoke_reason: string | null
-          revoked_at: string | null
-          revoked_by: string | null
-          user_agent: string | null
-          user_id: string
-        }
-        Insert: {
-          auth_session_id: string
-          created_at?: string
-          email?: string | null
-          id?: string
-          last_seen_at?: string
-          revoke_reason?: string | null
-          revoked_at?: string | null
-          revoked_by?: string | null
-          user_agent?: string | null
-          user_id: string
-        }
-        Update: {
-          auth_session_id?: string
-          created_at?: string
-          email?: string | null
-          id?: string
-          last_seen_at?: string
-          revoke_reason?: string | null
-          revoked_at?: string | null
-          revoked_by?: string | null
-          user_agent?: string | null
-          user_id?: string
-        }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "customer_routines_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ingredients: {
         Row: {
@@ -305,13 +250,76 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_products: {
+        Row: {
+          available_for_sale: boolean
+          cap_color: string | null
+          created_at: string
+          currency_code: string
+          description: string
+          enable_3d_viewer: boolean
+          fill_color: string | null
+          full_description: string | null
+          handle: string
+          id: string
+          images: Json
+          model_3d_url: string | null
+          price: number
+          sort_order: number
+          title: string
+          upc: string | null
+          updated_at: string
+          variant_id: string | null
+        }
+        Insert: {
+          available_for_sale?: boolean
+          cap_color?: string | null
+          created_at?: string
+          currency_code?: string
+          description?: string
+          enable_3d_viewer?: boolean
+          fill_color?: string | null
+          full_description?: string | null
+          handle: string
+          id?: string
+          images?: Json
+          model_3d_url?: string | null
+          price: number
+          sort_order?: number
+          title: string
+          upc?: string | null
+          updated_at?: string
+          variant_id?: string | null
+        }
+        Update: {
+          available_for_sale?: boolean
+          cap_color?: string | null
+          created_at?: string
+          currency_code?: string
+          description?: string
+          enable_3d_viewer?: boolean
+          fill_color?: string | null
+          full_description?: string | null
+          handle?: string
+          id?: string
+          images?: Json
+          model_3d_url?: string | null
+          price?: number
+          sort_order?: number
+          title?: string
+          upc?: string | null
+          updated_at?: string
+          variant_id?: string | null
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
           currency_code: string
           id: string
           image_url: string | null
-          line_total: number
+          line_total: number | null
           order_id: string
           product_handle: string
           product_title: string
@@ -324,7 +332,7 @@ export type Database = {
           currency_code?: string
           id?: string
           image_url?: string | null
-          line_total?: number
+          line_total?: number | null
           order_id: string
           product_handle: string
           product_title: string
@@ -337,7 +345,7 @@ export type Database = {
           currency_code?: string
           id?: string
           image_url?: string | null
-          line_total?: number
+          line_total?: number | null
           order_id?: string
           product_handle?: string
           product_title?: string
@@ -345,7 +353,15 @@ export type Database = {
           unit_price?: number
           variant_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       order_status_events: {
         Row: {
@@ -375,62 +391,109 @@ export type Database = {
           order_id?: string
           previous_status?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "order_status_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       orders: {
         Row: {
+          client_order_token: string | null
           created_at: string
           currency_code: string
           customer_email: string | null
-          client_order_token: string | null
           external_id: string | null
           fulfilled_at: string | null
           id: string
           item_count: number
-          stripe_payment_intent_id: string | null
           status: string
+          stripe_payment_intent_id: string | null
+          total_amount: number
           tracking_carrier: string | null
           tracking_number: string | null
           tracking_sent_at: string | null
           tracking_url: string | null
-          total_amount: number
           updated_at: string
         }
         Insert: {
+          client_order_token?: string | null
           created_at?: string
           currency_code?: string
           customer_email?: string | null
-          client_order_token?: string | null
           external_id?: string | null
           fulfilled_at?: string | null
           id?: string
           item_count?: number
-          stripe_payment_intent_id?: string | null
           status?: string
+          stripe_payment_intent_id?: string | null
+          total_amount: number
           tracking_carrier?: string | null
           tracking_number?: string | null
           tracking_sent_at?: string | null
           tracking_url?: string | null
-          total_amount: number
           updated_at?: string
         }
         Update: {
+          client_order_token?: string | null
           created_at?: string
           currency_code?: string
           customer_email?: string | null
-          client_order_token?: string | null
           external_id?: string | null
           fulfilled_at?: string | null
           id?: string
           item_count?: number
-          stripe_payment_intent_id?: string | null
           status?: string
+          stripe_payment_intent_id?: string | null
+          total_amount?: number
           tracking_carrier?: string | null
           tracking_number?: string | null
           tracking_sent_at?: string | null
           tracking_url?: string | null
-          total_amount?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          auth_session_id: string
+          created_at: string
+          email: string | null
+          id: string
+          last_seen_at: string
+          revoke_reason: string | null
+          revoked_at: string | null
+          revoked_by: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth_session_id: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          last_seen_at?: string
+          revoke_reason?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth_session_id?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          last_seen_at?: string
+          revoke_reason?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          user_agent?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -439,10 +502,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      is_admin_user: {
-        Args: { target_user_id?: string }
-        Returns: boolean
-      }
+      is_admin_user: { Args: { target_user_id?: string }; Returns: boolean }
       revoke_all_user_sessions: {
         Args: { p_reason?: string; p_target_user_id: string }
         Returns: number
@@ -583,6 +643,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
