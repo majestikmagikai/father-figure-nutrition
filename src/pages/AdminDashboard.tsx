@@ -1966,59 +1966,67 @@ const AdminDashboard = () => {
                         )}
                       </div>
 
-                      <div className="grid gap-3 lg:grid-cols-[1.2fr_1fr_1fr_1.4fr] items-end pt-1">
-                        <Input
-                          placeholder="Tracking #"
-                          value={order.tracking_number ?? ""}
-                          onChange={(e) => {
-                            const tracking_number = e.target.value;
-                            setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, tracking_number } : o)));
-                          }}
-                        />
-                        <Input
-                          placeholder="Carrier"
-                          value={order.tracking_carrier ?? ""}
-                          onChange={(e) => {
-                            const tracking_carrier = e.target.value;
-                            setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, tracking_carrier } : o)));
-                          }}
-                        />
-                        <Input
-                          placeholder="https://tracking-link"
-                          value={order.tracking_url ?? ""}
-                          onChange={(e) => {
-                            const tracking_url = e.target.value;
-                            setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, tracking_url } : o)));
-                          }}
-                        />
-                        <div className="flex flex-wrap gap-2 justify-start lg:justify-end">
-                          <Button
-                            variant="outline"
-                            onClick={() => void handleMarkFulfilled(order)}
-                            disabled={isSavingOrder === order.id || order.status === "fulfilled"}
-                          >
-                            Fulfill Shipment
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            onClick={() => openCancelRefundModal(order)}
-                            disabled={isSavingOrder === order.id || order.status === "cancelled"}
-                          >
-                            {order.status === "cancelled" ? "Cancelled" : "Cancel & Refund"}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            onClick={() => void handleSendTrackingEmail(order)}
-                            disabled={isSavingOrder === order.id || !order.customer_email}
-                          >
-                            Send Tracking via Email
-                          </Button>
-                          <Button
-                            onClick={() => void handleSaveOrderStatus(order)}
-                            disabled={isSavingOrder === order.id}
-                          >
-                            {isSavingOrder === order.id ? "Saving..." : "Update"}
-                          </Button>
+                      <div className="flex flex-wrap gap-2 justify-start lg:justify-end pt-1">
+                        <Button
+                          variant="outline"
+                          onClick={() => void handleMarkFulfilled(order)}
+                          disabled={isSavingOrder === order.id || order.status === "fulfilled"}
+                        >
+                          Fulfill Shipment
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={() => openCancelRefundModal(order)}
+                          disabled={isSavingOrder === order.id || order.status === "cancelled"}
+                        >
+                          {order.status === "cancelled" ? "Cancelled" : "Cancel & Refund"}
+                        </Button>
+                      </div>
+
+                      <hr className="border-t border-navy/10 my-4" />
+
+                      <div className="space-y-2">
+                        <p className="text-xs uppercase tracking-widest font-semibold text-navy/50">Tracking Details</p>
+                        <div className="grid gap-3 lg:grid-cols-[1.2fr_1fr_1fr_1.4fr] items-end">
+                          <Input
+                            placeholder="Tracking #"
+                            value={order.tracking_number ?? ""}
+                            onChange={(e) => {
+                              const tracking_number = e.target.value;
+                              setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, tracking_number } : o)));
+                            }}
+                          />
+                          <Input
+                            placeholder="Carrier"
+                            value={order.tracking_carrier ?? ""}
+                            onChange={(e) => {
+                              const tracking_carrier = e.target.value;
+                              setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, tracking_carrier } : o)));
+                            }}
+                          />
+                          <Input
+                            placeholder="https://tracking-link"
+                            value={order.tracking_url ?? ""}
+                            onChange={(e) => {
+                              const tracking_url = e.target.value;
+                              setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, tracking_url } : o)));
+                            }}
+                          />
+                          <div className="flex flex-wrap gap-2 justify-start lg:justify-end">
+                            <Button
+                              variant="outline"
+                              onClick={() => void handleSendTrackingEmail(order)}
+                              disabled={isSavingOrder === order.id || !order.customer_email}
+                            >
+                              Send Tracking via Email
+                            </Button>
+                            <Button
+                              onClick={() => void handleSaveOrderStatus(order)}
+                              disabled={isSavingOrder === order.id}
+                            >
+                              {isSavingOrder === order.id ? "Saving..." : "Update"}
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </div>
