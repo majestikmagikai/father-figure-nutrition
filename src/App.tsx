@@ -46,6 +46,26 @@ const OAuthHashBridge = () => {
   return null;
 };
 
+const OAuthCodeBridge = () => {
+  const { pathname, search, hash } = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(search);
+    const code = searchParams.get("code");
+    if (!code) return;
+
+    const isRecoveryFlow = searchParams.get("type") === "recovery" || hash.includes("type=recovery");
+    const targetPath = isRecoveryFlow ? "/reset-password" : "/auth/callback";
+
+    if (pathname === targetPath) return;
+
+    navigate({ pathname: targetPath, search, hash }, { replace: true });
+  }, [hash, navigate, pathname, search]);
+
+  return null;
+};
+
 const StripeReturnBridge = () => {
   const { pathname, search, hash } = useLocation();
   const navigate = useNavigate();
@@ -75,6 +95,7 @@ const AppRoutes = () => {
     <>
       <ScrollToTop />
       <OAuthHashBridge />
+      <OAuthCodeBridge />
       <StripeReturnBridge />
       <Routes>
         <Route path="/" element={<Index />} />
