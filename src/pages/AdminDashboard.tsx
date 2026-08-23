@@ -2026,7 +2026,7 @@ const AdminDashboard = () => {
                         index % 2 === 0 ? "bg-white/90" : "bg-sky/10"
                       } ${getOrderCardAccentClass(order.status)}`}
                     >
-                      <div className="grid gap-3 lg:grid-cols-4 pb-3 border-b border-navy/10">
+                      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 pb-4 border-b border-navy/10">
                         <div className="text-sm text-navy/70 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-semibold text-navy break-words">
@@ -2126,6 +2126,7 @@ const AdminDashboard = () => {
                               variant="outline"
                               onClick={() => void handleMarkFulfilled(order)}
                               disabled={isSavingOrder === order.id}
+                              className="w-full sm:w-auto"
                             >
                               Fulfill Shipment
                             </Button>
@@ -2135,6 +2136,7 @@ const AdminDashboard = () => {
                           <Button
                             variant="outline"
                             disabled
+                            className="w-full sm:w-auto"
                           >
                             Fulfilled
                           </Button>
@@ -2143,6 +2145,7 @@ const AdminDashboard = () => {
                           variant="destructive"
                           onClick={() => openCancelRefundModal(order)}
                           disabled={isSavingOrder === order.id || order.status === "cancelled"}
+                          className="w-full sm:w-auto"
                         >
                           {order.status === "cancelled" ? "Cancelled" : "Cancel & Refund"}
                         </Button>
@@ -2150,7 +2153,7 @@ const AdminDashboard = () => {
                           variant="outline"
                           onClick={() => openDeleteOrderModal(order)}
                           disabled={isDeletingOrderId === order.id}
-                          className="border-navy/20 text-navy hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200"
+                          className="w-full sm:w-auto border-navy/20 text-navy hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200"
                         >
                           <Trash2 className="h-4 w-4 mr-1" /> Delete Order
                         </Button>
@@ -2160,7 +2163,7 @@ const AdminDashboard = () => {
 
                       <div className="space-y-2">
                         <p className="text-xs uppercase tracking-widest font-semibold text-navy/50">Tracking Details</p>
-                        <div className="grid gap-3 lg:grid-cols-[1.2fr_1fr_1fr_1.4fr] items-end">
+                        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.2fr_1fr_1fr_1.4fr] items-end">
                           <Input
                             placeholder="Tracking #"
                             value={order.tracking_number ?? ""}
@@ -2185,17 +2188,19 @@ const AdminDashboard = () => {
                               setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, tracking_url } : o)));
                             }}
                           />
-                          <div className="flex flex-wrap gap-2 justify-start lg:justify-end">
+                          <div className="flex flex-wrap gap-2 justify-start lg:justify-end w-full sm:col-span-2 lg:col-span-1">
                             <Button
                               variant="outline"
                               onClick={() => void handleSendTrackingEmail(order)}
                               disabled={isSavingOrder === order.id || !order.customer_email}
+                              className="w-full sm:w-auto flex-1 sm:flex-initial"
                             >
                               Send Tracking via Email
                             </Button>
                             <Button
                               onClick={() => void handleSaveOrderStatus(order)}
                               disabled={isSavingOrder === order.id}
+                              className="w-full sm:w-auto flex-1 sm:flex-initial"
                             >
                               {isSavingOrder === order.id ? "Saving..." : "Update"}
                             </Button>

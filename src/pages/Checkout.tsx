@@ -92,6 +92,7 @@ const Checkout = () => {
 
     const validateSession = async () => {
       const { data, error } = await supabase.auth.getSession();
+      if (error || !data.session?.user) { sessionStorage.setItem('returnTo', window.location.pathname + window.location.search); }
       if (!isMounted) return;
 
       if (error || !data.session?.user) {

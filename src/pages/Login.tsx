@@ -131,7 +131,9 @@ const Login = () => {
     resetAttemptState();
     toast.success("Signed in successfully.");
     const target = isAdminUser(data.user) ? "/admin" : "/dashboard";
-    window.location.assign(target);
+    const returnTo = sessionStorage.getItem('returnTo');
+    sessionStorage.removeItem('returnTo');
+    window.location.assign(returnTo || target);
   };
 
   const handleGoogleLogin = async () => {

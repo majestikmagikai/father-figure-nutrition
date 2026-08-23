@@ -91,9 +91,11 @@ const AuthCallback = () => {
           return;
         }
 
+        const returnTo = sessionStorage.getItem('returnTo');
+        sessionStorage.removeItem('returnTo');
         window.history.replaceState(null, "", "/auth/callback");
         const target = isAdminUser(sessionUser) ? "/admin" : "/dashboard";
-        navigate(target, { replace: true });
+        navigate(returnTo || target, { replace: true });
         return;
       }
 
@@ -106,9 +108,11 @@ const AuthCallback = () => {
           return;
         }
 
+        const returnTo = sessionStorage.getItem('returnTo');
+        sessionStorage.removeItem('returnTo');
         window.history.replaceState(null, "", "/auth/callback");
         const target = isAdminUser(session.user) ? "/admin" : "/dashboard";
-        navigate(target, { replace: true });
+        navigate(returnTo || target, { replace: true });
       });
 
       for (let attempt = 0; attempt < 16; attempt += 1) {
@@ -127,9 +131,11 @@ const AuthCallback = () => {
             return;
           }
 
+          const returnTo = sessionStorage.getItem('returnTo');
+          sessionStorage.removeItem('returnTo');
           window.history.replaceState(null, "", "/auth/callback");
           const target = isAdminUser(user) ? "/admin" : "/dashboard";
-          navigate(target, { replace: true });
+          navigate(returnTo || target, { replace: true });
           return;
         }
 

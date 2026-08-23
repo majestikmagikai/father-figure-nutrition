@@ -128,7 +128,8 @@ export const SiteHeader = () => {
     }
 
     toast.success("Signed out successfully.");
-    window.location.assign("/login");
+    sessionStorage.setItem('returnTo', window.location.pathname + window.location.search);
+    window.location.assign("/login"); // Redirect to login page
   };
 
   return (
