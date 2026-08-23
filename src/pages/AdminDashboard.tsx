@@ -658,6 +658,13 @@ const AdminDashboard = () => {
     return "bg-amber-100 text-amber-800 border-amber-200";
   };
 
+  const getOrderStatusSelectClass = (status: string) => {
+    if (status === "fulfilled") return "border-emerald-300 bg-emerald-50 text-emerald-900";
+    if (status === "processing") return "border-sky-300 bg-sky-50 text-sky-900";
+    if (status === "cancelled") return "border-rose-300 bg-rose-50 text-rose-900";
+    return "border-amber-300 bg-amber-50 text-amber-900";
+  };
+
   useEffect(() => {
     setProductsPage((current) => {
       if (current > totalProductPages) return totalProductPages;
@@ -1795,7 +1802,7 @@ const AdminDashboard = () => {
                               const status = e.target.value;
                               setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status } : o)));
                             }}
-                            className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            className={`h-10 w-full rounded-md border px-3 py-2 text-sm font-medium ${getOrderStatusSelectClass(order.status)}`}
                           >
                             <option value="pending">pending</option>
                             <option value="processing">processing</option>

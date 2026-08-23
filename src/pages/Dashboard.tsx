@@ -446,6 +446,32 @@ const Dashboard = () => {
     return full || user?.email || "Customer";
   }, [user]);
 
+  const getOrderCardAccentClass = (status: string) => {
+    if (status === "fulfilled") return "border-l-emerald-500";
+    if (status === "processing") return "border-l-sky-500";
+    if (status === "cancelled") return "border-l-rose-500";
+    return "border-l-amber-500";
+  };
+
+  const getOrderStatusPillClass = (status: string) => {
+    if (status === "fulfilled") return "bg-emerald-100 text-emerald-800 border-emerald-200";
+    if (status === "processing") return "bg-sky-100 text-sky-800 border-sky-200";
+    if (status === "cancelled") return "bg-rose-100 text-rose-800 border-rose-200";
+    return "bg-amber-100 text-amber-800 border-amber-200";
+  };
+
+  const getSessionCardAccentClass = (isCurrent: boolean, isRevoked: boolean) => {
+    if (isRevoked) return "border-l-rose-500";
+    if (isCurrent) return "border-l-sky-500";
+    return "border-l-emerald-500";
+  };
+
+  const getSessionStatusPillClass = (isCurrent: boolean, isRevoked: boolean) => {
+    if (isRevoked) return "bg-rose-100 text-rose-800 border-rose-200";
+    if (isCurrent) return "bg-sky-100 text-sky-800 border-sky-200";
+    return "bg-emerald-100 text-emerald-800 border-emerald-200";
+  };
+
   const ordersPerPage = 3;
   const totalOrderPages = Math.max(1, Math.ceil(orders.length / ordersPerPage));
   const paginatedOrders = useMemo(() => {
@@ -539,14 +565,23 @@ const Dashboard = () => {
                   <p>No orders yet.</p>
                 ) : (
                   <div className="space-y-3">
-                    {paginatedOrders.map((order) => (
-                    <div key={order.id} className="rounded-md border border-navy/10 p-3 space-y-1">
-                      <p className="font-semibold text-navy">
-                        {order.currency_code} {Number(order.total_amount).toFixed(2)}
-                      </p>
+                    {paginatedOrders.map((order, index) => (
+                    <div
+                      key={order.id}
+                      className={`rounded-lg border border-l-4 border-navy/15 p-3 space-y-2 shadow-sm ${
+                        index % 2 === 0 ? "bg-white/90" : "bg-sky/10"
+                      } ${getOrderCardAccentClass(order.status)}`}
+                    >
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <p className="font-semibold text-navy">
+                          {order.currency_code} {Number(order.total_amount).toFixed(2)}
+                        </p>
+                        <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ${getOrderStatusPillClass(order.status)}`}>
+                          {order.status}
+                        </span>
+                      </div>
                       <p className="text-sm">Placed: {new Date(order.created_at).toLocaleString()}</p>
-                      <p className="text-sm">Status: {order.status}</p>
-                      <div className="pt-1">
+                      <div className="pt-2 border-t border-navy/10">
                         <p className="text-xs uppercase tracking-wide text-navy/60">Products</p>
                         {orderItemsByOrderId[order.id]?.length ? (
                           <div className="space-y-1 mt-1">
@@ -563,7 +598,7 @@ const Dashboard = () => {
                         )}
                       </div>
                       {order.tracking_number ? (
-                        <>
+                        <div className="pt-2 border-t border-navy/10 space-y-1">
                           <p className="text-sm">Tracking: {order.tracking_number}</p>
                           {order.tracking_carrier && <p className="text-sm">Carrier: {order.tracking_carrier}</p>}
                           {order.tracking_url && (
@@ -576,9 +611,9 @@ const Dashboard = () => {
                               Track Shipment
                             </a>
                           )}
-                        </>
+                        </div>
                       ) : (
-                        <p className="text-sm">Tracking not available yet.</p>
+                        <p className="text-sm pt-2 border-t border-navy/10">Tracking not available yet.</p>
                       )}
                     </div>
                     ))}
@@ -785,18 +820,27 @@ const Dashboard = () => {
                 <p>No session records yet.</p>
               ) : (
                 <div className="space-y-2">
-                  {sessions.map((sessionRecord) => {
+                  {sessions.map((sessionRecord, index) => {
                     const isCurrent = sessionRecord.auth_session_id === currentAuthSessionId;
                     const isRevoked = Boolean(sessionRecord.revoked_at);
 
                     return (
-                      <div key={sessionRecord.id} className="rounded-md border border-navy/10 p-3 bg-white/80">
+                      <div
+                        key={sessionRecord.id}
+                        className={`rounded-lg border border-l-4 border-navy/15 p-3 shadow-sm ${
+                          index % 2 === 0 ? "bg-white/90" : "bg-sky/10"
+                        } ${getSessionCardAccentClass(isCurrent, isRevoked)}`}
+                      >
                         <div className="flex items-start justify-between gap-3 flex-wrap">
                           <div className="space-y-1">
-                            <p className="font-medium text-navy">
-                              {isCurrent ? "Current Device" : "Signed-in Device"}
-                              {isRevoked ? " (Revoked)" : ""}
-                            </p>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-medium text-navy">
+                                {isCurrent ? "Current Device" : "Signed-in Device"}
+                              </p>
+                              <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ${getSessionStatusPillClass(isCurrent, isRevoked)}`}>
+                                {isRevoked ? "Revoked" : isCurrent ? "Current" : "Active"}
+                              </span>
+                            </div>
                             <p className="text-sm break-words">{sessionRecord.user_agent ?? "Unknown device"}</p>
                             <p className="text-sm">
                               Last active: {new Date(sessionRecord.last_seen_at).toLocaleString()}
