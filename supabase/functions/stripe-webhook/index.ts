@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
       const cartLines: ParsedCartLine[] = cartLinesRaw
         ? cartLinesRaw
             .split("|")
-            .map((line): ParsedCartLine | null => {
+            .map((line: string): ParsedCartLine | null => {
               const [h, v, q, p, c] = line.split(":");
               const quantity = Number.parseInt(q ?? "", 10);
               const unitMinor = Number.parseInt(p ?? "", 10);
@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
               }
               return { h, v: v ?? "", q: quantity, p: unitMinor, c };
             })
-            .filter((line): line is ParsedCartLine => line !== null)
+            .filter((line: ParsedCartLine | null): line is ParsedCartLine => line !== null)
         : [];
 
       let cartItems: Array<{ h: string; t: string; v: string; q: number; p: number; c: string; i: string }> = [];
