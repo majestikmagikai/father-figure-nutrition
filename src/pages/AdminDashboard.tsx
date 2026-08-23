@@ -1161,7 +1161,7 @@ const AdminDashboard = () => {
             )}
           </div>
 
-          <Card className={`border-navy/15 shadow-card mb-6 ${isProductEditSection ? "bg-[#fbf6eb]" : "bg-white/95"}`}>
+          <Card className="border-navy/15 shadow-card mb-6 bg-white/95">
             <CardHeader>
               <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-navy text-sm uppercase tracking-widest font-semibold mb-3 w-fit ${isProductEditSection ? "bg-[#efe2c8] border-[#d8c7a1]" : "bg-navy/10 border-navy/20"}`}>
                 <ShieldCheck className="h-3.5 w-3.5" /> Admin Dashboard
