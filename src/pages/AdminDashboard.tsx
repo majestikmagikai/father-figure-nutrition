@@ -47,6 +47,7 @@ type RichTextEditorProps = {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  variant?: "default" | "fieldManual";
 };
 
 type HexColorInputProps = {
@@ -105,7 +106,7 @@ const HexColorInput = ({ value, onChange, placeholder, fallbackColor }: HexColor
   );
 };
 
-const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorProps) => {
+const RichTextEditor = ({ value, onChange, placeholder, variant = "default" }: RichTextEditorProps) => {
   const editorRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -147,9 +148,24 @@ const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorProps) =
     onChange(editor.innerHTML);
   };
 
+  const containerClass =
+    variant === "fieldManual"
+      ? "rounded-lg border border-[#d8c7a1] bg-[#f9f2e4] shadow-sm"
+      : "rounded-md border border-input bg-background";
+
+  const toolbarClass =
+    variant === "fieldManual"
+      ? "flex flex-wrap gap-2 border-b border-[#d8c7a1] bg-[#efe2c8] p-2"
+      : "flex flex-wrap gap-2 border-b border-input p-2";
+
+  const editorClass =
+    variant === "fieldManual"
+      ? "min-h-28 p-3 text-sm leading-relaxed text-navy/90 focus:outline-none [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-2 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-2 [&_a]:text-orange [&_a]:underline [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1"
+      : "min-h-28 p-3 text-sm leading-relaxed focus:outline-none [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-2 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-2 [&_a]:text-orange [&_a]:underline [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1";
+
   return (
-    <div className="rounded-md border border-input bg-background">
-      <div className="flex flex-wrap gap-2 border-b border-input p-2">
+    <div className={containerClass}>
+      <div className={toolbarClass}>
         <Button type="button" variant="outline" size="sm" onClick={() => runCommand("bold")}>
           Bold
         </Button>
@@ -182,7 +198,7 @@ const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorProps) =
         ref={editorRef}
         contentEditable
         suppressContentEditableWarning
-        className="min-h-28 p-3 text-sm leading-relaxed focus:outline-none [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-2 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-2 [&_a]:text-orange [&_a]:underline [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1"
+        className={editorClass}
         onInput={(e) => onChange((e.currentTarget as HTMLDivElement).innerHTML)}
         data-placeholder={placeholder ?? "Type description..."}
       />
@@ -1115,7 +1131,11 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
-      <main className="flex-1 bg-gradient-to-b from-sky/20 via-secondary to-background px-6 py-12">
+      <main className={`flex-1 px-6 py-12 ${
+        isProductEditSection
+          ? "bg-[radial-gradient(circle_at_18%_20%,rgba(229,197,136,0.30),transparent_42%),radial-gradient(circle_at_82%_14%,rgba(14,35,64,0.20),transparent_45%),linear-gradient(to_bottom,#f7efe0,#efe6d3,#e9deca)]"
+          : "bg-gradient-to-b from-sky/20 via-secondary to-background"
+      }`}>
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between gap-4 mb-8 flex-wrap">
             <Link to="/" className="inline-flex items-center gap-2 text-sm text-navy/70 hover:text-orange transition-colors font-medium">
@@ -1138,14 +1158,16 @@ const AdminDashboard = () => {
             )}
           </div>
 
-          <Card className="border-navy/15 shadow-card bg-white/95 mb-6">
+          <Card className={`border-navy/15 shadow-card mb-6 ${isProductEditSection ? "bg-[#fbf6eb]" : "bg-white/95"}`}>
             <CardHeader>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-navy/10 border border-navy/20 text-navy text-sm uppercase tracking-widest font-semibold mb-3 w-fit">
+              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-navy text-sm uppercase tracking-widest font-semibold mb-3 w-fit ${isProductEditSection ? "bg-[#efe2c8] border-[#d8c7a1]" : "bg-navy/10 border-navy/20"}`}>
                 <ShieldCheck className="h-3.5 w-3.5" /> Admin Dashboard
               </div>
               <CardTitle className="font-display uppercase text-xl text-navy">Welcome, {displayName}</CardTitle>
               <CardDescription>
-                Manage customer operations and monitor storefront activity from one control surface.
+                {isProductEditSection
+                  ? "Field Manual Mode: shape product story, tune visual language, and preview exactly how copy lands."
+                  : "Manage customer operations and monitor storefront activity from one control surface."}
               </CardDescription>
             </CardHeader>
           </Card>
@@ -1327,21 +1349,24 @@ const AdminDashboard = () => {
           )}
 
           {isProductEditSection && (
-          <Card className="border-navy/15 bg-white/95 mb-6">
+          <Card className="border-[#d8c7a1] bg-[#fbf6eb] mb-6 shadow-[0_18px_45px_rgba(14,35,64,0.12)]">
             <CardHeader>
-              <CardTitle className="text-lg text-navy">Product Edit</CardTitle>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#efe2c8] border border-[#d8c7a1] text-navy text-xs uppercase tracking-widest font-semibold w-fit">
+                Field Manual
+              </div>
+              <CardTitle className="text-lg text-navy">Product Edit Studio</CardTitle>
               <CardDescription>
-                Edit one product on this page. Return to Products List for all products.
+                Tune product copy and preview how content will read before it goes live.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5">
+              <Button asChild variant="outline" className="border-[#d8c7a1] bg-[#f7efdd] text-navy hover:bg-[#efe2c8]">
                 <Link to="/admin/products">Back to Products List</Link>
               </Button>
 
               {isEditingNewProduct ? (
                 <>
-                  <div className="rounded-md border border-navy/10 p-3 space-y-3">
+                  <div className="rounded-lg border border-[#d8c7a1] bg-[#f8f1e3] p-3 space-y-3">
                     <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Core Info</p>
                     <div className="grid md:grid-cols-5 gap-3">
                       <div className="space-y-1">
@@ -1386,26 +1411,40 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="rounded-md border border-navy/10 p-3 space-y-3">
+                  <div className="rounded-lg border border-[#d8c7a1] bg-[#f8f1e3] p-3 space-y-3">
                     <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Descriptions</p>
-                    <div className="space-y-1">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Short Description</p>
-                      <Input
-                        placeholder="Short summary shown under product title"
-                        value={newProduct.description}
-                        onChange={(e) => setNewProduct((prev) => ({ ...prev, description: e.target.value }))}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Full Description</p>
-                      <RichTextEditor
-                        value={newProduct.fullDescription}
-                        onChange={(nextValue) => setNewProduct((prev) => ({ ...prev, fullDescription: nextValue }))}
-                        placeholder="Full product description with formatting"
-                      />
+                    <div className="grid lg:grid-cols-2 gap-4">
+                      <div className="rounded-lg border border-[#d8c7a1] bg-[#fff9ed] p-3 space-y-3">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">Description Editor</p>
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Short Description</p>
+                          <Input
+                            placeholder="Short summary shown under product title"
+                            value={newProduct.description}
+                            onChange={(e) => setNewProduct((prev) => ({ ...prev, description: e.target.value }))}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Full Description</p>
+                          <RichTextEditor
+                            value={newProduct.fullDescription}
+                            onChange={(nextValue) => setNewProduct((prev) => ({ ...prev, fullDescription: nextValue }))}
+                            placeholder="Full product description with formatting"
+                            variant="fieldManual"
+                          />
+                        </div>
+                      </div>
+                      <div className="rounded-lg border border-[#d8c7a1] bg-[#f2e6d0] p-3">
+                        <p className="text-sm uppercase tracking-wide text-navy/60 mb-2">Live Preview</p>
+                        <p className="text-sm text-navy/80 mb-3">{newProduct.description || "No short description yet."}</p>
+                        <div
+                          className="text-sm text-navy/80 [&_b]:font-semibold [&_i]:italic [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1"
+                          dangerouslySetInnerHTML={{ __html: newProduct.fullDescription || "<p>No full description yet.</p>" }}
+                        />
+                      </div>
                     </div>
                   </div>
-                  <div className="rounded-md border border-navy/10 p-3 space-y-3">
+                  <div className="rounded-lg border border-[#d8c7a1] bg-[#f8f1e3] p-3 space-y-3">
                     <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Visuals</p>
                     <div className="grid md:grid-cols-3 gap-3">
                       <div className="space-y-1">
@@ -1498,7 +1537,7 @@ const AdminDashboard = () => {
               ) : (
                 <>
                   <p className="text-sm uppercase tracking-wide text-navy/60">Product: {editingProduct.title || editingProduct.handle}</p>
-                  <div className="rounded-md border border-navy/10 p-3 space-y-3">
+                  <div className="rounded-lg border border-[#d8c7a1] bg-[#f8f1e3] p-3 space-y-3">
                     <p className="text-sm uppercase tracking-wide text-navy/60">Core Info</p>
                     <div className="grid md:grid-cols-5 gap-3">
                       <div className="space-y-1">
@@ -1553,40 +1592,46 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="rounded-md border border-navy/10 p-3 space-y-3">
+                  <div className="rounded-lg border border-[#d8c7a1] bg-[#f8f1e3] p-3 space-y-3">
                     <p className="text-sm uppercase tracking-wide text-navy/60">Descriptions</p>
-                    <div className="space-y-1">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Short Description</p>
-                      <Input
-                        placeholder="Short description shown under product title"
-                        value={editingProduct.description}
-                        onChange={(e) => {
-                          const description = e.target.value;
-                          setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, description } : p)));
-                        }}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Full Description</p>
-                      <RichTextEditor
-                        value={editingProduct.full_description ?? ""}
-                        onChange={(e) => {
-                          const full_description = e;
-                          setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, full_description } : p)));
-                        }}
-                        placeholder="Full product description with formatting"
-                      />
-                    </div>
-                    <div className="rounded-md border border-navy/10 bg-secondary/20 p-3">
-                      <p className="text-sm uppercase tracking-wide text-navy/60 mb-2">Description Preview</p>
-                      <p className="text-sm text-navy/80 mb-3">{editingProduct.description || "No short description."}</p>
-                      <div
-                        className="text-sm text-navy/80 [&_b]:font-semibold [&_i]:italic [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1"
-                        dangerouslySetInnerHTML={{ __html: editingProduct.full_description || "" }}
-                      />
+                    <div className="grid lg:grid-cols-2 gap-4">
+                      <div className="rounded-lg border border-[#d8c7a1] bg-[#fff9ed] p-3 space-y-3">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">Description Editor</p>
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Short Description</p>
+                          <Input
+                            placeholder="Short description shown under product title"
+                            value={editingProduct.description}
+                            onChange={(e) => {
+                              const description = e.target.value;
+                              setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, description } : p)));
+                            }}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Full Description</p>
+                          <RichTextEditor
+                            value={editingProduct.full_description ?? ""}
+                            onChange={(e) => {
+                              const full_description = e;
+                              setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, full_description } : p)));
+                            }}
+                            placeholder="Full product description with formatting"
+                            variant="fieldManual"
+                          />
+                        </div>
+                      </div>
+                      <div className="rounded-lg border border-[#d8c7a1] bg-[#f2e6d0] p-3">
+                        <p className="text-sm uppercase tracking-wide text-navy/60 mb-2">Description Preview</p>
+                        <p className="text-sm text-navy/80 mb-3">{editingProduct.description || "No short description."}</p>
+                        <div
+                          className="text-sm text-navy/80 [&_b]:font-semibold [&_i]:italic [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1"
+                          dangerouslySetInnerHTML={{ __html: editingProduct.full_description || "" }}
+                        />
+                      </div>
                     </div>
                   </div>
-                  <div className="rounded-md border border-navy/10 p-3 space-y-3">
+                  <div className="rounded-lg border border-[#d8c7a1] bg-[#f8f1e3] p-3 space-y-3">
                     <p className="text-sm uppercase tracking-wide text-navy/60">Media and Visuals</p>
                     <div className="space-y-2">
                       <p className="text-sm uppercase tracking-wide text-navy/60">Image Order</p>
