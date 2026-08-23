@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cartStore";
 import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { toast } from "sonner";
 
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
@@ -77,6 +78,8 @@ const Checkout = () => {
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [isPreparingPayment, setIsPreparingPayment] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [paymentFormError, setPaymentFormError] = useState<string | null>(null);
+  const [retryToken, setRetryToken] = useState(0);
   const items = useCartStore((s) => s.items);
 
   useEffect(() => {
@@ -124,6 +127,7 @@ const Checkout = () => {
     const createPaymentIntent = async () => {
       setIsPreparingPayment(true);
       setClientSecret(null);
+      setPaymentFormError(null);
 
       sessionStorage.setItem(CHECKOUT_SNAPSHOT_KEY, JSON.stringify(items));
 
@@ -141,10 +145,22 @@ const Checkout = () => {
       if (!isMounted) return;
 
       if (error || !data?.clientSecret) {
-        const detail = (data && typeof data === "object" && "details" in data)
-          ? String((data as { details?: unknown }).details ?? "")
-          : "";
-        toast.error(detail ? `Could not initialize payment form: ${detail}` : "Could not initialize payment form.");
+        let detail = "";
+        if (error instanceof FunctionsHttpError) {
+          try {
+            const body = await error.context.json();
+            detail = String(body?.details ?? body?.error ?? "");
+          } catch {
+            // Response body was not JSON; fall through with no detail.
+          }
+        } else if (data && typeof data === "object" && "details" in data) {
+          detail = String((data as { details?: unknown }).details ?? "");
+        }
+
+        console.error("create-payment-intent failed", error, detail);
+        const message = detail ? `Could not initialize payment form: ${detail}` : "Could not initialize payment form.";
+        toast.error(message);
+        setPaymentFormError(message);
         setIsPreparingPayment(false);
         return;
       }
@@ -158,7 +174,7 @@ const Checkout = () => {
     return () => {
       isMounted = false;
     };
-  }, [isCheckingSession, items]);
+  }, [isCheckingSession, items, retryToken]);
 
   if (!stripePublishableKey) {
     return (
@@ -249,8 +265,22 @@ const Checkout = () => {
                     <Elements stripe={stripePromise} options={options}>
                       <EmbeddedPaymentForm />
                     </Elements>
+                  ) : items.length === 0 ? (
+                    <p className="text-sm text-destructive">Your cart is empty. Add an item to check out.</p>
                   ) : (
-                    <p className="text-sm text-destructive">Could not load payment form. Please refresh.</p>
+                    <div className="space-y-3">
+                      <p className="text-sm text-destructive">
+                        {paymentFormError ?? "Could not load payment form. Please refresh."}
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="border-navy/20 text-navy hover:bg-navy/5"
+                        onClick={() => setRetryToken((n) => n + 1)}
+                      >
+                        Try Again
+                      </Button>
+                    </div>
                   )}
 
                   <Button
