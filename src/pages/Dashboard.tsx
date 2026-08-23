@@ -7,6 +7,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { isAdminUser } from "@/lib/auth";
@@ -22,6 +31,10 @@ import type { User } from "@supabase/supabase-js";
 type OrderRecord = Database["public"]["Tables"]["orders"]["Row"];
 type OrderItemRecord = Database["public"]["Tables"]["order_items"]["Row"];
 type RoutineRecord = Database["public"]["Tables"]["customer_routines"]["Row"];
+
+type RevokeAccessTarget =
+  | { kind: "session"; sessionRecord: UserSessionRecord }
+  | { kind: "other_sessions"; otherActiveCount: number };
 
 const ROUTINE_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -61,6 +74,7 @@ const Dashboard = () => {
   const [isRevokingSessionId, setIsRevokingSessionId] = useState<string | null>(null);
   const [isRevokingAllSessions, setIsRevokingAllSessions] = useState(false);
   const [currentAuthSessionId, setCurrentAuthSessionId] = useState<string | null>(null);
+  const [revokeAccessTarget, setRevokeAccessTarget] = useState<RevokeAccessTarget | null>(null);
 
   useEffect(() => {
     if (!supabase) return;
@@ -223,14 +237,6 @@ const Dashboard = () => {
   const handleRevokeSession = async (sessionRecord: UserSessionRecord) => {
     if (!user?.id) return;
 
-    const isCurrentSession = sessionRecord.auth_session_id === currentAuthSessionId;
-    const accepted = window.confirm(
-      isCurrentSession
-        ? "Revoke this current session and sign out now?"
-        : "Revoke this session?",
-    );
-    if (!accepted) return;
-
     setIsRevokingSessionId(sessionRecord.id);
     try {
       await revokeUserSessionRecord(sessionRecord.id, "Revoked by account owner");
@@ -252,9 +258,6 @@ const Dashboard = () => {
   const handleRevokeOtherSessions = async () => {
     if (!user?.id) return;
 
-    const accepted = window.confirm("Revoke all other active sessions on this account?");
-    if (!accepted) return;
-
     setIsRevokingAllSessions(true);
     try {
       const revokedCount = await revokeAllSessionsForUser(user.id, "Revoked by account owner");
@@ -274,6 +277,31 @@ const Dashboard = () => {
     } finally {
       setIsRevokingAllSessions(false);
     }
+  };
+
+  const openRevokeSessionModal = (sessionRecord: UserSessionRecord) => {
+    setRevokeAccessTarget({ kind: "session", sessionRecord });
+  };
+
+  const openRevokeOtherSessionsModal = () => {
+    const otherActiveCount = sessions.filter(
+      (sessionRecord) => !sessionRecord.revoked_at && sessionRecord.auth_session_id !== currentAuthSessionId,
+    ).length;
+    setRevokeAccessTarget({ kind: "other_sessions", otherActiveCount });
+  };
+
+  const confirmRevokeAccess = async () => {
+    if (!revokeAccessTarget) return;
+
+    const target = revokeAccessTarget;
+    setRevokeAccessTarget(null);
+
+    if (target.kind === "session") {
+      await handleRevokeSession(target.sessionRecord);
+      return;
+    }
+
+    await handleRevokeOtherSessions();
   };
 
   const toggleNewRoutineDay = (day: string) => {
@@ -744,7 +772,7 @@ const Dashboard = () => {
                 <Button
                   variant="outline"
                   className="border-navy/20 text-navy hover:bg-navy/5"
-                  onClick={() => void handleRevokeOtherSessions()}
+                  onClick={openRevokeOtherSessionsModal}
                   disabled={isRevokingAllSessions || sessions.length === 0}
                 >
                   {isRevokingAllSessions ? "Revoking..." : "Revoke Other Sessions"}
@@ -781,7 +809,7 @@ const Dashboard = () => {
                           </div>
                           <Button
                             variant={isRevoked ? "outline" : "destructive"}
-                            onClick={() => void handleRevokeSession(sessionRecord)}
+                            onClick={() => openRevokeSessionModal(sessionRecord)}
                             disabled={isRevokingSessionId === sessionRecord.id || isRevoked}
                           >
                             {isRevoked ? "Revoked" : isRevokingSessionId === sessionRecord.id ? "Revoking..." : "Revoke"}
@@ -797,6 +825,48 @@ const Dashboard = () => {
         </div>
       </main>
       <SiteFooter />
+
+      <AlertDialog open={Boolean(revokeAccessTarget)} onOpenChange={(open) => { if (!open) setRevokeAccessTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Revoke Access</AlertDialogTitle>
+            <AlertDialogDescription>
+              {revokeAccessTarget?.kind === "session"
+                ? revokeAccessTarget.sessionRecord.auth_session_id === currentAuthSessionId
+                  ? "This will revoke your current session and sign you out automatically."
+                  : "This will revoke this device session."
+                : revokeAccessTarget?.kind === "other_sessions"
+                  ? `This will revoke ${revokeAccessTarget.otherActiveCount} other active session${revokeAccessTarget.otherActiveCount === 1 ? "" : "s"} on this account.`
+                  : "Confirm access revocation."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={
+                (revokeAccessTarget?.kind === "session" && isRevokingSessionId === revokeAccessTarget.sessionRecord.id) ||
+                (revokeAccessTarget?.kind === "other_sessions" && isRevokingAllSessions)
+              }
+            >
+              Cancel
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={() => void confirmRevokeAccess()}
+              disabled={
+                !revokeAccessTarget ||
+                (revokeAccessTarget.kind === "session" && isRevokingSessionId === revokeAccessTarget.sessionRecord.id) ||
+                (revokeAccessTarget.kind === "other_sessions" && isRevokingAllSessions)
+              }
+            >
+              {revokeAccessTarget?.kind === "session" && isRevokingSessionId === revokeAccessTarget.sessionRecord.id
+                ? "Revoking..."
+                : revokeAccessTarget?.kind === "other_sessions" && isRevokingAllSessions
+                  ? "Revoking..."
+                  : "Revoke Access"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
