@@ -1393,6 +1393,7 @@ const AdminDashboard = () => {
                           </button>
                           <div>
                           <p className="font-semibold text-navy">{product.title || "Untitled Product"}</p>
+                          <p className="text-sm text-navy/60">Category: <span className="font-medium">{product.handle.startsWith("father-figure-") ? "Apparel" : "Supplement"}</span></p>
                           <p className="text-sm text-navy/60">Handle: {product.handle}</p>
                           <p className="text-sm text-navy/60">Position: {(productsPage - 1) * productsPerPage + index + 1}</p>
                           <p className="text-sm text-navy/60">{product.currency_code} {Number(product.price).toFixed(2)}</p>
@@ -1658,20 +1659,28 @@ const AdminDashboard = () => {
                 <>
                   <p className="text-sm uppercase tracking-wide text-navy/60">Product: {editingProduct.title || editingProduct.handle}</p>
                   <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
-                    <p className="text-sm uppercase tracking-wide text-navy/60">Core Info</p>
-                    <div className="grid md:grid-cols-5 gap-3">
-                      <div className="space-y-1">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">Handle</p>
-                        <Input
-                          value={editingProduct.handle}
-                          onChange={(e) => {
-                            const handle = e.target.value;
-                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, handle } : p)));
-                          }}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">Title</p>
+                                    <p className="text-sm uppercase tracking-wide text-navy/60">Core Info</p>
+                                    <div className="grid md:grid-cols-6 gap-3">
+                                      <div className="space-y-1">
+                                        <p className="text-sm uppercase tracking-wide text-navy/60">Category</p>
+                                        <Input
+                                          value={editingProduct.handle.startsWith("father-figure-") ? "Apparel" : "Supplement"}
+                                          disabled
+                                          className="bg-secondary/40"
+                                        />
+                                      </div>
+                                      <div className="space-y-1">
+                                        <p className="text-sm uppercase tracking-wide text-navy/60">Handle</p>
+                                        <Input
+                                          value={editingProduct.handle}
+                                          onChange={(e) => {
+                                            const handle = e.target.value;
+                                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, handle } : p)));
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="space-y-1">
+                                        <p className="text-sm uppercase tracking-wide text-navy/60">Title</p>
                         <Input
                           value={editingProduct.title}
                           onChange={(e) => {
