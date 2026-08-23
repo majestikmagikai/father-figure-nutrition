@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Shirt } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { fetchStorefrontProducts } from "@/lib/products";
 import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
 import dadCapImg from "@/assets/products/father-figure-logo-product.webp";
@@ -51,6 +53,35 @@ const APPAREL: ApparelProduct[] = [
 
 export const ApparelGrid = () => {
   const addItem = useCartStore((s) => s.addItem);
+  const [apparel, setApparel] = useState<ApparelProduct[]>(APPAREL);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadApparel = async () => {
+      try {
+        const allProducts = await fetchStorefrontProducts();
+        if (!isMounted) return;
+        const dbApparel = allProducts.filter((p) => p.handle.startsWith("father-figure-"));
+        if (dbApparel.length > 0) {
+          const mapped: ApparelProduct[] = dbApparel.map((p) => ({
+            id: p.id,
+            handle: p.handle,
+            title: p.title,
+            price: p.price,
+            currencyCode: p.currencyCode,
+            availableForSale: p.availableForSale,
+            image: p.images[0] ?? { url: dadCapImg, altText: p.title },
+            variantId: p.variantId,
+          }));
+          setApparel(mapped);
+        }
+      } catch {
+        // Fallback silently to static placeholder APPAREL
+      }
+    };
+    void loadApparel();
+    return () => { isMounted = false; };
+  }, []);
 
   return (
     <section id="apparel" className="relative py-24 px-6 bg-gradient-to-b from-sky to-navy overflow-hidden">
@@ -72,7 +103,7 @@ export const ApparelGrid = () => {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {APPAREL.map((p) => (
+          {apparel.map((p) => (
             <div
               key={p.id}
               className="group relative bg-white/5 border border-white/10 rounded-xl overflow-hidden shadow-card hover:border-orange/50 transition-all hover:-translate-y-1 duration-300"

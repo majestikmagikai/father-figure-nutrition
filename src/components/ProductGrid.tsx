@@ -16,7 +16,9 @@ export const ProductGrid = () => {
     const loadProducts = async () => {
       const nextProducts = await fetchStorefrontProducts();
       if (!isMounted) return;
-      setProducts(nextProducts);
+      // Exclude apparel products (handles starting with "father-figure-")
+      const supplements = nextProducts.filter((p) => !p.handle.startsWith("father-figure-"));
+      setProducts(supplements);
     };
 
     void loadProducts();
@@ -70,7 +72,6 @@ export const ProductGrid = () => {
 
 const ProductCard = ({ product }: { product: LocalProduct }) => {
   const addItem = useCartStore((s) => s.addItem);
-  const isLoading = useCartStore((s) => s.isLoading);
   const image = product.images[0];
 
   const handleAdd = () => {
@@ -119,7 +120,7 @@ const ProductCard = ({ product }: { product: LocalProduct }) => {
           </span>
           <Button
             onClick={handleAdd}
-            disabled={isLoading || !product.availableForSale}
+            disabled={!product.availableForSale}
             aria-label={`Add ${product.title} to cart`}
             className="bg-orange text-white hover:opacity-90 shadow-cta font-display uppercase tracking-wider"
           >

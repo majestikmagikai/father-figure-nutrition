@@ -283,6 +283,7 @@ const AdminDashboard = () => {
     currencyCode: "USD",
   });
   const [newProduct, setNewProduct] = useState({
+    category: "supplement",
     handle: "",
     title: "",
     description: "",
@@ -1106,7 +1107,10 @@ const AdminDashboard = () => {
   };
 
   const handleAddProduct = async () => {
-    const handle = newProduct.handle.trim().toLowerCase();
+    const handleRaw = newProduct.handle.trim().toLowerCase();
+    const handle = newProduct.category === "apparel" && !handleRaw.startsWith("father-figure-")
+      ? `father-figure-${handleRaw}`
+      : handleRaw;
     const title = newProduct.title.trim();
     const description = newProduct.description.trim();
     const fullDescription = newProduct.fullDescription.trim();
@@ -1172,6 +1176,7 @@ const AdminDashboard = () => {
       });
       toast.success("Product added.");
       setNewProduct({
+        category: "supplement",
         handle: "",
         title: "",
         description: "",
@@ -1473,7 +1478,18 @@ const AdminDashboard = () => {
                 <>
                   <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
                     <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Core Info</p>
-                    <div className="grid md:grid-cols-5 gap-3">
+                    <div className="grid md:grid-cols-6 gap-3">
+                      <div className="space-y-1">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">Category</p>
+                        <select
+                          value={newProduct.category}
+                          onChange={(e) => setNewProduct((prev) => ({ ...prev, category: e.target.value }))}
+                          className="h-10 w-full rounded-md border border-navy/20 bg-white px-3 py-2 text-sm text-navy"
+                        >
+                          <option value="supplement">Supplement</option>
+                          <option value="apparel">Apparel</option>
+                        </select>
+                      </div>
                       <div className="space-y-1">
                         <p className="text-sm uppercase tracking-wide text-navy/60">Handle</p>
                         <Input
