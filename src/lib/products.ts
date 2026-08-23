@@ -15,6 +15,7 @@ export interface LocalProduct {
   cap: string;
   fill: string | null;
   model3dUrl?: string | null;
+  enable3dViewer: boolean;
 }
 
 type InventoryProductRow = Database["public"]["Tables"]["inventory_products"]["Row"];
@@ -120,6 +121,7 @@ const mapInventoryRowToProduct = (row: InventoryProductRow): LocalProduct | null
     cap: row.cap_color || "#f5f5f5",
     fill: row.fill_color ?? null,
     model3dUrl: normalizeModelUrl(row.model_3d_url),
+    enable3dViewer: row.enable_3d_viewer,
   };
 };
 

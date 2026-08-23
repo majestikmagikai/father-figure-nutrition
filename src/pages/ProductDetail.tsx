@@ -155,13 +155,13 @@ const ProductDetail = () => {
             <div className="relative">
               <div className="absolute -inset-6 bg-orange/10 blur-3xl rounded-full" />
               <div className="relative aspect-square rounded-2xl bg-secondary border border-navy/10 shadow-card">
-                {view === "spin" && labelImage ? (
-                  <BottleSpin360
-                    labelUrl={labelImage.url}
-                    capColor={product.cap}
-                    fillColor={product.fill}
-                    modelUrl={product.model3dUrl}
-                  />
+                {view === "spin" && labelImage && product.enable3dViewer && product.model3dUrl ? (
+                                  <BottleSpin360
+                                    labelUrl={labelImage.url}
+                                    capColor={product.cap}
+                                    fillColor={product.fill}
+                                    modelUrl={product.model3dUrl}
+                                  />
                 ) : typeof view === "number" && product.images[view] ? (
                   <div
                     className="relative w-full h-full group cursor-zoom-in"
@@ -194,6 +194,7 @@ const ProductDetail = () => {
                     </div>
                   </button>
                 ))}
+                {product.enable3dViewer && product.model3dUrl && (
                 <button
                   onClick={() => setView("spin")}
                   className={`relative h-16 w-16 rounded-lg overflow-hidden border-2 transition-all flex items-center justify-center bg-gradient-to-br from-orange/20 to-orange/5 ${
@@ -206,6 +207,7 @@ const ProductDetail = () => {
                     360°
                   </span>
                 </button>
+                )}
               </div>
             </div>
 

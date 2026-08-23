@@ -66,12 +66,14 @@ type CancelRefundTarget = {
   order: OrderRecord;
 };
 
+type AdminInventoryProduct = InventoryProduct & { enable_3d_viewer?: boolean };
+
 type ProductDeleteTarget = {
-  product: InventoryProduct;
+  product: AdminInventoryProduct;
 };
 
 type RemoveImageTarget = {
-  product: InventoryProduct;
+  product: AdminInventoryProduct;
   index: number;
   url: string;
 };
@@ -258,7 +260,7 @@ const AdminDashboard = () => {
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [user, setUser] = useState<User | null>(null);
-  const [products, setProducts] = useState<InventoryProduct[]>([]);
+  const [products, setProducts] = useState<AdminInventoryProduct[]>([]);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItemRecord[]>([]);
   const [customerProfiles, setCustomerProfiles] = useState<CustomerProfile[]>([]);
@@ -296,6 +298,7 @@ const AdminDashboard = () => {
     capColor: "#f5f5f5",
     fillColor: "",
     model3dUrl: "",
+    enable3dViewer: false,
   });
 
   const openDeleteOrderModal = (order: OrderRecord) => {
@@ -859,7 +862,7 @@ const AdminDashboard = () => {
     window.location.assign("/login");
   };
 
-  const handleSaveProduct = async (product: InventoryProduct) => {
+  const handleSaveProduct = async (product: AdminInventoryProduct) => {
     const handle = product.handle.trim().toLowerCase();
     const title = product.title.trim();
     const description = product.description.trim();
@@ -925,6 +928,7 @@ const AdminDashboard = () => {
         capColor,
         fillColor: fillColor || null,
         model3dUrl: model3dUrl || null,
+        enable3dViewer: product.enable_3d_viewer,
       });
       toast.success("Product updated.");
       await reloadAdminData();
@@ -935,7 +939,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const performDeleteProduct = async (product: InventoryProduct) => {
+  const performDeleteProduct = async (product: AdminInventoryProduct) => {
     setIsDeletingProduct(product.id);
     try {
       await deleteInventoryProduct(product.id);
@@ -948,7 +952,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const openProductDeleteModal = (product: InventoryProduct) => {
+  const openProductDeleteModal = (product: AdminInventoryProduct) => {
     setProductDeleteTarget({ product });
   };
 
@@ -1017,7 +1021,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleUploadProductImage = async (product: InventoryProduct, file: File | null) => {
+  const handleUploadProductImage = async (product: AdminInventoryProduct, file: File | null) => {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
@@ -1041,7 +1045,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleUploadProductModel = async (product: InventoryProduct, file: File | null) => {
+  const handleUploadProductModel = async (product: AdminInventoryProduct, file: File | null) => {
     if (!file) return;
 
     const isGlb = /\.glb$/i.test(file.name) || file.type === "model/gltf-binary";
@@ -1064,7 +1068,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleMoveProductImage = (product: InventoryProduct, fromIndex: number, toIndex: number) => {
+  const handleMoveProductImage = (product: AdminInventoryProduct, fromIndex: number, toIndex: number) => {
     const images = parseImagesInput(JSON.stringify(product.images)) ?? [];
     if (fromIndex < 0 || toIndex < 0 || fromIndex >= images.length || toIndex >= images.length) return;
 
@@ -1077,11 +1081,11 @@ const AdminDashboard = () => {
     );
   };
 
-  const handleSetProductImageFirst = (product: InventoryProduct, index: number) => {
+  const handleSetProductImageFirst = (product: AdminInventoryProduct, index: number) => {
     handleMoveProductImage(product, index, 0);
   };
 
-  const handleRemoveProductImage = (product: InventoryProduct, index: number) => {
+  const handleRemoveProductImage = (product: AdminInventoryProduct, index: number) => {
     const images = parseImagesInput(JSON.stringify(product.images)) ?? [];
     if (index < 0 || index >= images.length) return;
 
@@ -1091,7 +1095,7 @@ const AdminDashboard = () => {
     );
   };
 
-  const openRemoveImageModal = (product: InventoryProduct, index: number) => {
+  const openRemoveImageModal = (product: AdminInventoryProduct, index: number) => {
     const images = parseImagesInput(JSON.stringify(product.images)) ?? [];
     const image = images[index];
     if (!image) return;
@@ -1173,6 +1177,7 @@ const AdminDashboard = () => {
         capColor,
         fillColor: fillColor || null,
         model3dUrl: model3dUrl || null,
+        enable3dViewer: newProduct.enable3dViewer,
       });
       toast.success("Product added.");
       setNewProduct({
@@ -1189,6 +1194,7 @@ const AdminDashboard = () => {
         capColor: "#f5f5f5",
         fillColor: "",
         model3dUrl: "",
+        enable3dViewer: false,
       });
       await reloadAdminData();
     } catch {
@@ -1198,7 +1204,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const persistSortOrder = async (orderedProducts: InventoryProduct[]) => {
+  const persistSortOrder = async (orderedProducts: AdminInventoryProduct[]) => {
     setIsSavingSortOrder(true);
     try {
       await updateInventoryProductSortOrders(
@@ -1644,6 +1650,14 @@ const AdminDashboard = () => {
                       />
                       Available for sale
                     </label>
+                    <label className="inline-flex items-center gap-2 text-sm text-navy/70">
+                      <input
+                        type="checkbox"
+                        checked={newProduct.enable3dViewer}
+                        onChange={(e) => setNewProduct((prev) => ({ ...prev, enable3dViewer: e.target.checked }))}
+                      />
+                      Enable 3D Viewer
+                    </label>
                     <Button onClick={handleAddProduct} disabled={isAddingProduct} className="w-full md:w-auto">
                       {isAddingProduct ? "Adding..." : "Add Product"}
                     </Button>
@@ -1868,6 +1882,7 @@ const AdminDashboard = () => {
                           }}
                         />
                       </div>
+                      <div className="flex flex-col gap-2">
                       <label className="inline-flex items-center gap-2 text-sm text-navy/70">
                         <input
                           type="checkbox"
@@ -1877,10 +1892,22 @@ const AdminDashboard = () => {
                             setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, available_for_sale } : p)));
                           }}
                         />
-                        Available
+                        Available for sale
+                      </label>
+                      <label className="inline-flex items-center gap-2 text-sm text-navy/70">
+                        <input
+                          type="checkbox"
+                          checked={editingProduct.enable_3d_viewer ?? false}
+                          onChange={(e) => {
+                            const enable_3d_viewer = e.target.checked;
+                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, enable_3d_viewer } : p)));
+                          }}
+                        />
+                        Enable 3D Viewer
                       </label>
                     </div>
-                    <div className="flex gap-3 flex-wrap">
+                  </div>
+                  <div className="flex gap-3 flex-wrap">
                       <label className="inline-flex items-center gap-2">
                         <input
                           type="file"
