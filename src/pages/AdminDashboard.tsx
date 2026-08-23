@@ -229,6 +229,7 @@ const AdminDashboard = () => {
   const [draggingProductId, setDraggingProductId] = useState<string | null>(null);
   const [productsPage, setProductsPage] = useState(1);
   const [ordersPage, setOrdersPage] = useState(1);
+  const [orderSort, setOrderSort] = useState<"newest" | "oldest" | "amount_desc" | "amount_asc" | "status">("newest");
   const [isSavingOrder, setIsSavingOrder] = useState<string | null>(null);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -638,11 +639,42 @@ const AdminDashboard = () => {
   }, [products, productsPage]);
 
   const ordersPerPage = 10;
+  const sortedOrders = useMemo(() => {
+    const nextOrders = [...orders];
+
+    if (orderSort === "oldest") {
+      nextOrders.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      return nextOrders;
+    }
+
+    if (orderSort === "amount_desc") {
+      nextOrders.sort((a, b) => Number(b.total_amount) - Number(a.total_amount));
+      return nextOrders;
+    }
+
+    if (orderSort === "amount_asc") {
+      nextOrders.sort((a, b) => Number(a.total_amount) - Number(b.total_amount));
+      return nextOrders;
+    }
+
+    if (orderSort === "status") {
+      nextOrders.sort((a, b) => {
+        const statusCompare = a.status.localeCompare(b.status);
+        if (statusCompare !== 0) return statusCompare;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      return nextOrders;
+    }
+
+    nextOrders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return nextOrders;
+  }, [orders, orderSort]);
+
   const totalOrderPages = Math.max(1, Math.ceil(orders.length / ordersPerPage));
   const paginatedOrders = useMemo(() => {
     const start = (ordersPage - 1) * ordersPerPage;
-    return orders.slice(start, start + ordersPerPage);
-  }, [orders, ordersPage]);
+    return sortedOrders.slice(start, start + ordersPerPage);
+  }, [sortedOrders, ordersPage]);
 
   const getOrderCardAccentClass = (status: string) => {
     if (status === "fulfilled") return "border-l-emerald-500";
@@ -1738,6 +1770,26 @@ const AdminDashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              <div className="mb-4 flex items-center justify-end">
+                <label className="flex items-center gap-2 text-sm text-navy/70">
+                  <span className="uppercase tracking-wide text-navy/60">Sort by</span>
+                  <select
+                    value={orderSort}
+                    onChange={(e) => {
+                      const nextSort = e.target.value as "newest" | "oldest" | "amount_desc" | "amount_asc" | "status";
+                      setOrderSort(nextSort);
+                      setOrdersPage(1);
+                    }}
+                    className="h-10 rounded-md border border-navy/20 bg-white px-3 py-2 text-sm text-navy"
+                  >
+                    <option value="newest">Newest first</option>
+                    <option value="oldest">Oldest first</option>
+                    <option value="amount_desc">Amount high to low</option>
+                    <option value="amount_asc">Amount low to high</option>
+                    <option value="status">Status (A-Z)</option>
+                  </select>
+                </label>
+              </div>
               {isLoadingData ? (
                 <p className="text-sm text-navy/60">Loading orders...</p>
               ) : orders.length === 0 ? (
