@@ -64,7 +64,11 @@ export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: 
         map.set(p.variant_id.toLowerCase(), p.handle.toLowerCase());
       }
       if ((p as any).upc) {
-        map.set(String((p as any).upc).toLowerCase(), p.handle.toLowerCase());
+        const upcString = String((p as any).upc);
+        const upcList = upcString.split(',').map(item => item.trim().toLowerCase());
+        for (const u of upcList) {
+          if (u) map.set(u, p.handle.toLowerCase());
+        }
       }
     }
     return map;

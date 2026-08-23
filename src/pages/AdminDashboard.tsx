@@ -77,7 +77,7 @@ type CancelRefundTarget = {
   order: OrderRecord;
 };
 
-type AdminInventoryProduct = InventoryProduct & { enable_3d_viewer?: boolean };
+type AdminInventoryProduct = InventoryProduct & { enable_3d_viewer?: boolean; upc?: string };
 
 type ProductDeleteTarget = {
   product: AdminInventoryProduct;
@@ -311,6 +311,7 @@ const AdminDashboard = () => {
     fillColor: "",
     model3dUrl: "",
     enable3dViewer: false,
+    upc: "",
   });
 
   const openDeleteOrderModal = (order: OrderRecord) => {
@@ -883,6 +884,7 @@ const AdminDashboard = () => {
     const images = parseImagesInput(JSON.stringify(product.images));
 
     const parsedPrice = Number.parseFloat(String(product.price));
+    const upc = (product.upc ?? "").trim();
     if (!/^[a-z0-9-]+$/.test(handle)) {
       toast.error("Handle must contain lowercase letters, numbers, or hyphens.");
       return;
@@ -1135,6 +1137,7 @@ const AdminDashboard = () => {
     const capColor = newProduct.capColor.trim();
     const fillColor = newProduct.fillColor.trim();
     const model3dUrl = newProduct.model3dUrl.trim();
+    const upc = newProduct.upc.trim();
     const parsedPrice = Number.parseFloat(newProduct.price);
 
     if (!/^[a-z0-9-]+$/.test(handle)) {
@@ -1190,7 +1193,8 @@ const AdminDashboard = () => {
         fillColor: fillColor || null,
         model3dUrl: model3dUrl || null,
         enable3dViewer: newProduct.enable3dViewer,
-      });
+        upc: upc || null,
+      } as any);
       toast.success("Product added.");
       setNewProduct({
         category: "supplement",
@@ -1207,6 +1211,7 @@ const AdminDashboard = () => {
         fillColor: "",
         model3dUrl: "",
         enable3dViewer: false,
+        upc: "",
       });
       await reloadAdminData();
     } catch {
@@ -1417,6 +1422,17 @@ const AdminDashboard = () => {
                           <p className="text-sm text-navy/60">{product.currency_code} {Number(product.price).toFixed(2)}</p>
                           <p className="text-sm text-navy/70 mt-1">{product.description || "No short description."}</p>
                           </div>
+                                      <div className="space-y-1">
+                                        <p className="text-sm uppercase tracking-wide text-navy/60">UPC</p>
+                                        <Input
+                                          value={editingProduct.upc ?? ""}
+                                          onChange={(e) => {
+                                            const upc = e.target.value;
+                                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, upc } : p)));
+                                          }}
+                                          placeholder="e.g. 199874431949"
+                                        />
+                                      </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5">
@@ -1497,7 +1513,7 @@ const AdminDashboard = () => {
                 <>
                   <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
                     <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Core Info</p>
-                    <div className="grid md:grid-cols-6 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 gap-3">
                       <div className="space-y-1">
                         <p className="text-sm uppercase tracking-wide text-navy/60">Category</p>
                         <select
@@ -1686,7 +1702,7 @@ const AdminDashboard = () => {
                   <p className="text-sm uppercase tracking-wide text-navy/60">Product: {editingProduct.title || editingProduct.handle}</p>
                   <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
                                     <p className="text-sm uppercase tracking-wide text-navy/60">Core Info</p>
-                                    <div className="grid md:grid-cols-6 gap-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 gap-3">
                                       <div className="space-y-1">
                                         <p className="text-sm uppercase tracking-wide text-navy/60">Category</p>
                                         <Input
@@ -1781,6 +1797,14 @@ const AdminDashboard = () => {
                         <div
                           className="text-sm text-navy/80 [&_b]:font-semibold [&_i]:italic [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1"
                           dangerouslySetInnerHTML={{ __html: editingProduct.full_description || "" }}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">UPC</p>
+                        <Input
+                          placeholder="e.g. 199874431949"
+                          value={newProduct.upc}
+                          onChange={(e) => setNewProduct((prev) => ({ ...prev, upc: e.target.value }))}
                         />
                       </div>
                     </div>
