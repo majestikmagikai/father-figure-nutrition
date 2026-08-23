@@ -1977,9 +1977,9 @@ const AdminDashboard = () => {
                         >
                           {order.status === "cancelled" ? "Cancelled" : "Cancel & Refund"}
                         </Button>
-                      </div>
+                      </div>      
 
-                      <hr className="border-t border-navy/10 my-4" />
+                      <hr className="border-t border-navy/10 my-4" />                
 
                       <div className="space-y-2">
                         <p className="text-xs uppercase tracking-widest font-semibold text-navy/50">Tracking Details</p>
