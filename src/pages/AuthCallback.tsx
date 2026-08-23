@@ -46,10 +46,13 @@ const AuthCallback = () => {
         if (!isMounted) return;
 
         if (exchangeError) {
-          toast.error("Could not complete secure sign-in exchange.");
-          setStatus("Sign-in exchange failed. Redirecting to login...");
-          navigate("/login", { replace: true });
-          return;
+          const { data: exchangeSession } = await supabase.auth.getSession();
+          if (!exchangeSession.session?.user) {
+            toast.error("Could not complete secure sign-in exchange.");
+            setStatus("Sign-in exchange failed. Redirecting to login...");
+            navigate("/login", { replace: true });
+            return;
+          }
         }
       }
 
