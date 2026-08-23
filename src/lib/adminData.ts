@@ -347,6 +347,7 @@ export const updateInventoryProduct = async (input: {
   fillColor: string | null;
   model3dUrl: string | null;
   enable3dViewer: boolean;
+  upc: string | null;
 }) => {
   if (!supabase) return;
 
@@ -366,6 +367,7 @@ export const updateInventoryProduct = async (input: {
       fill_color: input.fillColor,
       model_3d_url: input.model3dUrl,
       enable_3d_viewer: input.enable3dViewer,
+      upc: input.upc,
       updated_at: new Date().toISOString(),
     })
     .eq("id", input.id);
@@ -387,6 +389,7 @@ export const createInventoryProduct = async (input: {
   fillColor: string | null;
   model3dUrl: string | null;
   enable3dViewer: boolean;
+  upc: string | null;
 }) => {
   if (!supabase) return;
 
@@ -404,6 +407,7 @@ export const createInventoryProduct = async (input: {
     fill_color: input.fillColor,
     model_3d_url: input.model3dUrl,
     enable_3d_viewer: input.enable3dViewer,
+    upc: input.upc,
   });
 
   if (error) throw error;
