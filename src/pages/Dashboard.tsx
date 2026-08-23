@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, CalendarClock, ClipboardList, LogOut, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowLeft, CalendarClock, ClipboardList, LogOut, ShieldCheck, Trash2, UserRound } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -75,6 +75,8 @@ const Dashboard = () => {
   const [isRevokingSessionId, setIsRevokingSessionId] = useState<string | null>(null);
   const [isRevokingAllSessions, setIsRevokingAllSessions] = useState(false);
   const [currentAuthSessionId, setCurrentAuthSessionId] = useState<string | null>(null);
+  const [isDeletingSessionId, setIsDeletingSessionId] = useState<string | null>(null);
+  const [deleteSessionTarget, setDeleteSessionTarget] = useState<UserSessionRecord | null>(null);
   const [revokeAccessTarget, setRevokeAccessTarget] = useState<RevokeAccessTarget | null>(null);
 
   useEffect(() => {
@@ -303,6 +305,35 @@ const Dashboard = () => {
     }
 
     await handleRevokeOtherSessions();
+  };
+
+  const openDeleteSessionModal = (sessionRecord: UserSessionRecord) => {
+    setDeleteSessionTarget(sessionRecord);
+  };
+
+  const confirmDeleteSession = async () => {
+    if (!deleteSessionTarget || !user?.id) return;
+
+    const target = deleteSessionTarget;
+    setDeleteSessionTarget(null);
+    setIsDeletingSessionId(target.id);
+
+    try {
+      const { error } = await supabase
+        .from("user_sessions")
+        .delete()
+        .eq("id", target.id)
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      toast.success("Session record deleted.");
+      setSessions((prev) => prev.filter((s) => s.id !== target.id));
+    } catch {
+      toast.error("Could not delete session record.");
+    } finally {
+      setIsDeletingSessionId(null);
+    }
   };
 
   const toggleNewRoutineDay = (day: string) => {
@@ -903,13 +934,23 @@ const Dashboard = () => {
                               </p>
                             )}
                           </div>
-                          <Button
-                            variant={isRevoked ? "outline" : "destructive"}
-                            onClick={() => openRevokeSessionModal(sessionRecord)}
-                            disabled={isRevokingSessionId === sessionRecord.id || isRevoked}
-                          >
-                            {isRevoked ? "Revoked" : isRevokingSessionId === sessionRecord.id ? "Revoking..." : "Revoke"}
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              variant={isRevoked ? "outline" : "destructive"}
+                              onClick={() => openRevokeSessionModal(sessionRecord)}
+                              disabled={isRevokingSessionId === sessionRecord.id || isRevoked}
+                            >
+                              {isRevoked ? "Revoked" : isRevokingSessionId === sessionRecord.id ? "Revoking..." : "Revoke"}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => openDeleteSessionModal(sessionRecord)}
+                              disabled={isDeletingSessionId === sessionRecord.id || (isCurrent && !isRevoked)}
+                              className="border-navy/20 text-navy hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200"
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" /> Delete
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     );
@@ -959,6 +1000,29 @@ const Dashboard = () => {
                 : revokeAccessTarget?.kind === "other_sessions" && isRevokingAllSessions
                   ? "Revoking..."
                   : "Revoke Access"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={Boolean(deleteSessionTarget)} onOpenChange={(open) => { if (!open) setDeleteSessionTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Session Record</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete this session record from your history? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingSessionId !== null}>
+              Cancel
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={() => void confirmDeleteSession()}
+              disabled={!deleteSessionTarget || isDeletingSessionId !== null}
+            >
+              {isDeletingSessionId === deleteSessionTarget?.id ? "Deleting..." : "Delete Session"}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
