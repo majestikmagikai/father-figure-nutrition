@@ -571,7 +571,7 @@ const Dashboard = () => {
             </CardHeader>
           </Card>
 
-          <div className="grid md:grid-cols-3 gap-5">
+          <div className="grid md:grid-cols-2 gap-5">
             <Card className="border-navy/15 bg-white/95">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2 text-navy">
