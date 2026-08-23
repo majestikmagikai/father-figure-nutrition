@@ -1,10 +1,35 @@
 
-import { useEffect, useState, useMemo } from 'react';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import type { OrderRecord, OrderItemRecord, InventoryProduct } from '@/lib/adminData';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { X } from 'lucide-react';
+import { X, Camera, ShieldAlert } from 'lucide-react';
+
+// Web Audio API helper to generate programmatic beeps
+const playBeep = (freq = 800, duration = 150, type: OscillatorType = 'sine') => {
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = type;
+    osc.frequency.value = freq;
+
+    // Smooth out volume to prevent pops or clipping at start/end
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration / 1000);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + duration / 1000);
+  } catch (err) {
+    console.warn('Audio feedback failed:', err);
+  }
+};
 
 interface UPCScannerModalProps {
   order: OrderRecord;
@@ -17,6 +42,11 @@ interface UPCScannerModalProps {
 export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: UPCScannerModalProps) => {
   const [scannedItems, setScannedItems] = useState<Record<string, number>>({});
   const [isFulfilling, setIsFulfilling] = useState(false);
+  const [isDetectorSupported, setIsDetectorSupported] = useState<boolean | null>(null);
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [lastScanned, setLastScanned] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const productUPCs = useMemo(() => {
     return new Map(products.map(p => [p.upc, p.handle]));
@@ -40,41 +70,118 @@ export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: 
     return true;
   }, [scannedItems, requiredItems]);
 
+  // Keep mutable ref to avoid restarting the camera loop on scanned items state changes
+  const scanStateRef = useRef({ productUPCs, requiredItems, scannedItems });
   useEffect(() => {
-    const scanner = new Html5QrcodeScanner(
-      'upc-scanner-reader',
-      {
-        fps: 10,
-        qrbox: { width: 250, height: 150 },
-        rememberLastUsedCamera: true,
-      },
-      false,
-    );
+    scanStateRef.current = { productUPCs, requiredItems, scannedItems };
+  }, [productUPCs, requiredItems, scannedItems]);
 
-    const onScanSuccess = (decodedText: string) => {
-      const handle = productUPCs.get(decodedText);
-      if (handle && requiredItems.has(handle)) {
-        setScannedItems(prev => {
-          const newCount = (prev[handle] || 0) + 1;
-          if (newCount > (requiredItems.get(handle) ?? 0)) {
-            // Optional: notify user they scanned an extra item
-            return prev;
-          }
-          return { ...prev, [handle]: newCount };
+  // Check native browser BarcodeDetector API support
+  useEffect(() => {
+    setIsDetectorSupported('BarcodeDetector' in window);
+  }, []);
+
+  // Handle permission initialization, stream setup, and active frame analysis loop
+  useEffect(() => {
+    if (isDetectorSupported === false || isDetectorSupported === null) return;
+
+    let active = true;
+    let animationFrameId: number;
+
+    const startCamera = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: 'environment',
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
         });
-      } else {
-        // Optional: notify user of invalid scan
+
+        if (!active) {
+          stream.getTracks().forEach(track => track.stop());
+          return;
+        }
+
+        streamRef.current = stream;
+        setHasPermission(true);
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (err) {
+        console.error('Camera access failed:', err);
+        if (active) {
+          setHasPermission(false);
+        }
       }
     };
 
-    scanner.render(onScanSuccess, undefined);
+    startCamera();
+
+    // @ts-ignore
+    const barcodeDetector = new window.BarcodeDetector({
+      formats: ['upc_a', 'upc_e', 'ean_13'],
+    });
+
+    let lastCode = '';
+    let lastTime = 0;
+
+    const tick = async () => {
+      if (!active) return;
+
+      const video = videoRef.current;
+      if (video && video.readyState === video.HAVE_ENOUGH_DATA) {
+        try {
+          const detectedBarcodes = await barcodeDetector.detect(video);
+          if (detectedBarcodes.length > 0 && active) {
+            const code = detectedBarcodes[0].rawValue;
+            const now = Date.now();
+
+            // Throttles successive duplicate scans of the same code within 1.5 seconds
+            if (code !== lastCode || now - lastTime > 1500) {
+              lastCode = code;
+              lastTime = now;
+              setLastScanned(code);
+
+              const { productUPCs: upcMap, requiredItems: reqMap, scannedItems: scanMap } = scanStateRef.current;
+              const handle = upcMap.get(code);
+
+              if (handle && reqMap.has(handle)) {
+                const requiredQty = reqMap.get(handle) ?? 0;
+                const currentCount = scanMap[handle] || 0;
+
+                if (currentCount < requiredQty) {
+                  setScannedItems(prev => ({ ...prev, [handle]: (prev[handle] || 0) + 1 }));
+                  playBeep(880, 120, 'sine');
+                } else {
+                  playBeep(330, 200, 'triangle');
+                }
+              } else {
+                playBeep(180, 300, 'sawtooth');
+              }
+            }
+          }
+        } catch (err) {
+          // Silence transient black-frame processing errors
+        }
+      }
+
+      if (active) {
+        animationFrameId = requestAnimationFrame(tick);
+      }
+    };
+
+    tick();
 
     return () => {
-      scanner.clear().catch(error => {
-        console.error("Failed to clear html5-qrcode-scanner.", error);
-      });
+      active = false;
+      cancelAnimationFrame(animationFrameId);
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
     };
-  }, [productUPCs, requiredItems]);
+  }, [isDetectorSupported]);
 
   const handleFulfill = async () => {
     if (!isOrderFulfilled) return;
@@ -98,7 +205,40 @@ export const UPCScannerModal = ({ order, items, products, onClose, onFulfill }: 
         </CardHeader>
         <CardContent className="grid md:grid-cols-2 gap-6">
           <div>
-            <div id="upc-scanner-reader" className="w-full"></div>
+            <div className="relative aspect-video rounded-lg overflow-hidden bg-black flex items-center justify-center border border-gray-200 shadow-inner">
+              {isDetectorSupported === false && (
+                <div className="p-4 text-center text-red-600 space-y-2">
+                  <ShieldAlert className="mx-auto h-8 w-8" />
+                  <p className="text-sm font-semibold">Native Barcode API Unsupported</p>
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    Please switch to Chrome or another modern Chromium-based browser to activate native device scanning.
+                  </p>
+                </div>
+              )}
+
+              {isDetectorSupported === true && hasPermission === null && (
+                <div className="text-center text-gray-400 space-y-2">
+                  <Camera className="mx-auto h-8 w-8 animate-pulse" />
+                  <p className="text-xs">Requesting camera access...</p>
+                </div>
+              )}
+
+              {isDetectorSupported === true && hasPermission === false && (
+                <div className="p-4 text-center text-red-600 space-y-2">
+                  <ShieldAlert className="mx-auto h-8 w-8" />
+                  <p className="text-sm font-semibold">Camera Access Denied</p>
+                  <p className="text-xs text-gray-500">Please unlock permission access inside your browser settings.</p>
+                </div>
+              )}
+
+              {isDetectorSupported === true && hasPermission === true && (
+                <>
+                  <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 border-2 border-dashed border-orange/40 rounded-lg pointer-events-none m-6 flex items-center justify-center" />
+                  {lastScanned && <span className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[11px] font-mono px-3 py-0.5 rounded-full">Scanned: {lastScanned}</span>}
+                </>
+              )}
+            </div>
           </div>
           <div>
             <h3 className="text-lg font-semibold mb-2">Order Items</h3>
