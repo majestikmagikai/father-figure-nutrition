@@ -150,12 +150,12 @@ const RichTextEditor = ({ value, onChange, placeholder, variant = "default" }: R
 
   const containerClass =
     variant === "fieldManual"
-      ? "rounded-lg border border-[#d8c7a1] bg-[#f9f2e4] shadow-sm"
+      ? "rounded-lg border border-[#d6bf99] bg-[#f5eee1] shadow-sm"
       : "rounded-md border border-input bg-background";
 
   const toolbarClass =
     variant === "fieldManual"
-      ? "flex flex-wrap gap-2 border-b border-[#d8c7a1] bg-[#efe2c8] p-2"
+      ? "flex flex-wrap gap-2 border-b border-[#d6bf99] bg-[#e8d4b2] p-2"
       : "flex flex-wrap gap-2 border-b border-input p-2";
 
   const editorClass =
@@ -1133,7 +1133,7 @@ const AdminDashboard = () => {
       <SiteHeader />
       <main className={`flex-1 px-6 py-12 ${
         isProductEditSection
-          ? "bg-[radial-gradient(circle_at_18%_20%,rgba(229,197,136,0.30),transparent_42%),radial-gradient(circle_at_82%_14%,rgba(14,35,64,0.20),transparent_45%),linear-gradient(to_bottom,#f7efe0,#efe6d3,#e9deca)]"
+          ? "bg-[radial-gradient(circle_at_18%_20%,rgba(249,139,58,0.18),transparent_38%),radial-gradient(circle_at_82%_14%,rgba(235,214,177,0.12),transparent_42%),linear-gradient(to_bottom,#0f223d,#132b4d,#18355f)]"
           : "bg-gradient-to-b from-sky/20 via-secondary to-background"
       }`}>
         <div className="max-w-6xl mx-auto">
@@ -1158,15 +1158,15 @@ const AdminDashboard = () => {
             )}
           </div>
 
-          <Card className={`border-navy/15 shadow-card mb-6 ${isProductEditSection ? "bg-[#fbf6eb]" : "bg-white/95"}`}>
+          <Card className={`border-navy/15 shadow-card mb-6 ${isProductEditSection ? "bg-[#f4ead8]" : "bg-white/95"}`}>
             <CardHeader>
-              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-navy text-sm uppercase tracking-widest font-semibold mb-3 w-fit ${isProductEditSection ? "bg-[#efe2c8] border-[#d8c7a1]" : "bg-navy/10 border-navy/20"}`}>
+              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-navy text-sm uppercase tracking-widest font-semibold mb-3 w-fit ${isProductEditSection ? "bg-[#e8d4b2] border-[#d6bf99]" : "bg-navy/10 border-navy/20"}`}>
                 <ShieldCheck className="h-3.5 w-3.5" /> Admin Dashboard
               </div>
               <CardTitle className="font-display uppercase text-xl text-navy">Welcome, {displayName}</CardTitle>
               <CardDescription>
                 {isProductEditSection
-                  ? "Field Manual Mode: shape product story, tune visual language, and preview exactly how copy lands."
+                  ? "Brand Campaign Mode: shape product story, tune visual language, and preview exactly how copy lands."
                   : "Manage customer operations and monitor storefront activity from one control surface."}
               </CardDescription>
             </CardHeader>
@@ -1349,10 +1349,10 @@ const AdminDashboard = () => {
           )}
 
           {isProductEditSection && (
-          <Card className="border-[#d8c7a1] bg-[#fbf6eb] mb-6 shadow-[0_18px_45px_rgba(14,35,64,0.12)]">
+          <Card className="border-[#d6bf99] bg-[#f4ead8] mb-6 shadow-[0_18px_45px_rgba(5,12,28,0.35)]">
             <CardHeader>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#efe2c8] border border-[#d8c7a1] text-navy text-xs uppercase tracking-widest font-semibold w-fit">
-                Field Manual
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#e8d4b2] border border-[#d6bf99] text-navy text-xs uppercase tracking-widest font-semibold w-fit">
+                Brand Campaign
               </div>
               <CardTitle className="text-lg text-navy">Product Edit Studio</CardTitle>
               <CardDescription>
@@ -1360,13 +1360,13 @@ const AdminDashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button asChild variant="outline" className="border-[#d8c7a1] bg-[#f7efdd] text-navy hover:bg-[#efe2c8]">
+              <Button asChild variant="outline" className="border-[#d6bf99] bg-[#f6ebd8] text-navy hover:bg-[#e8d4b2]">
                 <Link to="/admin/products">Back to Products List</Link>
               </Button>
 
               {isEditingNewProduct ? (
                 <>
-                  <div className="rounded-lg border border-[#d8c7a1] bg-[#f8f1e3] p-3 space-y-3">
+                  <div className="rounded-lg border border-[#d6bf99] bg-[#f7eedf] p-3 space-y-3">
                     <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Core Info</p>
                     <div className="grid md:grid-cols-5 gap-3">
                       <div className="space-y-1">
@@ -1411,10 +1411,10 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="rounded-lg border border-[#d8c7a1] bg-[#f8f1e3] p-3 space-y-3">
+                  <div className="rounded-lg border border-[#d6bf99] bg-[#f7eedf] p-3 space-y-3">
                     <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Descriptions</p>
                     <div className="grid lg:grid-cols-2 gap-4">
-                      <div className="rounded-lg border border-[#d8c7a1] bg-[#fff9ed] p-3 space-y-3">
+                      <div className="rounded-lg border border-[#d6bf99] bg-[#fff7ea] p-3 space-y-3">
                         <p className="text-sm uppercase tracking-wide text-navy/60">Description Editor</p>
                         <div className="space-y-1">
                           <p className="text-sm uppercase tracking-wide text-navy/60">Short Description</p>
@@ -1434,7 +1434,7 @@ const AdminDashboard = () => {
                           />
                         </div>
                       </div>
-                      <div className="rounded-lg border border-[#d8c7a1] bg-[#f2e6d0] p-3">
+                      <div className="rounded-lg border border-[#d6bf99] bg-[#e8d7bb] p-3">
                         <p className="text-sm uppercase tracking-wide text-navy/60 mb-2">Live Preview</p>
                         <p className="text-sm text-navy/80 mb-3">{newProduct.description || "No short description yet."}</p>
                         <div
@@ -1444,7 +1444,7 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="rounded-lg border border-[#d8c7a1] bg-[#f8f1e3] p-3 space-y-3">
+                  <div className="rounded-lg border border-[#d6bf99] bg-[#f7eedf] p-3 space-y-3">
                     <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Visuals</p>
                     <div className="grid md:grid-cols-3 gap-3">
                       <div className="space-y-1">
@@ -1537,7 +1537,7 @@ const AdminDashboard = () => {
               ) : (
                 <>
                   <p className="text-sm uppercase tracking-wide text-navy/60">Product: {editingProduct.title || editingProduct.handle}</p>
-                  <div className="rounded-lg border border-[#d8c7a1] bg-[#f8f1e3] p-3 space-y-3">
+                  <div className="rounded-lg border border-[#d6bf99] bg-[#f7eedf] p-3 space-y-3">
                     <p className="text-sm uppercase tracking-wide text-navy/60">Core Info</p>
                     <div className="grid md:grid-cols-5 gap-3">
                       <div className="space-y-1">
@@ -1592,10 +1592,10 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="rounded-lg border border-[#d8c7a1] bg-[#f8f1e3] p-3 space-y-3">
+                  <div className="rounded-lg border border-[#d6bf99] bg-[#f7eedf] p-3 space-y-3">
                     <p className="text-sm uppercase tracking-wide text-navy/60">Descriptions</p>
                     <div className="grid lg:grid-cols-2 gap-4">
-                      <div className="rounded-lg border border-[#d8c7a1] bg-[#fff9ed] p-3 space-y-3">
+                      <div className="rounded-lg border border-[#d6bf99] bg-[#fff7ea] p-3 space-y-3">
                         <p className="text-sm uppercase tracking-wide text-navy/60">Description Editor</p>
                         <div className="space-y-1">
                           <p className="text-sm uppercase tracking-wide text-navy/60">Short Description</p>
@@ -1621,7 +1621,7 @@ const AdminDashboard = () => {
                           />
                         </div>
                       </div>
-                      <div className="rounded-lg border border-[#d8c7a1] bg-[#f2e6d0] p-3">
+                      <div className="rounded-lg border border-[#d6bf99] bg-[#e8d7bb] p-3">
                         <p className="text-sm uppercase tracking-wide text-navy/60 mb-2">Description Preview</p>
                         <p className="text-sm text-navy/80 mb-3">{editingProduct.description || "No short description."}</p>
                         <div
@@ -1631,7 +1631,7 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="rounded-lg border border-[#d8c7a1] bg-[#f8f1e3] p-3 space-y-3">
+                  <div className="rounded-lg border border-[#d6bf99] bg-[#f7eedf] p-3 space-y-3">
                     <p className="text-sm uppercase tracking-wide text-navy/60">Media and Visuals</p>
                     <div className="space-y-2">
                       <p className="text-sm uppercase tracking-wide text-navy/60">Image Order</p>
