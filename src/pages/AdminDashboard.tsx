@@ -253,6 +253,7 @@ const AdminDashboard = () => {
   const [productsPage, setProductsPage] = useState(1);
   const [ordersPage, setOrdersPage] = useState(1);
   const [orderSort, setOrderSort] = useState<"newest" | "oldest" | "amount_desc" | "amount_asc" | "status">("newest");
+  const [orderSearchQuery, setOrderSearchQuery] = useState("");
   const [isSavingOrder, setIsSavingOrder] = useState<string | null>(null);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -728,8 +729,31 @@ const AdminDashboard = () => {
   }, [products, productsPage]);
 
   const ordersPerPage = 10;
+  const filteredOrders = useMemo(() => {
+    const query = orderSearchQuery.trim().toLowerCase();
+    if (!query) return orders;
+
+    return orders.filter((order) => {
+      const customerName = customerNameByEmail.get(order.customer_email ?? "") ?? "";
+      const products = orderItemsByOrderId[order.id] ?? [];
+
+      const haystack = [
+        customerName,
+        order.customer_email ?? "",
+        order.external_id ?? "",
+        order.tracking_number ?? "",
+        order.status,
+        ...products.flatMap((item) => [item.product_title, item.product_handle]),
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(query);
+    });
+  }, [orders, orderSearchQuery, customerNameByEmail, orderItemsByOrderId]);
+
   const sortedOrders = useMemo(() => {
-    const nextOrders = [...orders];
+    const nextOrders = [...filteredOrders];
 
     if (orderSort === "oldest") {
       nextOrders.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
@@ -757,9 +781,9 @@ const AdminDashboard = () => {
 
     nextOrders.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     return nextOrders;
-  }, [orders, orderSort]);
+  }, [filteredOrders, orderSort]);
 
-  const totalOrderPages = Math.max(1, Math.ceil(orders.length / ordersPerPage));
+  const totalOrderPages = Math.max(1, Math.ceil(filteredOrders.length / ordersPerPage));
   const paginatedOrders = useMemo(() => {
     const start = (ordersPage - 1) * ordersPerPage;
     return sortedOrders.slice(start, start + ordersPerPage);
@@ -813,6 +837,10 @@ const AdminDashboard = () => {
       setOrdersPage(1);
     }
   }, [isOrdersSection]);
+
+  useEffect(() => {
+    setOrdersPage(1);
+  }, [orderSearchQuery]);
 
   const handleSignOut = async () => {
     if (!supabase) return;
@@ -1890,7 +1918,16 @@ const AdminDashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="mb-4 flex items-center justify-end">
+              <div className="mb-4 flex items-center justify-end gap-3 flex-wrap">
+                <label className="flex items-center gap-2 text-sm text-navy/70">
+                  <span className="uppercase tracking-wide text-navy/60">Search</span>
+                  <Input
+                    value={orderSearchQuery}
+                    onChange={(e) => setOrderSearchQuery(e.target.value)}
+                    placeholder="Customer, email, order ID, tracking, product..."
+                    className="h-10 w-64 max-w-full border-navy/20 bg-white text-sm text-navy"
+                  />
+                </label>
                 <label className="flex items-center gap-2 text-sm text-navy/70">
                   <span className="uppercase tracking-wide text-navy/60">Sort by</span>
                   <select
@@ -1914,6 +1951,8 @@ const AdminDashboard = () => {
                 <p className="text-sm text-navy/60">Loading orders...</p>
               ) : orders.length === 0 ? (
                 <p className="text-sm text-navy/60">No orders found yet.</p>
+              ) : filteredOrders.length === 0 ? (
+                <p className="text-sm text-navy/60">No orders match your search.</p>
               ) : (
                 <div className="space-y-3">
                   {paginatedOrders.map((order, index) => (
