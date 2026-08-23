@@ -27,6 +27,7 @@ const AuthCallback = () => {
       const urlHash = window.location.hash.replace(/^#/, "");
       const hashParams = new URLSearchParams(urlHash);
       const code = searchParams.get("code");
+      const isRecoveryFlow = hashParams.get("type") === "recovery" || searchParams.get("type") === "recovery";
       const authError = hashParams.get("error_description") ?? hashParams.get("error");
       const accessToken = hashParams.get("access_token");
       const refreshToken = hashParams.get("refresh_token");
@@ -81,6 +82,12 @@ const AuthCallback = () => {
 
       const sessionUser = data.session?.user;
       if (sessionUser) {
+        if (isRecoveryFlow) {
+          window.history.replaceState(null, "", "/reset-password");
+          navigate("/reset-password", { replace: true });
+          return;
+        }
+
         window.history.replaceState(null, "", "/auth/callback");
         const target = isAdminUser(sessionUser) ? "/admin" : "/dashboard";
         navigate(target, { replace: true });
@@ -90,6 +97,12 @@ const AuthCallback = () => {
       // If session persistence is still catching up, listen and poll for a few seconds.
       const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
         if (!isMounted || timedOut || !session?.user) return;
+        if (isRecoveryFlow) {
+          window.history.replaceState(null, "", "/reset-password");
+          navigate("/reset-password", { replace: true });
+          return;
+        }
+
         window.history.replaceState(null, "", "/auth/callback");
         const target = isAdminUser(session.user) ? "/admin" : "/dashboard";
         navigate(target, { replace: true });
@@ -105,6 +118,12 @@ const AuthCallback = () => {
         const user = polledData.session?.user;
         if (user) {
           listener.subscription.unsubscribe();
+          if (isRecoveryFlow) {
+            window.history.replaceState(null, "", "/reset-password");
+            navigate("/reset-password", { replace: true });
+            return;
+          }
+
           window.history.replaceState(null, "", "/auth/callback");
           const target = isAdminUser(user) ? "/admin" : "/dashboard";
           navigate(target, { replace: true });
