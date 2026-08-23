@@ -1131,11 +1131,7 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
-      <main className={`flex-1 px-6 py-12 ${
-        isProductEditSection
-          ? "bg-[radial-gradient(circle_at_18%_20%,rgba(249,139,58,0.18),transparent_38%),radial-gradient(circle_at_82%_14%,rgba(235,214,177,0.12),transparent_42%),linear-gradient(to_bottom,#0f223d,#132b4d,#18355f)]"
-          : "bg-gradient-to-b from-sky/20 via-secondary to-background"
-      }`}>
+      <main className="flex-1 px-6 py-12 bg-gradient-to-b from-sky/20 via-secondary to-background">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between gap-4 mb-8 flex-wrap">
             <Link to="/" className="inline-flex items-center gap-2 text-sm text-navy/70 hover:text-orange transition-colors font-medium">
