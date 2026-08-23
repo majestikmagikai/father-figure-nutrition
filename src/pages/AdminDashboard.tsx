@@ -77,7 +77,7 @@ type CancelRefundTarget = {
   order: OrderRecord;
 };
 
-type AdminInventoryProduct = InventoryProduct & { enable_3d_viewer?: boolean; upc?: string };
+type AdminInventoryProduct = InventoryProduct & { enable_3d_viewer?: boolean };
 
 type ProductDeleteTarget = {
   product: AdminInventoryProduct;
@@ -1422,7 +1422,6 @@ const AdminDashboard = () => {
                           <p className="text-sm text-navy/60">Position: {(productsPage - 1) * productsPerPage + index + 1}</p>
                           <p className="text-sm text-navy/60">{product.currency_code} {Number(product.price).toFixed(2)}</p>
                           <p className="text-sm text-navy/70 mt-1">{product.description || "No short description."}</p>
-                          {product.upc && <p className="text-xs font-mono text-navy/60 mt-1">UPC: {product.upc}</p>}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -1554,14 +1553,6 @@ const AdminDashboard = () => {
                           placeholder="USD"
                           value={newProduct.currencyCode}
                           onChange={(e) => setNewProduct((prev) => ({ ...prev, currencyCode: e.target.value }))}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">UPC</p>
-                        <Input
-                          placeholder="e.g. 199874431949"
-                          value={newProduct.upc}
-                          onChange={(e) => setNewProduct((prev) => ({ ...prev, upc: e.target.value }))}
                         />
                       </div>
                     </div>
@@ -1701,7 +1692,7 @@ const AdminDashboard = () => {
                   <p className="text-sm uppercase tracking-wide text-navy/60">Product: {editingProduct.title || editingProduct.handle}</p>
                   <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
                                     <p className="text-sm uppercase tracking-wide text-navy/60">Core Info</p>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 gap-3">
+                                    <div className="grid md:grid-cols-6 gap-3">
                                       <div className="space-y-1">
                                         <p className="text-sm uppercase tracking-wide text-navy/60">Category</p>
                                         <Input
@@ -1760,17 +1751,6 @@ const AdminDashboard = () => {
                           }}
                         />
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">UPC</p>
-                        <Input
-                          placeholder="e.g. 199874431949"
-                          value={editingProduct.upc ?? ""}
-                          onChange={(e) => {
-                            const upc = e.target.value;
-                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, upc } : p)));
-                          }}
-                        />
-                      </div>
                     </div>
                   </div>
                   <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
@@ -1807,6 +1787,14 @@ const AdminDashboard = () => {
                         <div
                           className="text-sm text-navy/80 [&_b]:font-semibold [&_i]:italic [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1"
                           dangerouslySetInnerHTML={{ __html: editingProduct.full_description || "" }}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">UPC</p>
+                        <Input
+                          placeholder="e.g. 199874431949"
+                          value={newProduct.upc}
+                          onChange={(e) => setNewProduct((prev) => ({ ...prev, upc: e.target.value }))}
                         />
                       </div>
                     </div>
