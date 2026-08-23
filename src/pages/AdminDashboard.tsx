@@ -644,6 +644,20 @@ const AdminDashboard = () => {
     return orders.slice(start, start + ordersPerPage);
   }, [orders, ordersPage]);
 
+  const getOrderCardAccentClass = (status: string) => {
+    if (status === "fulfilled") return "border-l-emerald-500";
+    if (status === "processing") return "border-l-sky-500";
+    if (status === "cancelled") return "border-l-rose-500";
+    return "border-l-amber-500";
+  };
+
+  const getOrderStatusPillClass = (status: string) => {
+    if (status === "fulfilled") return "bg-emerald-100 text-emerald-800 border-emerald-200";
+    if (status === "processing") return "bg-sky-100 text-sky-800 border-sky-200";
+    if (status === "cancelled") return "bg-rose-100 text-rose-800 border-rose-200";
+    return "bg-amber-100 text-amber-800 border-amber-200";
+  };
+
   useEffect(() => {
     setProductsPage((current) => {
       if (current > totalProductPages) return totalProductPages;
@@ -1723,13 +1737,23 @@ const AdminDashboard = () => {
                 <p className="text-sm text-navy/60">No orders found yet.</p>
               ) : (
                 <div className="space-y-3">
-                  {paginatedOrders.map((order) => (
-                    <div key={order.id} className="border border-navy/10 rounded-lg p-4 space-y-4 bg-white/80">
-                      <div className="grid gap-3 lg:grid-cols-4">
+                  {paginatedOrders.map((order, index) => (
+                    <div
+                      key={order.id}
+                      className={`border border-navy/15 border-l-4 rounded-xl p-4 space-y-4 shadow-sm ${
+                        index % 2 === 0 ? "bg-white/90" : "bg-sky/10"
+                      } ${getOrderCardAccentClass(order.status)}`}
+                    >
+                      <div className="grid gap-3 lg:grid-cols-4 pb-3 border-b border-navy/10">
                         <div className="text-sm text-navy/70 min-w-0">
-                          <p className="font-semibold text-navy break-words">
-                            {customerNameByEmail.get(order.customer_email ?? "") ?? order.customer_email ?? "Guest"}
-                          </p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-semibold text-navy break-words">
+                              {customerNameByEmail.get(order.customer_email ?? "") ?? order.customer_email ?? "Guest"}
+                            </p>
+                            <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ${getOrderStatusPillClass(order.status)}`}>
+                              {order.status}
+                            </span>
+                          </div>
                           {order.customer_email && (
                             <p className="text-sm break-words">{order.customer_email}</p>
                           )}
@@ -1805,7 +1829,7 @@ const AdminDashboard = () => {
                         )}
                       </div>
 
-                      <div className="grid gap-3 lg:grid-cols-[1.2fr_1fr_1fr_1.4fr] items-end">
+                      <div className="grid gap-3 lg:grid-cols-[1.2fr_1fr_1fr_1.4fr] items-end pt-1">
                         <Input
                           placeholder="Tracking #"
                           value={order.tracking_number ?? ""}
