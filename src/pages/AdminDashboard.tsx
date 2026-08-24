@@ -1994,15 +1994,8 @@ const AdminDashboard = () => {
           <Card className="border-navy/15 bg-white/95 mb-6">
             {/* Order Tracking Section */}
             <CardHeader>
-              <CardTitle className="text-lg text-navy">Order Tracking</CardTitle>
-              <CardDescription>
-                View orders, mark fulfillment, and update statuses.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
               <div className="mb-4 flex items-center justify-end gap-3 flex-wrap">
-                <label className="flex items-center gap-2 text-sm text-navy/70">
-                  <span className="uppercase tracking-wide text-navy/60">Search</span>
+                <label className="flex items-center gap-2 text-sm text-navy/70">                  
                   <Input
                     value={orderSearchQuery}
                     onChange={(e) => setOrderSearchQuery(e.target.value)}
@@ -2010,8 +2003,7 @@ const AdminDashboard = () => {
                     className="h-10 w-64 max-w-full border-navy/20 bg-white text-sm text-navy"
                   />
                 </label>
-                <label className="flex items-center gap-2 text-sm text-navy/70">
-                  <span className="uppercase tracking-wide text-navy/60">Sort by</span>
+                <label className="flex items-center gap-2 text-sm text-navy/70">                  
                   <select
                     value={orderSort}
                     onChange={(e) => {
@@ -2029,6 +2021,12 @@ const AdminDashboard = () => {
                   </select>
                 </label>
               </div>
+              <CardTitle className="text-lg text-navy">Order Tracking</CardTitle>
+              <CardDescription>
+                View orders, mark fulfillment, and update statuses.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
               {isLoadingData ? (
                 <p className="text-sm text-navy/60">Loading orders...</p>
               ) : orders.length === 0 ? (
