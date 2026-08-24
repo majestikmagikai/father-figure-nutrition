@@ -215,7 +215,7 @@ Deno.serve(async (req) => {
           .in("handle", cartLines.map((line) => line.h));
 
         const productInfoMap = new Map(
-          ((lineProducts ?? []) as Array<{ handle: string; title: string | null; images: any }>).map((p) => [p.handle, p]),
+          ((lineProducts ?? []) as Array<{ handle: string; title: string | null; images: Array<{ url?: unknown }> | null }>).map((p) => [p.handle, p]),
         );
 
         const orderItemsToUpsert = [];
