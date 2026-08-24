@@ -664,17 +664,17 @@ const Dashboard = () => {
                         </span>
                       </div>
                       <p className="text-sm">Placed: {new Date(order.created_at).toLocaleString()}</p>
-                  {(order as any).shipping_address && (
-                    <div className="text-xs text-navy/70 mt-2 bg-navy/5 p-2 rounded border border-navy/10 whitespace-pre-wrap">
-                      <p className="font-semibold text-navy">Shipping To:</p>
-                      {(order as any).shipping_address}
-                    </div>
-                  )}
-                    {(order.external_id || order.stripe_payment_intent_id) && (
-                      <p className="text-xs font-mono text-navy/60">
-                        Order ID: {order.external_id || order.stripe_payment_intent_id}
-                      </p>
-                    )}
+                      {order.shipping_address && (
+                        <div className="text-sm text-navy/80 pt-2">
+                          <p className="font-semibold text-navy">Shipping To:</p>
+                          <p className="whitespace-pre-wrap">{order.shipping_address}</p>
+                        </div>
+                      )}
+                      {(order.external_id || order.stripe_payment_intent_id) && (
+                        <p className="text-xs font-mono text-navy/60 pt-2">
+                          Order ID: {order.external_id || order.stripe_payment_intent_id}
+                        </p>
+                      )}
                       <div className="pt-2 border-t border-navy/10">
                         <p className="text-xs uppercase tracking-wide text-navy/60">Products</p>
                         {orderItemsByOrderId[order.id]?.length ? (
