@@ -58,6 +58,7 @@ import {
   deleteBundle,
   fetchAllBundles,
   updateBundle,
+  type BundleInput,
 } from "@/lib/bundles";
 import { toast } from "sonner";
 import type { User } from "@supabase/supabase-js";
@@ -310,13 +311,41 @@ const AdminDashboard = () => {
     handle: "",
     name: "",
     description: "",
-    price: "0.00",
+    discountType: "fixed" as "fixed" | "percentage",
+    discountValue: "0.00",
     currencyCode: "USD",
     productHandles: [] as string[],
     tag: "",
     active: true,
     sortOrder: 0,
   });
+
+  const { originalPrice, finalPrice, discountAmount } = useMemo(() => {
+    if (bundleForm.productHandles.length === 0) {
+      return { originalPrice: 0, finalPrice: 0, discountAmount: 0 };
+    }
+
+    const bundleProducts = products.filter((p) => bundleForm.productHandles.includes(p.handle));
+    const original = bundleProducts.reduce((sum, p) => sum + Number(p.price), 0);
+
+    const discountValue = Number.parseFloat(bundleForm.discountValue);
+    if (Number.isNaN(discountValue) || discountValue < 0) {
+      return { originalPrice: original, finalPrice: original, discountAmount: 0 };
+    }
+
+    let final = original;
+    let discount = 0;
+    if (bundleForm.discountType === "fixed") {
+      discount = discountValue;
+      final = original - discountValue;
+    } else {
+      discount = original * (discountValue / 100);
+      final = original - discount;
+    }
+
+    return { originalPrice: original, finalPrice: Math.max(0, final), discountAmount: discount };
+  }, [bundleForm.productHandles, bundleForm.discountType, bundleForm.discountValue, products]);
+
   const [metrics, setMetrics] = useState({
     totalSales: 0,
     totalOrders: 0,
@@ -351,7 +380,8 @@ const AdminDashboard = () => {
       handle: "",
       name: "",
       description: "",
-      price: "0.00",
+      discountType: "fixed" as "fixed" | "percentage",
+      discountValue: "0.00",
       currencyCode: "USD",
       productHandles: [],
       tag: "",
@@ -366,7 +396,8 @@ const AdminDashboard = () => {
       handle: bundle.handle,
       name: bundle.name,
       description: bundle.description ?? "",
-      price: bundle.price.toFixed(2),
+      discountType: bundle.discount_type ?? "fixed",
+      discountValue: (bundle.discount_value ?? 0).toFixed(2),
       currencyCode: bundle.currency_code,
       productHandles: [...bundle.product_handles],
       tag: bundle.tag ?? "",
@@ -388,7 +419,8 @@ const AdminDashboard = () => {
     const handle = bundleForm.handle.trim().toLowerCase();
     const name = bundleForm.name.trim();
     const description = bundleForm.description.trim();
-    const parsedPrice = Number.parseFloat(bundleForm.price);
+    const parsedDiscountValue = Number.parseFloat(bundleForm.discountValue);
+    const discountType = bundleForm.discountType;
     const currencyCode = bundleForm.currencyCode.trim().toUpperCase() || "USD";
     const tag = bundleForm.tag.trim();
 
@@ -400,8 +432,8 @@ const AdminDashboard = () => {
       toast.error("Bundle name must be at least 2 characters.");
       return;
     }
-    if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
-      toast.error("Bundle price must be a valid non-negative number.");
+    if (Number.isNaN(parsedDiscountValue) || parsedDiscountValue < 0) {
+      toast.error("Discount value must be a valid non-negative number.");
       return;
     }
     if (bundleForm.productHandles.length < 2) {
@@ -409,18 +441,35 @@ const AdminDashboard = () => {
       return;
     }
 
+    const bundleProducts = products.filter((p) => bundleForm.productHandles.includes(p.handle));
+    const originalTotalPrice = bundleProducts.reduce((sum, p) => sum + Number(p.price), 0);
+
+    let calculatedFinalPrice = 0;
+    if (discountType === "fixed") {
+      calculatedFinalPrice = originalTotalPrice - parsedDiscountValue;
+    } else {
+      calculatedFinalPrice = originalTotalPrice * (1 - parsedDiscountValue / 100);
+    }
+
+    if (calculatedFinalPrice < 0) {
+      toast.error("Discount results in a negative price. Please adjust.");
+      return;
+    }
+
     setIsSavingBundle(true);
     try {
-      const input = {
+      const input: BundleInput = {
         handle,
         name,
         description: description || null,
-        price: parsedPrice,
+        price: calculatedFinalPrice,
         currencyCode,
         productHandles: bundleForm.productHandles,
         tag: tag || null,
         active: bundleForm.active,
         sortOrder: bundleForm.sortOrder,
+        discountType,
+        discountValue: parsedDiscountValue,
       };
 
       if (editingBundleId) {
@@ -2658,22 +2707,6 @@ const AdminDashboard = () => {
                       />
                     </div>
                     <div className="space-y-1">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Price</p>
-                      <Input
-                        placeholder="34.99"
-                        value={bundleForm.price}
-                        onChange={(e) => setBundleForm((prev) => ({ ...prev, price: e.target.value }))}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Currency</p>
-                      <Input
-                        placeholder="USD"
-                        value={bundleForm.currencyCode}
-                        onChange={(e) => setBundleForm((prev) => ({ ...prev, currencyCode: e.target.value }))}
-                      />
-                    </div>
-                    <div className="space-y-1">
                       <p className="text-sm uppercase tracking-wide text-navy/60">Tag (optional)</p>
                       <Input
                         placeholder="Best Value"
@@ -2691,6 +2724,45 @@ const AdminDashboard = () => {
                         }
                       />
                     </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-3">
+                    <div className="space-y-1">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Discount Type</p>
+                      <select
+                        value={bundleForm.discountType}
+                        onChange={(e) =>
+                          setBundleForm((prev) => ({ ...prev, discountType: e.target.value as "fixed" | "percentage" }))
+                        }
+                        className="h-10 w-full rounded-md border border-navy/20 bg-white px-3 py-2 text-sm text-navy"
+                      >
+                        <option value="fixed">Fixed Amount ($)</option>
+                        <option value="percentage">Percentage (%)</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Discount Value</p>
+                      <Input
+                        placeholder={bundleForm.discountType === "fixed" ? "10.00" : "20"}
+                        value={bundleForm.discountValue}
+                        onChange={(e) => setBundleForm((prev) => ({ ...prev, discountValue: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Currency</p>
+                      <Input
+                        placeholder="USD"
+                        value={bundleForm.currencyCode}
+                        onChange={(e) => setBundleForm((prev) => ({ ...prev, currencyCode: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-1 rounded-md border border-sky-200 bg-sky-50 p-2 text-sm text-navy/80">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Pricing Preview</p>
+                      <p>Original: ${originalPrice.toFixed(2)}</p>
+                      <p>Discount: -${discountAmount.toFixed(2)}</p>
+                      <p className="font-bold text-navy">Final Price: ${finalPrice.toFixed(2)}</p>
+                    </div>
+                  </div>
+                  <div className="pt-2">
                     <label className="inline-flex items-center gap-2 text-sm text-navy/70 self-end pb-2">
                       <input
                         type="checkbox"
@@ -2769,6 +2841,15 @@ const AdminDashboard = () => {
                             <p className="text-sm text-navy/60">
                               {bundle.currency_code} {bundle.price.toFixed(2)} • {bundle.product_handles.length} products
                             </p>
+                            {bundle.discount_value != null && (
+                              <p className="text-sm font-medium text-emerald-700">
+                                Discount:{" "}
+                                {bundle.discount_type === "percentage"
+                                  ? `${bundle.discount_value}%`
+                                  : `$${Number(bundle.discount_value).toFixed(2)}`}{" "}
+                                off
+                              </p>
+                            )}
                             <p className="text-sm text-navy/70">{bundle.product_handles.join(", ")}</p>
                           </div>
                           <div className="flex items-center gap-2">

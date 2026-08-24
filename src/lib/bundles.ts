@@ -17,6 +17,8 @@ export type Bundle = {
   sort_order: number;
   created_at: string;
   updated_at: string;
+  discount_type: "fixed" | "percentage" | null;
+  discount_value: number | null;
 };
 
 export type BundleInput = {
@@ -29,6 +31,8 @@ export type BundleInput = {
   tag: string | null;
   active: boolean;
   sortOrder: number;
+  discountType: "fixed" | "percentage";
+  discountValue: number;
 };
 
 /** Public storefront fetch: only bundles marked active. */
@@ -74,6 +78,8 @@ export const createBundle = async (input: BundleInput) => {
     tag: input.tag,
     active: input.active,
     sort_order: input.sortOrder,
+    discount_type: input.discountType,
+    discount_value: input.discountValue,
   });
 
   if (error) throw error;
@@ -94,6 +100,8 @@ export const updateBundle = async (id: string, input: BundleInput) => {
       tag: input.tag,
       active: input.active,
       sort_order: input.sortOrder,
+      discount_type: input.discountType,
+      discount_value: input.discountValue,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id);
