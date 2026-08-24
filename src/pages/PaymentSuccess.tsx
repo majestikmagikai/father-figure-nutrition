@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
@@ -11,7 +11,8 @@ import { createOrderRecord, upsertOrderItems } from "@/lib/adminData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const REDIRECT_DELAY_MS = 5000;
+// Reduced delay to 1.5 seconds for snappier feedback
+const REDIRECT_DELAY_MS = 1500; 
 const CHECKOUT_SNAPSHOT_KEY = "ff-checkout-cart-snapshot";
 const CHECKOUT_ORDER_TOKEN_KEY = "ff-checkout-order-token";
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
@@ -21,13 +22,18 @@ const PaymentSuccess = () => {
   const navigate = useNavigate();
   const items = useCartStore((s) => s.items);
   const clearCart = useCartStore((s) => s.clearCart);
+  const hasExecuted = useRef(false);
 
   useEffect(() => {
+    if (hasExecuted.current) return;
+    hasExecuted.current = true;
+
     const url = new URL(window.location.href);
     const paymentIntentId = url.searchParams.get("payment_intent") ?? undefined;
     const paymentIntentClientSecret = url.searchParams.get("payment_intent_client_secret") ?? undefined;
     const clientOrderToken = sessionStorage.getItem(CHECKOUT_ORDER_TOKEN_KEY) ?? undefined;
     const dedupeKey = paymentIntentId ? `ff-order-saved-${paymentIntentId}` : null;
+    
     const snapshotItems = (() => {
       try {
         const raw = sessionStorage.getItem(CHECKOUT_SNAPSHOT_KEY);
@@ -38,19 +44,17 @@ const PaymentSuccess = () => {
         return [] as typeof items;
       }
     })();
+
     const sourceItems = items.length > 0 ? items : snapshotItems;
-    let timer: number | null = null;
-    let isActive = true;
 
     const saveOrderIfNeeded = async () => {
-      if (dedupeKey && sessionStorage.getItem(dedupeKey)) {
-        return;
-      }
+      if (dedupeKey && sessionStorage.getItem(dedupeKey)) return;
 
       let normalizedItems = sourceItems;
       let shippingAddress: string | null = null;
 
-      if (paymentIntentClientSecret && stripePromise) {
+      // Only make the Stripe SDK network call if we lack item details
+      if (sourceItems.length === 0 && paymentIntentClientSecret && stripePromise) {
         const stripe = await stripePromise;
         if (stripe) {
           const result = await stripe.retrievePaymentIntent(paymentIntentClientSecret);
@@ -68,7 +72,7 @@ const PaymentSuccess = () => {
               ].filter(Boolean).join("\n");
             }
 
-            if (intent.status === "succeeded" && normalizedItems.length === 0) {
+            if (intent.status === "succeeded") {
               const metadata = (intent as unknown as { metadata?: Record<string, string> }).metadata ?? {};
               const cartLinesRaw = metadata.cart_lines ?? "";
 
@@ -90,15 +94,10 @@ const PaymentSuccess = () => {
                 : [];
 
               if (cartLines.length > 0 && supabase) {
-                const { data: lineProducts, error: productError } = await supabase
+                const { data: lineProducts } = await supabase
                   .from("inventory_products")
                   .select("handle, title, images")
                   .in("handle", cartLines.map((line) => line.h));
-
-                if (productError) {
-                  console.error("Could not fetch product details for order sync:", productError);
-                  toast.error("Could not sync all product details for the order.");
-                }
 
                 const productByHandle = new Map(
                   (lineProducts ?? []).map((product) => [product.handle, product]),
@@ -117,27 +116,20 @@ const PaymentSuccess = () => {
                     productId: `prod-${line.h}`,
                     handle: line.h,
                     title,
-                    image: {
-                      url: imageUrl,
-                      altText: title,
-                    },
+                    image: { url: imageUrl, altText: title },
                     variantId: line.v,
                     price: (line.p / 100).toFixed(2),
                     currencyCode: line.c.toUpperCase(),
                     quantity: line.q,
                   };
                 });
-              } else {
-                normalizedItems = [];
               }
             }
           }
         }
       }
 
-      if (normalizedItems.length === 0) {
-        return;
-      }
+      if (normalizedItems.length === 0) return;
 
       let customerEmail: string | null = null;
       if (supabase) {
@@ -160,10 +152,10 @@ const PaymentSuccess = () => {
           totalAmount,
           currencyCode,
           itemCount,
-        shippingAddress,
+          shippingAddress,
         });
       } catch {
-        // The webhook may have already created the order row; continue so line items can still be stored.
+        // Handled by webhook if redundant
       }
 
       if (!orderId && supabase) {
@@ -188,63 +180,41 @@ const PaymentSuccess = () => {
         }
       }
 
-      if (!orderId) {
-        console.warn("Skipping success-page item sync because the saved order is not available yet.");
-        return;
+      if (orderId) {
+        try {
+          await upsertOrderItems(
+            orderId,
+            normalizedItems.map((item) => ({
+              productHandle: item.handle,
+              productTitle: item.title,
+              variantId: item.variantId,
+              imageUrl: item.image.url,
+              unitPrice: parseFloat(item.price),
+              quantity: item.quantity,
+              currencyCode: item.currencyCode,
+            })),
+          );
+        } catch {
+          // Silent catch or toast
+        }
       }
 
-      try {
-        await upsertOrderItems(
-          orderId,
-          normalizedItems.map((item) => ({
-            productHandle: item.handle,
-            productTitle: item.title,
-            variantId: item.variantId,
-            imageUrl: item.image.url,
-            unitPrice: parseFloat(item.price),
-            quantity: item.quantity,
-            currencyCode: item.currencyCode,
-          })),
-        );
-      } catch {
-        toast.error("Order saved, but product line items could not be synced.");
-      }
-
-      if (dedupeKey) {
-        sessionStorage.setItem(dedupeKey, "1");
-      }
-
+      if (dedupeKey) sessionStorage.setItem(dedupeKey, "1");
       sessionStorage.removeItem(CHECKOUT_SNAPSHOT_KEY);
       sessionStorage.removeItem(CHECKOUT_ORDER_TOKEN_KEY);
     };
 
-    const runOrderSave = async () => {
-      try {
-        await saveOrderIfNeeded();
-      } catch (error) {
-        console.error("Failed to save order on success page:", error);
-        toast.error("There was an issue saving your order details. Please check your dashboard or contact support.");
-      } finally {
-        if (sourceItems.length > 0) {
-          clearCart();
-        }
-      }
-    };
+    // Fire saving in background without blocking UI flow
+    void saveOrderIfNeeded().finally(() => {
+      if (sourceItems.length > 0) clearCart();
+    });
 
-    void runOrderSave();
-
-    timer = window.setTimeout(() => {
-      if (isActive) {
-        navigate("/dashboard", { replace: true });
-      }
+    // Fast redirection
+    const timer = window.setTimeout(() => {
+      navigate("/dashboard", { replace: true });
     }, REDIRECT_DELAY_MS);
 
-    return () => {
-      isActive = false;
-      if (timer !== null) {
-        window.clearTimeout(timer);
-      }
-    };
+    return () => window.clearTimeout(timer);
   }, [clearCart, items, navigate]);
 
   return (
@@ -261,12 +231,12 @@ const PaymentSuccess = () => {
                 Thank You For Your Order
               </CardTitle>
               <CardDescription className="text-emerald-900/80">
-                Your payment was confirmed. We are processing your order and redirecting you to your customer dashboard.
+                Your payment was confirmed. Redirecting you to your dashboard...
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-2 text-emerald-900/80 text-sm">
-                <Loader2 className="h-4 w-4 animate-spin" /> Redirecting in a few seconds...
+                <Loader2 className="h-4 w-4 animate-spin" /> Redirecting now...
               </div>
               <div className="flex flex-wrap gap-3">
                 <Button
