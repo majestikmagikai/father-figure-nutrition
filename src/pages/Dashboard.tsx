@@ -71,6 +71,7 @@ const Dashboard = () => {
   const [newRoutineTime, setNewRoutineTime] = useState("08:00");
   const [newRoutineDays, setNewRoutineDays] = useState<string[]>(["Mon", "Tue", "Wed", "Thu", "Fri"]);
   const [sessions, setSessions] = useState<UserSessionRecord[]>([]);
+  const [sessionsPage, setSessionsPage] = useState(1);
   const [isLoadingSessions, setIsLoadingSessions] = useState(true);
   const [isRevokingSessionId, setIsRevokingSessionId] = useState<string | null>(null);
   const [isRevokingAllSessions, setIsRevokingAllSessions] = useState(false);
@@ -81,6 +82,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (!supabase) return;
+
 
     let isMounted = true;
 
@@ -542,8 +544,16 @@ const Dashboard = () => {
     return sortedOrders.slice(start, start + ordersPerPage);
   }, [sortedOrders, ordersPage]);
 
+  const sessionsPerPage = 4;
+  const totalSessionPages = Math.max(1, Math.ceil(sessions.length / sessionsPerPage));
+  const paginatedSessions = useMemo(() => {
+    const start = (sessionsPage - 1) * sessionsPerPage;
+    return sessions.slice(start, start + sessionsPerPage);
+  }, [sessions, sessionsPage]);
+
   useEffect(() => {
     setOrdersPage(1);
+    setSessionsPage(1);
   }, [user?.id]);
 
   const handleSignOut = async () => {
@@ -914,7 +924,7 @@ const Dashboard = () => {
                 <p>No session records yet.</p>
               ) : (
                 <div className="space-y-2">
-                  {sessions.map((sessionRecord, index) => {
+                  {paginatedSessions.map((sessionRecord, index) => {
                     const isCurrent = sessionRecord.auth_session_id === currentAuthSessionId;
                     const isRevoked = Boolean(sessionRecord.revoked_at);
 
@@ -966,6 +976,31 @@ const Dashboard = () => {
                       </div>
                     );
                   })}
+                  {totalSessionPages > 1 && (
+                    <div className="flex items-center justify-between gap-3 pt-2">
+                      <p className="text-sm text-navy/60">
+                        Page {sessionsPage} of {totalSessionPages}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          className="border-navy/20 text-navy hover:bg-navy/5"
+                          disabled={sessionsPage === 1}
+                          onClick={() => setSessionsPage((prev) => Math.max(1, prev - 1))}
+                        >
+                          Previous
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="border-navy/20 text-navy hover:bg-navy/5"
+                          disabled={sessionsPage >= totalSessionPages}
+                          onClick={() => setSessionsPage((prev) => Math.min(totalSessionPages, prev + 1))}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>

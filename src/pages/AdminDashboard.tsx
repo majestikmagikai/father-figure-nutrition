@@ -290,6 +290,7 @@ const AdminDashboard = () => {
   const [productDeleteTarget, setProductDeleteTarget] = useState<ProductDeleteTarget | null>(null);
   const [removeImageTarget, setRemoveImageTarget] = useState<RemoveImageTarget | null>(null);
   const [scanningOrder, setScanningOrder] = useState<OrderRecord | null>(null);
+  const [sessionPages, setSessionPages] = useState<Record<string, number>>({});
   const [metrics, setMetrics] = useState({
     totalSales: 0,
     totalOrders: 0,
@@ -313,6 +314,10 @@ const AdminDashboard = () => {
     enable3dViewer: false,
     upc: "",
   });
+
+  const handleSessionPageChange = (userId: string, page: number) => {
+    setSessionPages((prev) => ({ ...prev, [userId]: page }));
+  };
 
   const openDeleteOrderModal = (order: OrderRecord) => {
     setDeleteOrderTarget(order);
@@ -1342,1102 +1347,1099 @@ const AdminDashboard = () => {
           )}
 
           {isMetricsSection && (
-          <div className="grid md:grid-cols-3 gap-5 mb-6">
-            <Card className="border-navy/15 bg-white/95">
-              <CardHeader>
-                <CardTitle className="text-lg text-navy">Sales</CardTitle>
-                <CardDescription>Total processed revenue</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="font-display text-3xl text-orange">
-                  {metrics.currencyCode} {metrics.totalSales.toFixed(2)}
-                </p>
-              </CardContent>
-            </Card>
+            <div className="grid md:grid-cols-3 gap-5 mb-6">
+              <Card className="border-navy/15 bg-white/95">
+                <CardHeader>
+                  <CardTitle className="text-lg text-navy">Sales</CardTitle>
+                  <CardDescription>Total processed revenue</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="font-display text-3xl text-orange">
+                    {metrics.currencyCode} {metrics.totalSales.toFixed(2)}
+                  </p>
+                </CardContent>
+              </Card>
 
-            <Card className="border-navy/15 bg-white/95">
-              <CardHeader>
-                <CardTitle className="text-lg text-navy">Total Orders</CardTitle>
-                <CardDescription>Completed checkout records</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="font-display text-3xl text-orange">{metrics.totalOrders}</p>
-              </CardContent>
-            </Card>
+              <Card className="border-navy/15 bg-white/95">
+                <CardHeader>
+                  <CardTitle className="text-lg text-navy">Total Orders</CardTitle>
+                  <CardDescription>Completed checkout records</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="font-display text-3xl text-orange">{metrics.totalOrders}</p>
+                </CardContent>
+              </Card>
 
-            <Card className="border-navy/15 bg-white/95">
-              <CardHeader>
-                <CardTitle className="text-lg text-navy">Active Users</CardTitle>
-                <CardDescription>Unique customers with completed orders</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="font-display text-3xl text-orange">{metrics.activeUsers}</p>
-              </CardContent>
-            </Card>
-          </div>
+              <Card className="border-navy/15 bg-white/95">
+                <CardHeader>
+                  <CardTitle className="text-lg text-navy">Active Users</CardTitle>
+                  <CardDescription>Unique customers with completed orders</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="font-display text-3xl text-orange">{metrics.activeUsers}</p>
+                </CardContent>
+              </Card>
+            </div>
           )}
 
           {isProductsSection && (
-          <Card className="border-navy/15 bg-white/95 mb-6">
-            <CardHeader>
-              <CardTitle className="text-lg text-navy">Products List</CardTitle>
-              <CardDescription>
-                View all products on one page, then open a separate page to edit a specific product.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {isLoadingData ? (
-                <p className="text-sm text-navy/60">Loading products...</p>
-              ) : products.length === 0 ? (
-                <p className="text-sm text-navy/60">No products found in inventory_products.</p>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-sm uppercase tracking-wide text-navy/60">
-                    Drag products by the grip icon to reorder. {isSavingSortOrder ? "Saving order..." : ""}
-                  </p>
-                  {paginatedProducts.map((product, index) => (
-                    <div
-                      key={product.id}
-                      className={`border rounded-lg p-4 bg-white/80 transition-colors ${draggingProductId === product.id ? "border-orange/60 bg-orange/5" : "border-navy/10"}`}
-                      onDragOver={handleDragOver}
-                      onDrop={() => void handleDropOnProduct(product.id)}
-                    >
-                      <div className="flex items-center justify-between gap-3 flex-wrap">
-                        <div className="flex items-start gap-3">
-                          <button
-                            type="button"
-                            draggable
-                            onDragStart={() => handleDragStart(product.id)}
-                            onDragEnd={() => setDraggingProductId(null)}
-                            className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-md border border-navy/20 text-navy/60 hover:text-navy hover:border-navy/40 cursor-grab active:cursor-grabbing"
-                            title="Drag to reorder"
-                            aria-label="Drag to reorder"
-                          >
-                            <GripVertical className="h-4 w-4" />
-                          </button>
-                          <div>
-                          <p className="font-semibold text-navy">{product.title || "Untitled Product"}</p>
-                          <p className="text-sm text-navy/60">Category: <span className="font-medium">{product.handle.startsWith("father-figure-") ? "Apparel" : "Supplement"}</span></p>
-                          <p className="text-sm text-navy/60">Handle: {product.handle}</p>
-                          <p className="text-sm text-navy/60">Position: {(productsPage - 1) * productsPerPage + index + 1}</p>
-                          <p className="text-sm text-navy/60">{product.currency_code} {Number(product.price).toFixed(2)}</p>
-                          <p className="text-sm text-navy/70 mt-1">{product.description || "No short description."}</p>
-                          {product.upc && <p className="text-xs font-mono text-navy/60 mt-1">UPC: {product.upc}</p>}
+            <Card className="border-navy/15 bg-white/95 mb-6">
+              <CardHeader>
+                <CardTitle className="text-lg text-navy">Products List</CardTitle>
+                <CardDescription>
+                  View all products on one page, then open a separate page to edit a specific product.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {isLoadingData ? (
+                  <p className="text-sm text-navy/60">Loading products...</p>
+                ) : products.length === 0 ? (
+                  <p className="text-sm text-navy/60">No products found in inventory_products.</p>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-sm uppercase tracking-wide text-navy/60">
+                      Drag products by the grip icon to reorder. {isSavingSortOrder ? "Saving order..." : ""}
+                    </p>
+                    {paginatedProducts.map((product, index) => (
+                      <div
+                        key={product.id}
+                        className={`border rounded-lg p-4 bg-white/80 transition-colors ${draggingProductId === product.id ? "border-orange/60 bg-orange/5" : "border-navy/10"}`}
+                        onDragOver={handleDragOver}
+                        onDrop={() => void handleDropOnProduct(product.id)}
+                      >
+                        <div className="flex items-center justify-between gap-3 flex-wrap">
+                          <div className="flex items-start gap-3">
+                            <button
+                              type="button"
+                              draggable
+                              onDragStart={() => handleDragStart(product.id)}
+                              onDragEnd={() => setDraggingProductId(null)}
+                              className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-md border border-navy/20 text-navy/60 hover:text-navy hover:border-navy/40 cursor-grab active:cursor-grabbing"
+                              title="Drag to reorder"
+                              aria-label="Drag to reorder"
+                            >
+                              <GripVertical className="h-4 w-4" />
+                            </button>
+                            <div>
+                              <p className="font-semibold text-navy">{product.title || "Untitled Product"}</p>
+                              <p className="text-sm text-navy/60">Category: <span className="font-medium">{product.handle.startsWith("father-figure-") ? "Apparel" : "Supplement"}</span></p>
+                              <p className="text-sm text-navy/60">Handle: {product.handle}</p>
+                              <p className="text-sm text-navy/60">Position: {(productsPage - 1) * productsPerPage + index + 1}</p>
+                              <p className="text-sm text-navy/60">{product.currency_code} {Number(product.price).toFixed(2)}</p>
+                              <p className="text-sm text-navy/70 mt-1">{product.description || "No short description."}</p>
+                              {product.upc && <p className="text-xs font-mono text-navy/60 mt-1">UPC: {product.upc}</p>}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5">
+                              <Link to={`/admin/product-edit/${product.handle}`}>Edit Product</Link>
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              onClick={() => openProductDeleteModal(product)}
+                              disabled={isDeletingProduct === product.id}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              {isDeletingProduct === product.id ? "Deleting..." : "Delete"}
+                            </Button>
                           </div>
                         </div>
+                        <div className="mt-3">
+                          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-sm font-medium ${product.available_for_sale ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"
+                            }`}>
+                            {product.available_for_sale ? "Available" : "Unavailable"}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    {totalProductPages > 1 && (
+                      <div className="flex items-center justify-between gap-3 pt-2">
+                        <p className="text-sm text-navy/60">
+                          Page {productsPage} of {totalProductPages}
+                        </p>
                         <div className="flex items-center gap-2">
-                          <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5">
-                            <Link to={`/admin/product-edit/${product.handle}`}>Edit Product</Link>
+                          <Button
+                            variant="outline"
+                            className="border-navy/20 text-navy hover:bg-navy/5"
+                            disabled={productsPage === 1}
+                            onClick={() => setProductsPage((prev) => Math.max(1, prev - 1))}
+                          >
+                            Previous
                           </Button>
                           <Button
-                            variant="destructive"
-                            onClick={() => openProductDeleteModal(product)}
-                            disabled={isDeletingProduct === product.id}
+                            variant="outline"
+                            className="border-navy/20 text-navy hover:bg-navy/5"
+                            disabled={productsPage >= totalProductPages}
+                            onClick={() => setProductsPage((prev) => Math.min(totalProductPages, prev + 1))}
                           >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            {isDeletingProduct === product.id ? "Deleting..." : "Delete"}
+                            Next
                           </Button>
                         </div>
                       </div>
-                      <div className="mt-3">
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-sm font-medium ${
-                          product.available_for_sale ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"
-                        }`}>
-                          {product.available_for_sale ? "Available" : "Unavailable"}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                  {totalProductPages > 1 && (
-                    <div className="flex items-center justify-between gap-3 pt-2">
-                      <p className="text-sm text-navy/60">
-                        Page {productsPage} of {totalProductPages}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          className="border-navy/20 text-navy hover:bg-navy/5"
-                          disabled={productsPage === 1}
-                          onClick={() => setProductsPage((prev) => Math.max(1, prev - 1))}
-                        >
-                          Previous
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="border-navy/20 text-navy hover:bg-navy/5"
-                          disabled={productsPage >= totalProductPages}
-                          onClick={() => setProductsPage((prev) => Math.min(totalProductPages, prev + 1))}
-                        >
-                          Next
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                )}
+                <div>
+                  <Button asChild className="bg-orange text-white hover:opacity-90 shadow-cta font-display uppercase tracking-wider">
+                    <Link to="/admin/product-edit/new">Add New Product</Link>
+                  </Button>
                 </div>
-              )}
-              <div>
-                <Button asChild className="bg-orange text-white hover:opacity-90 shadow-cta font-display uppercase tracking-wider">
-                  <Link to="/admin/product-edit/new">Add New Product</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
           )}
 
           {isProductEditSection && (
-          <Card className="border-navy/15 bg-white/95 mb-6 shadow-card">
-            <CardHeader>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-navy/10 border border-navy/20 text-navy text-xs uppercase tracking-widest font-semibold w-fit">
-                Product Editor
-              </div>
-              <CardTitle className="text-lg text-navy">Product Edit Studio</CardTitle>
-              <CardDescription>
-                Tune product copy and preview how content will read before it goes live.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5">
-                <Link to="/admin/products">Back to Products List</Link>
-              </Button>
+            <Card className="border-navy/15 bg-white/95 mb-6 shadow-card">
+              <CardHeader>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-navy/10 border border-navy/20 text-navy text-xs uppercase tracking-widest font-semibold w-fit">
+                  Product Editor
+                </div>
+                <CardTitle className="text-lg text-navy">Product Edit Studio</CardTitle>
+                <CardDescription>
+                  Tune product copy and preview how content will read before it goes live.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5">
+                  <Link to="/admin/products">Back to Products List</Link>
+                </Button>
 
-              {isEditingNewProduct ? (
-                <>
-                  <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
-                    <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Core Info</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 gap-3">
-                      <div className="space-y-1">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">Category</p>
-                        <select
-                          value={newProduct.category}
-                          onChange={(e) => setNewProduct((prev) => ({ ...prev, category: e.target.value }))}
-                          className="h-10 w-full rounded-md border border-navy/20 bg-white px-3 py-2 text-sm text-navy"
-                        >
-                          <option value="supplement">Supplement</option>
-                          <option value="apparel">Apparel</option>
-                        </select>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">Handle</p>
-                        <Input
-                          placeholder="creatine-hardbody"
-                          value={newProduct.handle}
-                          onChange={(e) => setNewProduct((prev) => ({ ...prev, handle: e.target.value }))}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">Title</p>
-                        <Input
-                          placeholder="Product title"
-                          value={newProduct.title}
-                          onChange={(e) => setNewProduct((prev) => ({ ...prev, title: e.target.value }))}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">Variant ID</p>
-                        <Input
-                          placeholder="var-product-default"
-                          value={newProduct.variantId}
-                          onChange={(e) => setNewProduct((prev) => ({ ...prev, variantId: e.target.value }))}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">Price</p>
-                        <Input
-                          placeholder="0.00"
-                          value={newProduct.price}
-                          onChange={(e) => setNewProduct((prev) => ({ ...prev, price: e.target.value }))}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">Currency</p>
-                        <Input
-                          placeholder="USD"
-                          value={newProduct.currencyCode}
-                          onChange={(e) => setNewProduct((prev) => ({ ...prev, currencyCode: e.target.value }))}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
-                    <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Descriptions</p>
-                    <div className="grid lg:grid-cols-2 gap-4">
-                      <div className="rounded-lg border border-navy/10 bg-white/90 p-3 space-y-3">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">Description Editor</p>
+                {isEditingNewProduct ? (
+                  <>
+                    <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Core Info</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 gap-3">
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Short Description</p>
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Category</p>
+                          <select
+                            value={newProduct.category}
+                            onChange={(e) => setNewProduct((prev) => ({ ...prev, category: e.target.value }))}
+                            className="h-10 w-full rounded-md border border-navy/20 bg-white px-3 py-2 text-sm text-navy"
+                          >
+                            <option value="supplement">Supplement</option>
+                            <option value="apparel">Apparel</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Handle</p>
                           <Input
-                            placeholder="Short summary shown under product title"
-                            value={newProduct.description}
-                            onChange={(e) => setNewProduct((prev) => ({ ...prev, description: e.target.value }))}
+                            placeholder="creatine-hardbody"
+                            value={newProduct.handle}
+                            onChange={(e) => setNewProduct((prev) => ({ ...prev, handle: e.target.value }))}
                           />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Full Description</p>
-                          <RichTextEditor
-                            value={newProduct.fullDescription}
-                            onChange={(nextValue) => setNewProduct((prev) => ({ ...prev, fullDescription: nextValue }))}
-                            placeholder="Full product description with formatting"
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Title</p>
+                          <Input
+                            placeholder="Product title"
+                            value={newProduct.title}
+                            onChange={(e) => setNewProduct((prev) => ({ ...prev, title: e.target.value }))}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Variant ID</p>
+                          <Input
+                            placeholder="var-product-default"
+                            value={newProduct.variantId}
+                            onChange={(e) => setNewProduct((prev) => ({ ...prev, variantId: e.target.value }))}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Price</p>
+                          <Input
+                            placeholder="0.00"
+                            value={newProduct.price}
+                            onChange={(e) => setNewProduct((prev) => ({ ...prev, price: e.target.value }))}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Currency</p>
+                          <Input
+                            placeholder="USD"
+                            value={newProduct.currencyCode}
+                            onChange={(e) => setNewProduct((prev) => ({ ...prev, currencyCode: e.target.value }))}
                           />
                         </div>
                       </div>
-                      <div className="rounded-lg border border-navy/10 bg-sky/10 p-3">
-                        <p className="text-sm uppercase tracking-wide text-navy/60 mb-2">Live Preview</p>
-                        <p className="text-sm text-navy/80 mb-3">{newProduct.description || "No short description yet."}</p>
-                        <div
-                          className="text-sm text-navy/80 [&_b]:font-semibold [&_i]:italic [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1"
-                          dangerouslySetInnerHTML={{ __html: newProduct.fullDescription || "<p>No full description yet.</p>" }}
-                        />
+                    </div>
+                    <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Descriptions</p>
+                      <div className="grid lg:grid-cols-2 gap-4">
+                        <div className="rounded-lg border border-navy/10 bg-white/90 p-3 space-y-3">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Description Editor</p>
+                          <div className="space-y-1">
+                            <p className="text-sm uppercase tracking-wide text-navy/60">Short Description</p>
+                            <Input
+                              placeholder="Short summary shown under product title"
+                              value={newProduct.description}
+                              onChange={(e) => setNewProduct((prev) => ({ ...prev, description: e.target.value }))}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-sm uppercase tracking-wide text-navy/60">Full Description</p>
+                            <RichTextEditor
+                              value={newProduct.fullDescription}
+                              onChange={(nextValue) => setNewProduct((prev) => ({ ...prev, fullDescription: nextValue }))}
+                              placeholder="Full product description with formatting"
+                            />
+                          </div>
+                        </div>
+                        <div className="rounded-lg border border-navy/10 bg-sky/10 p-3">
+                          <p className="text-sm uppercase tracking-wide text-navy/60 mb-2">Live Preview</p>
+                          <p className="text-sm text-navy/80 mb-3">{newProduct.description || "No short description yet."}</p>
+                          <div
+                            className="text-sm text-navy/80 [&_b]:font-semibold [&_i]:italic [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1"
+                            dangerouslySetInnerHTML={{ __html: newProduct.fullDescription || "<p>No full description yet.</p>" }}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
-                    <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Visuals</p>
-                    <div className="grid md:grid-cols-3 gap-3">
-                      <div className="space-y-1">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">Cap Color</p>
-                        <HexColorInput
-                          placeholder="#f5f5f5"
-                          value={newProduct.capColor}
-                          onChange={(capColor) => setNewProduct((prev) => ({ ...prev, capColor }))}
-                          fallbackColor="#f5f5f5"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">Fill Color</p>
-                        <HexColorInput
-                          placeholder="#7a86b8 or blank"
-                          value={newProduct.fillColor}
-                          onChange={(fillColor) => setNewProduct((prev) => ({ ...prev, fillColor }))}
-                          fallbackColor="#7a86b8"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">3D Model URL (.glb)</p>
-                        <Input
-                          placeholder="https://.../model.glb"
-                          value={newProduct.model3dUrl}
-                          onChange={(e) => setNewProduct((prev) => ({ ...prev, model3dUrl: e.target.value }))}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex gap-3 flex-wrap">
-                      <label className="inline-flex items-center gap-2">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            void handleUploadNewProductImage(e.target.files?.[0] ?? null);
-                            e.currentTarget.value = "";
-                          }}
-                        />
-                        <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
-                          {isUploadingImageFor === "new" ? "Converting & uploading..." : "Upload Image (auto .webp)"}
-                        </span>
-                      </label>
-                      <label className="inline-flex items-center gap-2">
-                        <input
-                          type="file"
-                          accept=".glb,model/gltf-binary"
-                          className="hidden"
-                          onChange={(e) => {
-                            void handleUploadNewProductModel(e.target.files?.[0] ?? null);
-                            e.currentTarget.value = "";
-                          }}
-                        />
-                        <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
-                          {isUploadingModelFor === "new" ? "Uploading .glb..." : "Upload 360 .glb"}
-                        </span>
-                      </label>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Images JSON</p>
-                      <Textarea
-                        placeholder='[{"url":"...","altText":"..."}]'
-                        value={newProduct.imagesJson}
-                        onChange={(e) => setNewProduct((prev) => ({ ...prev, imagesJson: e.target.value }))}
-                        className="min-h-24"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-4 pt-2">
-                    <label className="inline-flex items-center gap-2 text-sm text-navy/70">
-                      <input
-                        type="checkbox"
-                        checked={newProduct.availableForSale}
-                        onChange={(e) => setNewProduct((prev) => ({ ...prev, availableForSale: e.target.checked }))}
-                      />
-                      Available for sale
-                    </label>
-                    <label className="inline-flex items-center gap-2 text-sm text-navy/70">
-                      <input
-                        type="checkbox"
-                        checked={newProduct.enable3dViewer}
-                        onChange={(e) => setNewProduct((prev) => ({ ...prev, enable3dViewer: e.target.checked }))}
-                      />
-                      Enable 3D Viewer
-                    </label>
-                    <Button onClick={handleAddProduct} disabled={isAddingProduct} className="w-full md:w-auto">
-                      {isAddingProduct ? "Adding..." : "Add Product"}
-                    </Button>
-                  </div>
-                </>
-              ) : !productHandle ? (
-                <p className="text-sm text-navy/60">No product selected. Pick one from Products List.</p>
-              ) : isLoadingData ? (
-                <p className="text-sm text-navy/60">Loading product...</p>
-              ) : !editingProduct ? (
-                <p className="text-sm text-navy/60">Product not found for handle: {productHandle}</p>
-              ) : (
-                <>
-                  <p className="text-sm uppercase tracking-wide text-navy/60">Product: {editingProduct.title || editingProduct.handle}</p>
-                  <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
-                                    <p className="text-sm uppercase tracking-wide text-navy/60">Core Info</p>
-                                    <div className="grid md:grid-cols-6 gap-3">
-                                      <div className="space-y-1">
-                                        <p className="text-sm uppercase tracking-wide text-navy/60">Category</p>
-                                        <Input
-                                          value={editingProduct.handle.startsWith("father-figure-") ? "Apparel" : "Supplement"}
-                                          disabled
-                                          className="bg-secondary/40"
-                                        />
-                                      </div>
-                                      <div className="space-y-1">
-                                        <p className="text-sm uppercase tracking-wide text-navy/60">Handle</p>
-                                        <Input
-                                          value={editingProduct.handle}
-                                          onChange={(e) => {
-                                            const handle = e.target.value;
-                                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, handle } : p)));
-                                          }}
-                                        />
-                                      </div>
-                                      <div className="space-y-1">
-                                        <p className="text-sm uppercase tracking-wide text-navy/60">Title</p>
-                        <Input
-                          value={editingProduct.title}
-                          onChange={(e) => {
-                            const title = e.target.value;
-                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, title } : p)));
-                          }}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">Variant ID</p>
-                        <Input
-                          value={editingProduct.variant_id ?? ""}
-                          onChange={(e) => {
-                            const variant_id = e.target.value;
-                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, variant_id } : p)));
-                          }}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">Price</p>
-                        <Input
-                          value={String(editingProduct.price)}
-                          onChange={(e) => {
-                            const price = Number.parseFloat(e.target.value || "0");
-                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, price: Number.isNaN(price) ? 0 : price } : p)));
-                          }}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">Currency</p>
-                        <Input
-                          value={editingProduct.currency_code}
-                          onChange={(e) => {
-                            const currency_code = e.target.value.toUpperCase();
-                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, currency_code } : p)));
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
-                    <p className="text-sm uppercase tracking-wide text-navy/60">Descriptions</p>
-                    <div className="grid lg:grid-cols-2 gap-4">
-                      <div className="rounded-lg border border-navy/10 bg-white/90 p-3 space-y-3">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">Description Editor</p>
+                    <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Visuals</p>
+                      <div className="grid md:grid-cols-3 gap-3">
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Short Description</p>
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Cap Color</p>
+                          <HexColorInput
+                            placeholder="#f5f5f5"
+                            value={newProduct.capColor}
+                            onChange={(capColor) => setNewProduct((prev) => ({ ...prev, capColor }))}
+                            fallbackColor="#f5f5f5"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Fill Color</p>
+                          <HexColorInput
+                            placeholder="#7a86b8 or blank"
+                            value={newProduct.fillColor}
+                            onChange={(fillColor) => setNewProduct((prev) => ({ ...prev, fillColor }))}
+                            fallbackColor="#7a86b8"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">3D Model URL (.glb)</p>
                           <Input
-                            placeholder="Short description shown under product title"
-                            value={editingProduct.description}
+                            placeholder="https://.../model.glb"
+                            value={newProduct.model3dUrl}
+                            onChange={(e) => setNewProduct((prev) => ({ ...prev, model3dUrl: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-3 flex-wrap">
+                        <label className="inline-flex items-center gap-2">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
                             onChange={(e) => {
-                              const description = e.target.value;
-                              setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, description } : p)));
+                              void handleUploadNewProductImage(e.target.files?.[0] ?? null);
+                              e.currentTarget.value = "";
                             }}
                           />
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Full Description</p>
-                          <RichTextEditor
-                            value={editingProduct.full_description ?? ""}
+                          <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                            {isUploadingImageFor === "new" ? "Converting & uploading..." : "Upload Image (auto .webp)"}
+                          </span>
+                        </label>
+                        <label className="inline-flex items-center gap-2">
+                          <input
+                            type="file"
+                            accept=".glb,model/gltf-binary"
+                            className="hidden"
                             onChange={(e) => {
-                              const full_description = e;
-                              setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, full_description } : p)));
+                              void handleUploadNewProductModel(e.target.files?.[0] ?? null);
+                              e.currentTarget.value = "";
                             }}
-                            placeholder="Full product description with formatting"
                           />
-                        </div>
-                      </div>
-                      <div className="rounded-lg border border-navy/10 bg-sky/10 p-3">
-                        <p className="text-sm uppercase tracking-wide text-navy/60 mb-2">Description Preview</p>
-                        <p className="text-sm text-navy/80 mb-3">{editingProduct.description || "No short description."}</p>
-                        <div
-                          className="text-sm text-navy/80 [&_b]:font-semibold [&_i]:italic [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1"
-                          dangerouslySetInnerHTML={{ __html: editingProduct.full_description || "" }}
-                        />
+                          <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                            {isUploadingModelFor === "new" ? "Uploading .glb..." : "Upload 360 .glb"}
+                          </span>
+                        </label>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">UPC</p>
-                        <Input
-                          placeholder="e.g. 199874431949"
-                          value={editingProduct.upc ?? ""}
-                          onChange={(e) => {
-                            const upc = e.target.value;
-                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, upc } : p)));
-                          }}
+                        <p className="text-sm uppercase tracking-wide text-navy/60">Images JSON</p>
+                        <Textarea
+                          placeholder='[{"url":"...","altText":"..."}]'
+                          value={newProduct.imagesJson}
+                          onChange={(e) => setNewProduct((prev) => ({ ...prev, imagesJson: e.target.value }))}
+                          className="min-h-24"
                         />
                       </div>
                     </div>
-                  </div>
-                  <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
-                    <p className="text-sm uppercase tracking-wide text-navy/60">Media and Visuals</p>
-                    <div className="space-y-2">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Image Order</p>
-                      <p className="text-sm text-navy/60">The first image is used in Product Grid and as the default image in Product Detail.</p>
-                      {(parseImagesInput(JSON.stringify(editingProduct.images)) ?? []).length === 0 ? (
-                        <p className="text-sm text-navy/60">No images yet. Upload one below.</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {(parseImagesInput(JSON.stringify(editingProduct.images)) ?? []).map((image, index, allImages) => (
-                            <div key={`${image.url}-${index}`} className="rounded-md border border-navy/10 bg-secondary/20 p-2.5">
-                              <div className="flex items-center gap-3">
-                                <img
-                                  src={image.url}
-                                  alt={image.altText}
-                                  className="h-14 w-14 rounded-md border border-navy/10 object-cover bg-white"
-                                />
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-sm font-medium text-navy">Image {index + 1}{index === 0 ? " (Primary)" : ""}</p>
-                                  <p className="text-sm text-navy/70 truncate">{image.altText}</p>
-                                  <p className="text-sm text-navy/50 truncate">{image.url}</p>
-                                </div>
-                              </div>
-                              <div className="mt-2 flex flex-wrap gap-2">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  className="border-navy/20 text-navy hover:bg-navy/5"
-                                  disabled={index === 0}
-                                  onClick={() => handleMoveProductImage(editingProduct, index, index - 1)}
-                                >
-                                  Move Up
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  className="border-navy/20 text-navy hover:bg-navy/5"
-                                  disabled={index === allImages.length - 1}
-                                  onClick={() => handleMoveProductImage(editingProduct, index, index + 1)}
-                                >
-                                  Move Down
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  className="border-navy/20 text-navy hover:bg-navy/5"
-                                  disabled={index === 0}
-                                  onClick={() => handleSetProductImageFirst(editingProduct, index)}
-                                >
-                                  Set First
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="destructive"
-                                  onClick={() => openRemoveImageModal(editingProduct, index)}
-                                >
-                                  Remove
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Images JSON</p>
-                      <Textarea
-                        value={JSON.stringify(editingProduct.images, null, 2)}
-                        onChange={(e) => {
-                          const parsed = parseImagesInput(e.target.value);
-                          if (!parsed) return;
-                          setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, images: parsed } : p)));
-                        }}
-                        className="min-h-24 font-mono text-sm"
-                      />
-                    </div>
-                    <div className="grid md:grid-cols-5 gap-3 items-end">
-                      <div className="space-y-1">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">Cap Color</p>
-                        <HexColorInput
-                          placeholder="#f5f5f5"
-                          value={editingProduct.cap_color ?? ""}
-                          onChange={(cap_color) => {
-                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, cap_color } : p)));
-                          }}
-                          fallbackColor="#f5f5f5"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">Fill Color</p>
-                        <HexColorInput
-                          placeholder="#7a86b8 or blank"
-                          value={editingProduct.fill_color ?? ""}
-                          onChange={(fill_color) => {
-                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, fill_color } : p)));
-                          }}
-                          fallbackColor="#7a86b8"
-                        />
-                      </div>
-                      <div className="space-y-1 md:col-span-2">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">3D Model URL</p>
-                        <Input
-                          value={editingProduct.model_3d_url ?? ""}
-                          onChange={(e) => {
-                            const model_3d_url = e.target.value;
-                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, model_3d_url } : p)));
-                          }}
-                        />
-                      </div>
-                      <div className="flex flex-col gap-2">
+                    <div className="flex flex-wrap items-center gap-4 pt-2">
                       <label className="inline-flex items-center gap-2 text-sm text-navy/70">
                         <input
                           type="checkbox"
-                          checked={editingProduct.available_for_sale}
-                          onChange={(e) => {
-                            const available_for_sale = e.target.checked;
-                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, available_for_sale } : p)));
-                          }}
+                          checked={newProduct.availableForSale}
+                          onChange={(e) => setNewProduct((prev) => ({ ...prev, availableForSale: e.target.checked }))}
                         />
                         Available for sale
                       </label>
                       <label className="inline-flex items-center gap-2 text-sm text-navy/70">
                         <input
                           type="checkbox"
-                          checked={editingProduct.enable_3d_viewer ?? false}
-                          onChange={(e) => {
-                            const enable_3d_viewer = e.target.checked;
-                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, enable_3d_viewer } : p)));
-                          }}
+                          checked={newProduct.enable3dViewer}
+                          onChange={(e) => setNewProduct((prev) => ({ ...prev, enable3dViewer: e.target.checked }))}
                         />
                         Enable 3D Viewer
                       </label>
+                      <Button onClick={handleAddProduct} disabled={isAddingProduct} className="w-full md:w-auto">
+                        {isAddingProduct ? "Adding..." : "Add Product"}
+                      </Button>
                     </div>
-                  </div>
-                  <div className="flex gap-3 flex-wrap">
-                      <label className="inline-flex items-center gap-2">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            void handleUploadProductImage(editingProduct, e.target.files?.[0] ?? null);
-                            e.currentTarget.value = "";
-                          }}
-                        />
-                        <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
-                          {isUploadingImageFor === editingProduct.id ? "Converting & uploading..." : "Upload Image (auto .webp)"}
-                        </span>
-                      </label>
-                      <label className="inline-flex items-center gap-2">
-                        <input
-                          type="file"
-                          accept=".glb,model/gltf-binary"
-                          className="hidden"
-                          onChange={(e) => {
-                            void handleUploadProductModel(editingProduct, e.target.files?.[0] ?? null);
-                            e.currentTarget.value = "";
-                          }}
-                        />
-                        <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
-                          {isUploadingModelFor === editingProduct.id ? "Uploading .glb..." : "Upload 360 .glb"}
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Button
-                      onClick={() => void handleSaveProduct(editingProduct)}
-                      disabled={isSavingProduct === editingProduct.id}
-                    >
-                      {isSavingProduct === editingProduct.id ? "Saving..." : "Save"}
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={() => openProductDeleteModal(editingProduct)}
-                      disabled={isDeletingProduct === editingProduct.id}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      {isDeletingProduct === editingProduct.id ? "Deleting..." : "Delete"}
-                    </Button>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-          )}
-
-          {isOrdersSection && (
-          <Card className="border-navy/15 bg-white/95 mb-6">
-            {/* Order Tracking Section */}
-            <CardHeader>
-              <div className="mb-4 flex items-center justify-end gap-3 flex-wrap">
-                <label className="flex items-center gap-2 text-sm text-navy/70">                  
-                  <Input
-                    value={orderSearchQuery}
-                    onChange={(e) => setOrderSearchQuery(e.target.value)}
-                    placeholder="Customer, email, order ID, tracking, product..."
-                    className="h-10 w-64 max-w-full border-navy/20 bg-white text-sm text-navy"
-                  />
-                </label>
-                <label className="flex items-center gap-2 text-sm text-navy/70">                  
-                  <select
-                    value={orderSort}
-                    onChange={(e) => {
-                      const nextSort = e.target.value as "newest" | "oldest" | "amount_desc" | "amount_asc" | "status";
-                      setOrderSort(nextSort);
-                      setOrdersPage(1);
-                    }}
-                    className="h-10 rounded-md border border-navy/20 bg-white px-3 py-2 text-sm text-navy"
-                  >
-                    <option value="newest">Newest first</option>
-                    <option value="oldest">Oldest first</option>
-                    <option value="amount_desc">Amount high to low</option>
-                    <option value="amount_asc">Amount low to high</option>
-                    <option value="status">Status (A-Z)</option>
-                  </select>
-                </label>
-              </div>
-              <CardTitle className="text-lg text-navy">Order Tracking</CardTitle>
-              <CardDescription>
-                View orders, mark fulfillment, and update statuses.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoadingData ? (
-                <p className="text-sm text-navy/60">Loading orders...</p>
-              ) : orders.length === 0 ? (
-                <p className="text-sm text-navy/60">No orders found yet.</p>
-              ) : filteredOrders.length === 0 ? (
-                <p className="text-sm text-navy/60">No orders match your search.</p>
-              ) : (
-                <div className="space-y-3">
-                  {paginatedOrders.map((order, index) => (
-                    <div
-                      key={order.id}
-                      className={`border border-navy/15 border-l-4 rounded-xl p-4 space-y-4 shadow-sm ${
-                        index % 2 === 0 ? "bg-white/90" : "bg-sky/10"
-                      } ${getOrderCardAccentClass(order.status)}`}
-                    >
-                      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 pb-4 border-b border-navy/10">
-                        <div className="text-sm text-navy/70 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-semibold text-navy break-words">
-                              {customerNameByEmail.get(order.customer_email ?? "") ?? order.customer_email ?? "Guest"}
-                            </p>
-                            <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ${getOrderStatusPillClass(order.status)}`}>
-                              {order.status}
-                            </span>
-                          </div>
-                          {order.customer_email && (
-                            <p className="text-sm break-words">{order.customer_email}</p>
-                          )}
-                          <p className="text-sm break-words">{new Date(order.created_at).toLocaleString()}</p>
-                          {order.tracking_sent_at && (
-                            <p className="text-[11px] text-emerald-700 mt-1 break-words">
-                              Tracking sent: {new Date(order.tracking_sent_at).toLocaleString()}
-                            </p>
-                          )}
-                          <div className="text-sm text-navy/80 pt-2">
-                            <p className="font-semibold text-navy">Shipping To:</p>
-                            {order.shipping_address ? (
-                              <pre className="whitespace-pre-wrap font-sans">{order.shipping_address}</pre>
-                            ) : (
-                              <p>No shipping address provided.</p>
-                            )}
-                          </div>
-                          {refundOutcomeByOrderId[order.id] && (
-                            <span
-                              className={`inline-flex mt-2 items-center rounded-full px-2.5 py-1 text-sm font-medium ${
-                                refundOutcomeByOrderId[order.id].tone === "success"
-                                  ? "bg-emerald-100 text-emerald-800"
-                                  : refundOutcomeByOrderId[order.id].tone === "warning"
-                                    ? "bg-amber-100 text-amber-800"
-                                    : refundOutcomeByOrderId[order.id].tone === "danger"
-                                      ? "bg-rose-100 text-rose-800"
-                                      : "bg-slate-200 text-slate-700"
-                              }`}
-                            >
-                              {refundOutcomeByOrderId[order.id].label}
-                            </span>
-                          )}
+                  </>
+                ) : !productHandle ? (
+                  <p className="text-sm text-navy/60">No product selected. Pick one from Products List.</p>
+                ) : isLoadingData ? (
+                  <p className="text-sm text-navy/60">Loading product...</p>
+                ) : !editingProduct ? (
+                  <p className="text-sm text-navy/60">Product not found for handle: {productHandle}</p>
+                ) : (
+                  <>
+                    <p className="text-sm uppercase tracking-wide text-navy/60">Product: {editingProduct.title || editingProduct.handle}</p>
+                    <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Core Info</p>
+                      <div className="grid md:grid-cols-6 gap-3">
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Category</p>
+                          <Input
+                            value={editingProduct.handle.startsWith("father-figure-") ? "Apparel" : "Supplement"}
+                            disabled
+                            className="bg-secondary/40"
+                          />
                         </div>
-                        <div className="text-sm text-navy/70 min-w-0">
-                          <p className="font-semibold text-navy">{order.currency_code} {Number(order.total_amount).toFixed(2)}</p>
-                          <p className="text-sm">Items: {order.item_count}</p>
-                        </div>
-                        <div className="text-sm text-navy/70 min-w-0">
-                          <p className="text-sm uppercase tracking-wide text-navy/50 mb-1">Order ID</p>
-                          <Input value={order.external_id ?? "N/A"} disabled className="bg-secondary/40 w-full" />
-                        </div>
-                        <div className="text-sm text-navy/70 min-w-0">
-                          <p className="text-sm uppercase tracking-wide text-navy/50 mb-1">Status</p>
-                          <select
-                            value={order.status}
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Handle</p>
+                          <Input
+                            value={editingProduct.handle}
                             onChange={(e) => {
-                              const status = e.target.value;
-                              setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status } : o)));
+                              const handle = e.target.value;
+                              setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, handle } : p)));
                             }}
-                            className={`h-10 w-full rounded-md border px-3 py-2 text-sm font-medium ${getOrderStatusSelectClass(order.status)}`}
-                          >
-                            <option value="pending">pending</option>
-                            <option value="processing">processing</option>
-                            <option value="fulfilled">fulfilled</option>
-                            <option value="cancelled">cancelled</option>
-                          </select>
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Title</p>
+                          <Input
+                            value={editingProduct.title}
+                            onChange={(e) => {
+                              const title = e.target.value;
+                              setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, title } : p)));
+                            }}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Variant ID</p>
+                          <Input
+                            value={editingProduct.variant_id ?? ""}
+                            onChange={(e) => {
+                              const variant_id = e.target.value;
+                              setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, variant_id } : p)));
+                            }}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Price</p>
+                          <Input
+                            value={String(editingProduct.price)}
+                            onChange={(e) => {
+                              const price = Number.parseFloat(e.target.value || "0");
+                              setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, price: Number.isNaN(price) ? 0 : price } : p)));
+                            }}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Currency</p>
+                          <Input
+                            value={editingProduct.currency_code}
+                            onChange={(e) => {
+                              const currency_code = e.target.value.toUpperCase();
+                              setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, currency_code } : p)));
+                            }}
+                          />
                         </div>
                       </div>
-
-                      <div className="rounded-md border border-navy/10 bg-secondary/20 p-3 space-y-2">
-                        <p className="text-sm uppercase tracking-wide text-navy/50">Ordered Products</p>
-                        {orderItemsByOrderId[order.id]?.length ? (
+                    </div>
+                    <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Descriptions</p>
+                      <div className="grid lg:grid-cols-2 gap-4">
+                        <div className="rounded-lg border border-navy/10 bg-white/90 p-3 space-y-3">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Description Editor</p>
+                          <div className="space-y-1">
+                            <p className="text-sm uppercase tracking-wide text-navy/60">Short Description</p>
+                            <Input
+                              placeholder="Short description shown under product title"
+                              value={editingProduct.description}
+                              onChange={(e) => {
+                                const description = e.target.value;
+                                setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, description } : p)));
+                              }}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-sm uppercase tracking-wide text-navy/60">Full Description</p>
+                            <RichTextEditor
+                              value={editingProduct.full_description ?? ""}
+                              onChange={(e) => {
+                                const full_description = e;
+                                setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, full_description } : p)));
+                              }}
+                              placeholder="Full product description with formatting"
+                            />
+                          </div>
+                        </div>
+                        <div className="rounded-lg border border-navy/10 bg-sky/10 p-3">
+                          <p className="text-sm uppercase tracking-wide text-navy/60 mb-2">Description Preview</p>
+                          <p className="text-sm text-navy/80 mb-3">{editingProduct.description || "No short description."}</p>
+                          <div
+                            className="text-sm text-navy/80 [&_b]:font-semibold [&_i]:italic [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1"
+                            dangerouslySetInnerHTML={{ __html: editingProduct.full_description || "" }}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">UPC</p>
+                          <Input
+                            placeholder="e.g. 199874431949"
+                            value={editingProduct.upc ?? ""}
+                            onChange={(e) => {
+                              const upc = e.target.value;
+                              setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, upc } : p)));
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Media and Visuals</p>
+                      <div className="space-y-2">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">Image Order</p>
+                        <p className="text-sm text-navy/60">The first image is used in Product Grid and as the default image in Product Detail.</p>
+                        {(parseImagesInput(JSON.stringify(editingProduct.images)) ?? []).length === 0 ? (
+                          <p className="text-sm text-navy/60">No images yet. Upload one below.</p>
+                        ) : (
                           <div className="space-y-2">
-                            {orderItemsByOrderId[order.id].map((item) => (
-                              <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 text-sm text-navy/70">
-                                <div className="min-w-0">
-                                  <p className="font-medium text-navy break-words">{item.product_title}</p>
-                                  <p className="text-sm break-words">{item.product_handle}{item.variant_id ? ` • ${item.variant_id}` : ""}</p>
+                            {(parseImagesInput(JSON.stringify(editingProduct.images)) ?? []).map((image, index, allImages) => (
+                              <div key={`${image.url}-${index}`} className="rounded-md border border-navy/10 bg-secondary/20 p-2.5">
+                                <div className="flex items-center gap-3">
+                                  <img
+                                    src={image.url}
+                                    alt={image.altText}
+                                    className="h-14 w-14 rounded-md border border-navy/10 object-cover bg-white"
+                                  />
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-medium text-navy">Image {index + 1}{index === 0 ? " (Primary)" : ""}</p>
+                                    <p className="text-sm text-navy/70 truncate">{image.altText}</p>
+                                    <p className="text-sm text-navy/50 truncate">{image.url}</p>
+                                  </div>
                                 </div>
-                                <div className="text-right text-sm text-navy/60">
-                                  <p>Qty {item.quantity}</p>
-                                  <p>
-                                    {item.currency_code} {Number(item.line_total).toFixed(2)}
-                                  </p>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="border-navy/20 text-navy hover:bg-navy/5"
+                                    disabled={index === 0}
+                                    onClick={() => handleMoveProductImage(editingProduct, index, index - 1)}
+                                  >
+                                    Move Up
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="border-navy/20 text-navy hover:bg-navy/5"
+                                    disabled={index === allImages.length - 1}
+                                    onClick={() => handleMoveProductImage(editingProduct, index, index + 1)}
+                                  >
+                                    Move Down
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="border-navy/20 text-navy hover:bg-navy/5"
+                                    disabled={index === 0}
+                                    onClick={() => handleSetProductImageFirst(editingProduct, index)}
+                                  >
+                                    Set First
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="destructive"
+                                    onClick={() => openRemoveImageModal(editingProduct, index)}
+                                  >
+                                    Remove
+                                  </Button>
                                 </div>
                               </div>
                             ))}
                           </div>
-                        ) : (
-                          <p className="text-sm text-navy/60">No line items stored yet for this order.</p>
                         )}
                       </div>
-
-                      <div className="flex flex-wrap gap-2 justify-start lg:justify-end pt-1">
-                        {order.status === "processing" && (
-                          <>
-                            <Button
-                              variant="outline"
-                              className="border-sky-300 bg-sky-50 text-sky-900"
-                              onClick={() => setScanningOrder(order)}
-                            >
-                              <Scan className="h-4 w-4 mr-2" />
-                              Scan & Fulfill
-                            </Button>
-                            <Button
-                              variant="outline"
-                              onClick={() => void handleMarkFulfilled(order)}
-                              disabled={isSavingOrder === order.id}
-                              className="w-full sm:w-auto"
-                            >
-                              Fulfill Shipment
-                            </Button>
-                          </>
-                        )}
-                        {order.status === "fulfilled" && (
-                          <Button
-                            variant="outline"
-                            disabled
-                            className="w-full sm:w-auto"
-                          >
-                            Fulfilled
-                          </Button>
-                        )}
-                        <Button
-                          variant="destructive"
-                          onClick={() => openCancelRefundModal(order)}
-                          disabled={isSavingOrder === order.id || order.status === "cancelled"}
-                          className="w-full sm:w-auto"
-                        >
-                          {order.status === "cancelled" ? "Cancelled" : "Cancel & Refund"}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => openDeleteOrderModal(order)}
-                          disabled={isDeletingOrderId === order.id}
-                          className="w-full sm:w-auto border-navy/20 text-navy hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200"
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" /> Delete Order
-                        </Button>
-                      </div>      
-
-                      <hr className="border-t border-navy/10 my-4" />                
-
-                      <div className="space-y-2">
-                        <p className="text-xs uppercase tracking-widest font-semibold text-navy/50">Tracking Details</p>
-                        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.2fr_1fr_1fr_1.4fr] items-end">
+                      <div className="space-y-1">
+                        <p className="text-sm uppercase tracking-wide text-navy/60">Images JSON</p>
+                        <Textarea
+                          value={JSON.stringify(editingProduct.images, null, 2)}
+                          onChange={(e) => {
+                            const parsed = parseImagesInput(e.target.value);
+                            if (!parsed) return;
+                            setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, images: parsed } : p)));
+                          }}
+                          className="min-h-24 font-mono text-sm"
+                        />
+                      </div>
+                      <div className="grid md:grid-cols-5 gap-3 items-end">
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Cap Color</p>
+                          <HexColorInput
+                            placeholder="#f5f5f5"
+                            value={editingProduct.cap_color ?? ""}
+                            onChange={(cap_color) => {
+                              setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, cap_color } : p)));
+                            }}
+                            fallbackColor="#f5f5f5"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Fill Color</p>
+                          <HexColorInput
+                            placeholder="#7a86b8 or blank"
+                            value={editingProduct.fill_color ?? ""}
+                            onChange={(fill_color) => {
+                              setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, fill_color } : p)));
+                            }}
+                            fallbackColor="#7a86b8"
+                          />
+                        </div>
+                        <div className="space-y-1 md:col-span-2">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">3D Model URL</p>
                           <Input
-                            placeholder="Tracking #"
-                            value={order.tracking_number ?? ""}
+                            value={editingProduct.model_3d_url ?? ""}
                             onChange={(e) => {
-                              const tracking_number = e.target.value;
-                              setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, tracking_number } : o)));
+                              const model_3d_url = e.target.value;
+                              setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, model_3d_url } : p)));
                             }}
                           />
-                          <Input
-                            placeholder="Carrier"
-                            value={order.tracking_carrier ?? ""}
-                            onChange={(e) => {
-                              const tracking_carrier = e.target.value;
-                              setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, tracking_carrier } : o)));
-                            }}
-                          />
-                          <Input
-                            placeholder="https://tracking-link"
-                            value={order.tracking_url ?? ""}
-                            onChange={(e) => {
-                              const tracking_url = e.target.value;
-                              setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, tracking_url } : o)));
-                            }}
-                          />
-                          <div className="flex flex-wrap gap-2 justify-start lg:justify-end w-full sm:col-span-2 lg:col-span-1">
-                            <Button
-                              variant="outline"
-                              onClick={() => void handleSendTrackingEmail(order)}
-                              disabled={isSavingOrder === order.id || !order.customer_email}
-                              className="w-full sm:w-auto flex-1 sm:flex-initial"
-                            >
-                              Send Tracking via Email
-                            </Button>
-                            <Button
-                              onClick={() => void handleSaveOrderStatus(order)}
-                              disabled={isSavingOrder === order.id}
-                              className="w-full sm:w-auto flex-1 sm:flex-initial"
-                            >
-                              {isSavingOrder === order.id ? "Saving..." : "Update"}
-                            </Button>
-                          </div>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="inline-flex items-center gap-2 text-sm text-navy/70">
+                            <input
+                              type="checkbox"
+                              checked={editingProduct.available_for_sale}
+                              onChange={(e) => {
+                                const available_for_sale = e.target.checked;
+                                setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, available_for_sale } : p)));
+                              }}
+                            />
+                            Available for sale
+                          </label>
+                          <label className="inline-flex items-center gap-2 text-sm text-navy/70">
+                            <input
+                              type="checkbox"
+                              checked={editingProduct.enable_3d_viewer ?? false}
+                              onChange={(e) => {
+                                const enable_3d_viewer = e.target.checked;
+                                setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, enable_3d_viewer } : p)));
+                              }}
+                            />
+                            Enable 3D Viewer
+                          </label>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                  {totalOrderPages > 1 && (
-                    <div className="flex items-center justify-between gap-3 pt-2">
-                      <p className="text-sm text-navy/60">
-                        Page {ordersPage} of {totalOrderPages}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          className="border-navy/20 text-navy hover:bg-navy/5"
-                          disabled={ordersPage === 1}
-                          onClick={() => setOrdersPage((prev) => Math.max(1, prev - 1))}
-                        >
-                          Previous
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="border-navy/20 text-navy hover:bg-navy/5"
-                          disabled={ordersPage >= totalOrderPages}
-                          onClick={() => setOrdersPage((prev) => Math.min(totalOrderPages, prev + 1))}
-                        >
-                          Next
-                        </Button>
+                      <div className="flex gap-3 flex-wrap">
+                        <label className="inline-flex items-center gap-2">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              void handleUploadProductImage(editingProduct, e.target.files?.[0] ?? null);
+                              e.currentTarget.value = "";
+                            }}
+                          />
+                          <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                            {isUploadingImageFor === editingProduct.id ? "Converting & uploading..." : "Upload Image (auto .webp)"}
+                          </span>
+                        </label>
+                        <label className="inline-flex items-center gap-2">
+                          <input
+                            type="file"
+                            accept=".glb,model/gltf-binary"
+                            className="hidden"
+                            onChange={(e) => {
+                              void handleUploadProductModel(editingProduct, e.target.files?.[0] ?? null);
+                              e.currentTarget.value = "";
+                            }}
+                          />
+                          <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                            {isUploadingModelFor === editingProduct.id ? "Uploading .glb..." : "Upload 360 .glb"}
+                          </span>
+                        </label>
                       </div>
                     </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    <div className="flex items-center gap-3">
+                      <Button
+                        onClick={() => void handleSaveProduct(editingProduct)}
+                        disabled={isSavingProduct === editingProduct.id}
+                      >
+                        {isSavingProduct === editingProduct.id ? "Saving..." : "Save"}
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={() => openProductDeleteModal(editingProduct)}
+                        disabled={isDeletingProduct === editingProduct.id}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        {isDeletingProduct === editingProduct.id ? "Deleting..." : "Delete"}
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
           )}
 
-          {isUsersSection && (
-          <Card className="border-navy/15 bg-white/95 mb-6">
-            <CardHeader>
-              <CardTitle className="text-lg text-navy">User Management</CardTitle>
-              <CardDescription>
-                View registered customer profiles synced from authenticated sessions.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoadingData ? (
-                <p className="text-sm text-navy/60">Loading customer profiles...</p>
-              ) : customerProfiles.length === 0 ? (
-                <p className="text-sm text-navy/60">No customer profiles found yet.</p>
-              ) : (
-                <div className="space-y-3">
-                  {customerProfiles.map((profile) => {
-                    const fullName = [profile.first_name, profile.last_name]
-                      .filter(Boolean)
-                      .join(" ")
-                      .trim() || "Customer";
-                    const profileSessions = sessionsByUserId[profile.id] ?? [];
-                    const activeSessionCount = profileSessions.filter((sessionRecord) => !sessionRecord.revoked_at).length;
-
-                    return (
-                      <div key={profile.id} className="space-y-3 border border-navy/10 rounded-lg p-3">
-                        <div className="grid md:grid-cols-4 gap-3 items-center">
-                          <div className="text-sm text-navy/70">
-                            <p className="font-semibold text-navy">{fullName}</p>
-                            <p className="text-sm">{profile.email}</p>
+          {isOrdersSection && (
+            <Card className="border-navy/15 bg-white/95 mb-6">
+              {/* Order Tracking Section */}
+              <CardHeader>
+                <div className="mb-4 flex items-center justify-end gap-3 flex-wrap">
+                  <label className="flex items-center gap-2 text-sm text-navy/70">
+                    <Input
+                      value={orderSearchQuery}
+                      onChange={(e) => setOrderSearchQuery(e.target.value)}
+                      placeholder="Customer, email, order ID, tracking, product..."
+                      className="h-10 w-64 max-w-full border-navy/20 bg-white text-sm text-navy"
+                    />
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-navy/70">
+                    <select
+                      value={orderSort}
+                      onChange={(e) => {
+                        const nextSort = e.target.value as "newest" | "oldest" | "amount_desc" | "amount_asc" | "status";
+                        setOrderSort(nextSort);
+                        setOrdersPage(1);
+                      }}
+                      className="h-10 rounded-md border border-navy/20 bg-white px-3 py-2 text-sm text-navy"
+                    >
+                      <option value="newest">Newest first</option>
+                      <option value="oldest">Oldest first</option>
+                      <option value="amount_desc">Amount high to low</option>
+                      <option value="amount_asc">Amount low to high</option>
+                      <option value="status">Status (A-Z)</option>
+                    </select>
+                  </label>
+                </div>
+                <CardTitle className="text-lg text-navy">Order Tracking</CardTitle>
+                <CardDescription>
+                  View orders, mark fulfillment, and update statuses.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingData ? (
+                  <p className="text-sm text-navy/60">Loading orders...</p>
+                ) : orders.length === 0 ? (
+                  <p className="text-sm text-navy/60">No orders found yet.</p>
+                ) : filteredOrders.length === 0 ? (
+                  <p className="text-sm text-navy/60">No orders match your search.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {paginatedOrders.map((order, index) => (
+                      <div
+                        key={order.id}
+                        className={`border border-navy/15 border-l-4 rounded-xl p-4 space-y-4 shadow-sm ${index % 2 === 0 ? "bg-white/90" : "bg-sky/10"
+                          } ${getOrderCardAccentClass(order.status)}`}
+                      >
+                        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 pb-4 border-b border-navy/10">
+                          <div className="text-sm text-navy/70 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-semibold text-navy break-words">
+                                {customerNameByEmail.get(order.customer_email ?? "") ?? order.customer_email ?? "Guest"}
+                              </p>
+                              <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ${getOrderStatusPillClass(order.status)}`}>
+                                {order.status}
+                              </span>
+                            </div>
+                            {order.customer_email && (
+                              <p className="text-sm break-words">{order.customer_email}</p>
+                            )}
+                            <p className="text-sm break-words">{new Date(order.created_at).toLocaleString()}</p>
+                            {order.tracking_sent_at && (
+                              <p className="text-xs text-emerald-700 mt-1 break-words">
+                                Tracking sent: {new Date(order.tracking_sent_at).toLocaleString()}
+                              </p>
+                            )}
+                            <div className="text-sm text-navy/80 pt-2">
+                              <p className="font-semibold text-navy">Shipping To:</p>
+                              {order.shipping_address ? (
+                                <pre className="whitespace-pre-wrap font-sans">{order.shipping_address}</pre>
+                              ) : (
+                                <p>No shipping address provided.</p>
+                              )}
+                            </div>
+                            {refundOutcomeByOrderId[order.id] && (
+                              <span
+                                className={`inline-flex mt-2 items-center rounded-full px-2.5 py-1 text-sm font-medium ${refundOutcomeByOrderId[order.id].tone === "success"
+                                    ? "bg-emerald-100 text-emerald-800"
+                                    : refundOutcomeByOrderId[order.id].tone === "warning"
+                                      ? "bg-amber-100 text-amber-800"
+                                      : refundOutcomeByOrderId[order.id].tone === "danger"
+                                        ? "bg-rose-100 text-rose-800"
+                                        : "bg-slate-200 text-slate-700"
+                                  }`}
+                              >
+                                {refundOutcomeByOrderId[order.id].label}
+                              </span>
+                            )}
                           </div>
-                          <div className="text-sm text-navy/70">
-                            <p className="text-sm uppercase tracking-wide text-navy/50">Registered</p>
-                            <p>{new Date(profile.created_at).toLocaleString()}</p>
+                          <div className="text-sm text-navy/70 min-w-0">
+                            <p className="font-semibold text-navy">{order.currency_code} {Number(order.total_amount).toFixed(2)}</p>
+                            <p className="text-sm">Items: {order.item_count}</p>
                           </div>
-                          <div className="text-sm text-navy/70">
-                            <p className="text-sm uppercase tracking-wide text-navy/50">Last Sign In</p>
-                            <p>{profile.last_sign_in_at ? new Date(profile.last_sign_in_at).toLocaleString() : "N/A"}</p>
+                          <div className="text-sm text-navy/70 min-w-0">
+                            <p className="text-sm uppercase tracking-wide text-navy/50 mb-1">Order ID</p>
+                            <Input value={order.external_id ?? "N/A"} disabled className="bg-secondary/40 w-full" />
                           </div>
-                          <Input value={profile.id} disabled className="bg-secondary/40" />
+                          <div className="text-sm text-navy/70 min-w-0">
+                            <p className="text-sm uppercase tracking-wide text-navy/50 mb-1">Status</p>
+                            <select
+                              value={order.status}
+                              onChange={(e) => {
+                                const status = e.target.value;
+                                setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status } : o)));
+                              }}
+                              className={`h-10 w-full rounded-md border px-3 py-2 text-sm font-medium ${getOrderStatusSelectClass(order.status)}`}
+                            >
+                              <option value="pending">pending</option>
+                              <option value="processing">processing</option>
+                              <option value="fulfilled">fulfilled</option>
+                              <option value="cancelled">cancelled</option>
+                            </select>
+                          </div>
                         </div>
 
                         <div className="rounded-md border border-navy/10 bg-secondary/20 p-3 space-y-2">
-                          <div className="flex items-center justify-between gap-3 flex-wrap">
-                            <p className="text-sm text-navy/70">
-                              Active sessions: <span className="font-semibold text-navy">{activeSessionCount}</span>
-                            </p>
-                            <Button
-                              variant="outline"
-                              className="border-navy/20 text-navy hover:bg-navy/5"
-                              onClick={() => openRevokeAllSessionsModal(profile.id, profile.email, activeSessionCount)}
-                              disabled={isRevokingAllForUserId === profile.id || activeSessionCount === 0}
-                            >
-                              {isRevokingAllForUserId === profile.id ? "Revoking..." : "Revoke All Sessions"}
-                            </Button>
-                          </div>
-
-                          {profileSessions.length === 0 ? (
-                            <p className="text-sm text-navy/60">No session records for this user yet.</p>
-                          ) : (
+                          <p className="text-sm uppercase tracking-wide text-navy/50">Ordered Products</p>
+                          {orderItemsByOrderId[order.id]?.length ? (
                             <div className="space-y-2">
-                              {profileSessions.map((sessionRecord) => (
-                                <div key={sessionRecord.id} className="rounded-md border border-navy/10 bg-white/80 p-2.5">
-                                  <div className="flex items-start justify-between gap-3 flex-wrap">
-                                    <div className="text-sm text-navy/70 space-y-0.5">
-                                      <p className="font-medium text-navy">
-                                        {sessionRecord.revoked_at ? "Revoked session" : "Active session"}
-                                      </p>
-                                      <p className="break-words">{sessionRecord.user_agent ?? "Unknown device"}</p>
-                                      <p>Last active: {new Date(sessionRecord.last_seen_at).toLocaleString()}</p>
-                                      {sessionRecord.revoked_at && (
-                                        <p className="text-rose-700">
-                                          Revoked: {new Date(sessionRecord.revoked_at).toLocaleString()}
-                                        </p>
-                                      )}
-                                    </div>
-                                    <div className="flex gap-2">
-                                      <Button
-                                        variant={sessionRecord.revoked_at ? "outline" : "destructive"}
-                                        onClick={() => openRevokeSessionModal(sessionRecord)}
-                                        disabled={isRevokingSessionId === sessionRecord.id || Boolean(sessionRecord.revoked_at)}
-                                      >
-                                        {sessionRecord.revoked_at
-                                          ? "Revoked"
-                                          : isRevokingSessionId === sessionRecord.id
-                                            ? "Revoking..."
-                                            : "Revoke"}
-                                      </Button>
-                                      <Button
-                                        variant="outline"
-                                        onClick={() => openDeleteSessionModal(sessionRecord)}
-                                        disabled={isDeletingSessionId === sessionRecord.id}
-                                        className="border-navy/20 text-navy hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200"
-                                      >
-                                        <Trash2 className="h-4 w-4 mr-1" /> Delete
-                                      </Button>
-                                    </div>
+                              {orderItemsByOrderId[order.id].map((item) => (
+                                <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 text-sm text-navy/70">
+                                  <div className="min-w-0">
+                                    <p className="font-medium text-navy break-words">{item.product_title}</p>
+                                    <p className="text-sm break-words">{item.product_handle}{item.variant_id ? ` • ${item.variant_id}` : ""}</p>
+                                  </div>
+                                  <div className="text-right text-sm text-navy/60">
+                                    <p>Qty {item.quantity}</p>
+                                    <p>
+                                      {item.currency_code} {Number(item.line_total).toFixed(2)}
+                                    </p>
                                   </div>
                                 </div>
                               ))}
                             </div>
+                          ) : (
+                            <p className="text-sm text-navy/60">No line items stored yet for this order.</p>
                           )}
                         </div>
+
+                        <div className="flex flex-wrap gap-2 justify-start lg:justify-end pt-1">
+                          {order.status === "processing" && (
+                            <>
+                              <Button
+                                variant="outline"
+                                className="border-sky-300 bg-sky-50 text-sky-900"
+                                onClick={() => setScanningOrder(order)}
+                              >
+                                <Scan className="h-4 w-4 mr-2" />
+                                Scan & Fulfill
+                              </Button>
+                              <Button
+                                variant="outline"
+                                onClick={() => void handleMarkFulfilled(order)}
+                                disabled={isSavingOrder === order.id}
+                                className="w-full sm:w-auto"
+                              >
+                                Fulfill Shipment
+                              </Button>
+                            </>
+                          )}
+                          {order.status === "fulfilled" && (
+                            <Button
+                              variant="outline"
+                              disabled
+                              className="w-full sm:w-auto"
+                            >
+                              Fulfilled
+                            </Button>
+                          )}
+                          <Button
+                            variant="destructive"
+                            onClick={() => openCancelRefundModal(order)}
+                            disabled={isSavingOrder === order.id || order.status === "cancelled"}
+                            className="w-full sm:w-auto"
+                          >
+                            {order.status === "cancelled" ? "Cancelled" : "Cancel & Refund"}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => openDeleteOrderModal(order)}
+                            disabled={isDeletingOrderId === order.id}
+                            className="w-full sm:w-auto border-navy/20 text-navy hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200"
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" /> Delete Order
+                          </Button>
+                        </div>
+
+                        <hr className="border-t border-navy/10 my-4" />
+
+                        <div className="space-y-2">
+                          <p className="text-xs uppercase tracking-widest font-semibold text-navy/50">Tracking Details</p>
+                          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.2fr_1fr_1fr_1.4fr] items-end">
+                            <Input
+                              placeholder="Tracking #"
+                              value={order.tracking_number ?? ""}
+                              onChange={(e) => {
+                                const tracking_number = e.target.value;
+                                setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, tracking_number } : o)));
+                              }}
+                            />
+                            <Input
+                              placeholder="Carrier"
+                              value={order.tracking_carrier ?? ""}
+                              onChange={(e) => {
+                                const tracking_carrier = e.target.value;
+                                setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, tracking_carrier } : o)));
+                              }}
+                            />
+                            <Input
+                              placeholder="https://tracking-link"
+                              value={order.tracking_url ?? ""}
+                              onChange={(e) => {
+                                const tracking_url = e.target.value;
+                                setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, tracking_url } : o)));
+                              }}
+                            />
+                            <div className="flex flex-wrap gap-2 justify-start lg:justify-end w-full sm:col-span-2 lg:col-span-1">
+                              <Button
+                                variant="outline"
+                                onClick={() => void handleSendTrackingEmail(order)}
+                                disabled={isSavingOrder === order.id || !order.customer_email}
+                                className="w-full sm:w-auto flex-1 sm:flex-initial"
+                              >
+                                Send Tracking via Email
+                              </Button>
+                              <Button
+                                onClick={() => void handleSaveOrderStatus(order)}
+                                disabled={isSavingOrder === order.id}
+                                className="w-full sm:w-auto flex-1 sm:flex-initial"
+                              >
+                                {isSavingOrder === order.id ? "Saving..." : "Update"}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    ))}
+                    {totalOrderPages > 1 && (
+                      <div className="flex items-center justify-between gap-3 pt-2">
+                        <p className="text-sm text-navy/60">
+                          Page {ordersPage} of {totalOrderPages}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            className="border-navy/20 text-navy hover:bg-navy/5"
+                            disabled={ordersPage === 1}
+                            onClick={() => setOrdersPage((prev) => Math.max(1, prev - 1))}
+                          >
+                            Previous
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="border-navy/20 text-navy hover:bg-navy/5"
+                            disabled={ordersPage >= totalOrderPages}
+                            onClick={() => setOrdersPage((prev) => Math.min(totalOrderPages, prev + 1))}
+                          >
+                            Next
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {isUsersSection && (
+            <Card className="border-navy/15 bg-white/95 mb-6">
+              <CardHeader>
+                <CardTitle className="text-lg text-navy">User Management</CardTitle>
+                <CardDescription>
+                  View registered customer profiles synced from authenticated sessions.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingData ? (
+                  <p className="text-sm text-navy/60">Loading customer profiles...</p>
+                ) : customerProfiles.length === 0 ? (
+                  <p className="text-sm text-navy/60">No customer profiles found yet.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {customerProfiles.map((profile) => {
+                      const fullName = [profile.first_name, profile.last_name]
+                        .filter(Boolean)
+                        .join(" ")
+                        .trim() || "Customer";
+                      const profileSessions = sessionsByUserId[profile.id] ?? [];
+                      const activeSessionCount = profileSessions.filter((sessionRecord) => !sessionRecord.revoked_at).length;
+
+                      return (
+                        <div key={profile.id} className="space-y-3 border border-navy/10 rounded-lg p-3">
+                          <div className="grid md:grid-cols-4 gap-3 items-center">
+                            <div className="text-sm text-navy/70">
+                              <p className="font-semibold text-navy">{fullName}</p>
+                              <p className="text-sm">{profile.email}</p>
+                            </div>
+                            <div className="text-sm text-navy/70">
+                              <p className="text-sm uppercase tracking-wide text-navy/50">Registered</p>
+                              <p>{new Date(profile.created_at).toLocaleString()}</p>
+                            </div>
+                            <div className="text-sm text-navy/70">
+                              <p className="text-sm uppercase tracking-wide text-navy/50">Last Sign In</p>
+                              <p>{profile.last_sign_in_at ? new Date(profile.last_sign_in_at).toLocaleString() : "N/A"}</p>
+                            </div>
+                            <Input value={profile.id} disabled className="bg-secondary/40" />
+                          </div>
+
+                          <div className="rounded-md border border-navy/10 bg-secondary/20 p-3 space-y-2">
+                            <div className="flex items-center justify-between gap-3 flex-wrap">
+                              <p className="text-sm text-navy/70">
+                                Active sessions: <span className="font-semibold text-navy">{activeSessionCount}</span>
+                              </p>
+                              <Button
+                                variant="outline"
+                                className="border-navy/20 text-navy hover:bg-navy/5"
+                                onClick={() => openRevokeAllSessionsModal(profile.id, profile.email, activeSessionCount)}
+                                disabled={isRevokingAllForUserId === profile.id || activeSessionCount === 0}
+                              >
+                                {isRevokingAllForUserId === profile.id ? "Revoking..." : "Revoke All Sessions"}
+                              </Button>
+                            </div>
+
+                            {profileSessions.length === 0 ? (
+                              <p className="text-sm text-navy/60">No session records for this user yet.</p>
+                            ) : (
+                              <div className="space-y-2">
+                                {profileSessions.map((sessionRecord) => (
+                                  <div key={sessionRecord.id} className="rounded-md border border-navy/10 bg-white/80 p-2.5">
+                                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                                      <div className="text-sm text-navy/70 space-y-0.5">
+                                        <p className="font-medium text-navy">
+                                          {sessionRecord.revoked_at ? "Revoked session" : "Active session"}
+                                        </p>
+                                        <p className="break-words">{sessionRecord.user_agent ?? "Unknown device"}</p>
+                                        <p>Last active: {new Date(sessionRecord.last_seen_at).toLocaleString()}</p>
+                                        {sessionRecord.revoked_at && (
+                                          <p className="text-rose-700">
+                                            Revoked: {new Date(sessionRecord.revoked_at).toLocaleString()}
+                                          </p>
+                                        )}
+                                      </div>
+                                      <div className="flex gap-2">
+                                        <Button
+                                          variant={sessionRecord.revoked_at ? "outline" : "destructive"}
+                                          onClick={() => openRevokeSessionModal(sessionRecord)}
+                                          disabled={isRevokingSessionId === sessionRecord.id || Boolean(sessionRecord.revoked_at)}
+                                        >
+                                          {sessionRecord.revoked_at
+                                            ? "Revoked"
+                                            : isRevokingSessionId === sessionRecord.id
+                                              ? "Revoking..."
+                                              : "Revoke"}
+                                        </Button>
+                                        <Button
+                                          variant="outline"
+                                          onClick={() => openDeleteSessionModal(sessionRecord)}
+                                          disabled={isDeletingSessionId === sessionRecord.id}
+                                          className="border-navy/20 text-navy hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200"
+                                        >
+                                          <Trash2 className="h-4 w-4 mr-1" /> Delete
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
 
           {isInsightsSection && (
-          <div className="grid md:grid-cols-3 gap-5">
-            <Card className="border-navy/15 bg-white/95">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2 text-navy">
-                  <UsersRound className="h-5 w-5 text-orange" /> Customer Access
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-navy/70 space-y-2">
-                <p>
-                  <span className="font-semibold text-navy">Total profiles:</span> {insights.totalCustomers}
-                </p>
-                <p>
-                  <span className="font-semibold text-navy">Signed in last 30 days:</span> {insights.customersWithRecentSignIn}
-                </p>
-                <p className="text-sm text-navy/60">
-                  Active sign-ins are based on `last_sign_in_at` in customer profiles.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="grid md:grid-cols-3 gap-5">
+              <Card className="border-navy/15 bg-white/95">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2 text-navy">
+                    <UsersRound className="h-5 w-5 text-orange" /> Customer Access
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm text-navy/70 space-y-2">
+                  <p>
+                    <span className="font-semibold text-navy">Total profiles:</span> {insights.totalCustomers}
+                  </p>
+                  <p>
+                    <span className="font-semibold text-navy">Signed in last 30 days:</span> {insights.customersWithRecentSignIn}
+                  </p>
+                  <p className="text-sm text-navy/60">
+                    Active sign-ins are based on `last_sign_in_at` in customer profiles.
+                  </p>
+                </CardContent>
+              </Card>
 
-            <Card className="border-navy/15 bg-white/95">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2 text-navy">
-                  <BarChart3 className="h-5 w-5 text-orange" /> Sales Overview
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-navy/70 space-y-2">
-                <p>
-                  <span className="font-semibold text-navy">Orders (7d):</span> {insights.ordersLast7Days}
-                </p>
-                <p>
-                  <span className="font-semibold text-navy">Revenue (7d):</span> {metrics.currencyCode} {insights.revenueLast7Days.toFixed(2)}
-                </p>
-                <p>
-                  <span className="font-semibold text-navy">AOV (7d):</span> {metrics.currencyCode} {insights.averageOrderValue.toFixed(2)}
-                </p>
-                <p>
-                  <span className="font-semibold text-navy">Top product:</span>{" "}
-                  {insights.topProduct ? `${insights.topProduct.title} (${insights.topProduct.qty} sold)` : "No item data yet"}
-                </p>
-              </CardContent>
-            </Card>
+              <Card className="border-navy/15 bg-white/95">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2 text-navy">
+                    <BarChart3 className="h-5 w-5 text-orange" /> Sales Overview
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm text-navy/70 space-y-2">
+                  <p>
+                    <span className="font-semibold text-navy">Orders (7d):</span> {insights.ordersLast7Days}
+                  </p>
+                  <p>
+                    <span className="font-semibold text-navy">Revenue (7d):</span> {metrics.currencyCode} {insights.revenueLast7Days.toFixed(2)}
+                  </p>
+                  <p>
+                    <span className="font-semibold text-navy">AOV (7d):</span> {metrics.currencyCode} {insights.averageOrderValue.toFixed(2)}
+                  </p>
+                  <p>
+                    <span className="font-semibold text-navy">Top product:</span>{" "}
+                    {insights.topProduct ? `${insights.topProduct.title} (${insights.topProduct.qty} sold)` : "No item data yet"}
+                  </p>
+                </CardContent>
+              </Card>
 
-            <Card className="border-navy/15 bg-white/95">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2 text-navy">
-                  <ShieldAlert className="h-5 w-5 text-orange" /> Security Monitor
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-navy/70 space-y-2">
-                <p>
-                  <span className="font-semibold text-navy">Cancelled orders:</span> {insights.cancelledOrders}
-                </p>
-                <p>
-                  <span className="font-semibold text-navy">Fulfilled without tracking:</span> {insights.fulfilledWithoutTracking}
-                </p>
-                <p className="text-sm text-navy/60">
-                  Use this panel as an operational risk checklist while deeper security logs are added.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+              <Card className="border-navy/15 bg-white/95">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2 text-navy">
+                    <ShieldAlert className="h-5 w-5 text-orange" /> Security Monitor
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm text-navy/70 space-y-2">
+                  <p>
+                    <span className="font-semibold text-navy">Cancelled orders:</span> {insights.cancelledOrders}
+                  </p>
+                  <p>
+                    <span className="font-semibold text-navy">Fulfilled without tracking:</span> {insights.fulfilledWithoutTracking}
+                  </p>
+                  <p className="text-sm text-navy/60">
+                    Use this panel as an operational risk checklist while deeper security logs are added.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
           )}
         </div>
       </main>
