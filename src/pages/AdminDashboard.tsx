@@ -2301,6 +2301,13 @@ const AdminDashboard = () => {
                         .trim() || "Customer";
                       const profileSessions = sessionsByUserId[profile.id] ?? [];
                       const activeSessionCount = profileSessions.filter((sessionRecord) => !sessionRecord.revoked_at).length;
+                      const sessionsPerPage = 4;
+                      const totalProfileSessionPages = Math.max(1, Math.ceil(profileSessions.length / sessionsPerPage));
+                      const currentSessionPage = Math.min(sessionPages[profile.id] ?? 1, totalProfileSessionPages);
+                      const paginatedProfileSessions = profileSessions.slice(
+                        (currentSessionPage - 1) * sessionsPerPage,
+                        currentSessionPage * sessionsPerPage,
+                      );
 
                       return (
                         <div key={profile.id} className="space-y-3 border border-navy/10 rounded-lg p-3">
@@ -2339,7 +2346,7 @@ const AdminDashboard = () => {
                               <p className="text-sm text-navy/60">No session records for this user yet.</p>
                             ) : (
                               <div className="space-y-2">
-                                {profileSessions.map((sessionRecord) => (
+                                {paginatedProfileSessions.map((sessionRecord) => (
                                   <div key={sessionRecord.id} className="rounded-md border border-navy/10 bg-white/80 p-2.5">
                                     <div className="flex items-start justify-between gap-3 flex-wrap">
                                       <div className="text-sm text-navy/70 space-y-0.5">
@@ -2378,12 +2385,44 @@ const AdminDashboard = () => {
                                     </div>
                                   </div>
                                 ))}
+
+                                {totalProfileSessionPages > 1 && (
+                                  <div className="flex items-center justify-between gap-3 pt-1">
+                                    <p className="text-sm text-navy/60">
+                                      Page {currentSessionPage} of {totalProfileSessionPages}
+                                    </p>
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        variant="outline"
+                                        className="border-navy/20 text-navy hover:bg-navy/5"
+                                        disabled={currentSessionPage === 1}
+                                        onClick={() => handleSessionPageChange(profile.id, Math.max(1, currentSessionPage - 1))}
+                                      >
+                                        Previous
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        className="border-navy/20 text-navy hover:bg-navy/5"
+                                        disabled={currentSessionPage >= totalProfileSessionPages}
+                                        onClick={() =>
+                                          handleSessionPageChange(
+                                            profile.id,
+                                            Math.min(totalProfileSessionPages, currentSessionPage + 1),
+                                          )
+                                        }
+                                      >
+                                        Next
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
                         </div>
                       );
                     })}
+
 
                     {totalUsersPages > 1 && (
                       <div className="flex items-center justify-between gap-3 pt-2">
