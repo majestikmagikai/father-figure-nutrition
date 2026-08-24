@@ -52,6 +52,13 @@ import {
   updateInventoryProduct,
 } from "@/lib/adminData";
 import { convertImageFileToWebp } from "@/lib/imageUtils";
+import {
+  type Bundle,
+  createBundle,
+  deleteBundle,
+  fetchAllBundles,
+  updateBundle,
+} from "@/lib/bundles";
 import { toast } from "sonner";
 import type { User } from "@supabase/supabase-js";
 

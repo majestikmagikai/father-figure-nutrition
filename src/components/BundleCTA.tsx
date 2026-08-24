@@ -1,8 +1,13 @@
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Package } from "lucide-react";
+import { CheckCircle2, Loader2, Package } from "lucide-react";
 import bottleCreatine from "@/assets/products/creatine-bottle.webp";
 import bottleMulti from "@/assets/products/multi-bottle.webp";
 import bottleCleanse from "@/assets/products/cleanse-bottle.webp";
+import { fetchActiveBundles, type Bundle } from "@/lib/bundles";
+import { fetchStorefrontProducts, type LocalProduct } from "@/lib/products";
+import { useCartStore } from "@/stores/cartStore";
+import { toast } from "sonner";
 
 const productShots = [
   { name: "Creatine Hardbody", src: bottleCreatine },
@@ -10,28 +15,77 @@ const productShots = [
   { name: "15 Day Fresh Start Cleanse", src: bottleCleanse },
 ];
 
-const bundles = [
-  {
-    name: "Performance Stack",
-    price: "$34.99",
-    description: "Train Harder. Build Your Routine.",
-    summary: "The Performance Stack pairs Creatine Hardbody with Multi Vitamin Plus to create a simple two-product foundation for men focused on training and everyday nutrition. Creatine Hardbody supports your performance-focused training routine, while Multi Vitamin Plus helps support your daily nutritional foundation. Together, they're designed for men who want fewer complicated steps and a more consistent supplement routine.",
-    items: ["Creatine Hardbody", "Multi Vitamin Plus"],
-    tag: "Most Popular",
-    cta: "START YOUR TRANSFORMATION",
-  },
-  {
-    name: "Transformation Bundle",
-    price: "$44.99",
-    description: "Build Your Daily Foundation",
-    summary: "Three products. One simple routine.",
-    items: ["Performance support", "Daily nutritional support", "15-day fresh-start routine"],
-    tag: "Best Value",
-    cta: "START YOUR TRANSFORMATION",
-  },
-];
+const createInstanceId = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `bundle-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 export const BundleCTA = () => {
+  const [bundles, setBundles] = useState<Bundle[]>([]);
+  const [productsByHandle, setProductsByHandle] = useState<Map<string, LocalProduct>>(new Map());
+  const [isLoading, setIsLoading] = useState(true);
+  const [addingHandle, setAddingHandle] = useState<string | null>(null);
+  const addItem = useCartStore((s) => s.addItem);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    (async () => {
+      const [nextBundles, nextProducts] = await Promise.all([
+        fetchActiveBundles(),
+        fetchStorefrontProducts(),
+      ]);
+
+      if (!isMounted) return;
+
+      setBundles(nextBundles);
+      setProductsByHandle(new Map(nextProducts.map((product) => [product.handle, product])));
+      setIsLoading(false);
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleAddBundle = (bundle: Bundle) => {
+    const products = bundle.product_handles.map((handle) => productsByHandle.get(handle));
+    const missing = products.some((product) => !product || !product.availableForSale);
+
+    if (missing) {
+      toast.error("This bundle isn't available right now.", { position: "top-center" });
+      return;
+    }
+
+    setAddingHandle(bundle.handle);
+    const bundleInstanceId = createInstanceId();
+
+    for (const product of products) {
+      if (!product) continue;
+      addItem({
+        productId: product.id,
+        handle: product.handle,
+        title: product.title,
+        image: product.images[0] ?? { url: "", altText: product.title },
+        variantId: product.variantId,
+        price: product.price,
+        currencyCode: product.currencyCode,
+        bundleInstanceId,
+        bundleHandle: bundle.handle,
+        bundleName: bundle.name,
+      });
+    }
+
+    toast.success(`${bundle.name} added. Discount will be applied at checkout.`, {
+      position: "top-center",
+    });
+    setAddingHandle(null);
+  };
+
+  if (!isLoading && bundles.length === 0) {
+    return null;
+  }
+
   return (
     <section id="bundle" aria-label="Bundle offers" className="relative py-24 px-6 overflow-hidden bg-secondary">
       <div className="absolute inset-0 bg-gradient-to-br from-white via-secondary to-orange/5 pointer-events-none" />
@@ -61,44 +115,53 @@ export const BundleCTA = () => {
           ))}
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto mb-10 text-left">
-          {bundles.map((b) => (
-            <div key={b.name} className="relative bg-white border border-navy/10 rounded-2xl p-6 hover:border-orange/50 transition-all shadow-card">
-              <span className="absolute -top-3 left-4 bg-orange text-white text-[10px] font-display uppercase tracking-widest px-3 py-1 rounded-full">
-                {b.tag}
-              </span>
-              <h3 className="font-display text-xl uppercase text-navy mb-1">{b.name}</h3>
-              <p className="text-orange font-display text-3xl mb-4">{b.price}</p>
-              <p className="text-sm font-semibold uppercase tracking-[0.12em] text-navy/80 mb-2">{b.description}</p>
-              <p className="text-sm text-navy/65 mb-4 leading-relaxed">{b.summary}</p>
-              <div className="text-xs uppercase tracking-[0.18em] text-navy/70 font-semibold mb-3">What's Inside?</div>
-              <ul className="space-y-2">
-                {b.items.map((item) => (
-                  <li key={item} className="flex items-center gap-2 text-sm text-navy/60">
-                    <CheckCircle2 className="h-4 w-4 text-orange shrink-0" aria-hidden="true" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-5 pt-4 border-t border-navy/10 text-sm text-navy/70 font-medium">
-                {b.name === "Performance Stack" ? "Daily Consistency" : "Three products. One simple routine."}
-              </div>
-              <div className="mt-2 text-sm text-navy/60 leading-relaxed">
-                {b.name === "Performance Stack"
-                  ? "Your results aren't built in one workout. They're built through the habits you repeat."
-                  : ""}
-              </div>
-            </div>
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="flex items-center justify-center gap-2 text-navy/60 mb-10">
+            <Loader2 className="h-4 w-4 animate-spin" /> Loading bundles...
+          </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto mb-10 text-left">
+            {bundles.map((b) => {
+              const itemTitles = b.product_handles.map(
+                (handle) => productsByHandle.get(handle)?.title ?? handle,
+              );
 
-        <Button
-          asChild
-          size="lg"
-          className="bg-orange text-white hover:opacity-90 shadow-cta font-display uppercase tracking-wider text-base"
-        >
-          <a href="#shop" onClick={(e) => { e.preventDefault(); const el = document.getElementById('shop'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }}>START YOUR TRANSFORMATION</a>
-        </Button>
+              return (
+                <div key={b.handle} className="relative bg-white border border-navy/10 rounded-2xl p-6 hover:border-orange/50 transition-all shadow-card">
+                  {b.tag && (
+                    <span className="absolute -top-3 left-4 bg-orange text-white text-[10px] font-display uppercase tracking-widest px-3 py-1 rounded-full">
+                      {b.tag}
+                    </span>
+                  )}
+                  <h3 className="font-display text-xl uppercase text-navy mb-1">{b.name}</h3>
+                  <p className="text-orange font-display text-3xl mb-4">
+                    {b.currency_code} {b.price.toFixed(2)}
+                  </p>
+                  {b.description && (
+                    <p className="text-sm text-navy/65 mb-4 leading-relaxed">{b.description}</p>
+                  )}
+                  <div className="text-xs uppercase tracking-[0.18em] text-navy/70 font-semibold mb-3">What's Inside?</div>
+                  <ul className="space-y-2 mb-5">
+                    {itemTitles.map((item) => (
+                      <li key={item} className="flex items-center gap-2 text-sm text-navy/60">
+                        <CheckCircle2 className="h-4 w-4 text-orange shrink-0" aria-hidden="true" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    onClick={() => handleAddBundle(b)}
+                    disabled={addingHandle === b.handle}
+                    className="w-full bg-orange text-white hover:opacity-90 shadow-cta font-display uppercase tracking-wider"
+                  >
+                    {addingHandle === b.handle ? "Adding..." : "Add Bundle to Cart"}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         <p className="text-xs text-navy/40 mt-3 uppercase tracking-widest">
           60-day money back guarantee
         </p>
