@@ -493,12 +493,16 @@ const AdminDashboard = () => {
       resetBundleForm();
       await reloadAdminData();
     } catch (err) {
-      const isDuplicateHandle =
-        err instanceof Error && (err.message.includes("duplicate key") || err.message.includes("bundles_handle_key"));
+      const message =
+        err && typeof err === "object" && "message" in err && typeof (err as { message: string }).message === "string"
+          ? (err as { message: string }).message
+          : "An unexpected error occurred.";
+
+      const isDuplicateHandle = message.includes("duplicate key") || message.includes("bundles_handle_key");
+
       if (isDuplicateHandle) {
         toast.error("Could not save bundle. The handle is already in use. Please refresh and try a different handle.");
       } else {
-        const message = err instanceof Error ? err.message : "An unexpected error occurred.";
         toast.error(`Could not save bundle: ${message}`);
       }
     } finally {
