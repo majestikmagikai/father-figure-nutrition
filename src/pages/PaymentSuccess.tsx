@@ -58,6 +58,11 @@ const PaymentSuccess = () => {
 
         let normalizedItems = items.length > 0 ? items : snapshotItems;
         let shippingAddress: string | null = null;
+        // Prefer the amount Stripe actually charged over recomputing from cart item prices,
+        // since bundle discounts are applied server-side in create-payment-intent and would
+        // otherwise make a client-side recomputation understate the discount (or, if tampered
+        // with, overstate it).
+        let chargedAmountMinor: number | null = null;
 
         // Always retrieve the payment intent when we have its client secret so we can capture
         // the shipping address, even if we already have item details from the local cart snapshot.
@@ -70,6 +75,10 @@ const PaymentSuccess = () => {
 
           const intent = result.paymentIntent;
           if (intent) {
+            if (intent.status === "succeeded" && typeof intent.amount === "number") {
+              chargedAmountMinor = intent.amount;
+            }
+
             if (intent.shipping) {
               const s = intent.shipping;
               shippingAddress = [
@@ -125,6 +134,7 @@ const PaymentSuccess = () => {
                   const title = product?.title ?? line.h;
 
                   return {
+                    lineId: `metadata-${line.h}-${line.v}`,
                     productId: `prod-${line.h}`,
                     handle: line.h,
                     title,
@@ -154,7 +164,9 @@ const PaymentSuccess = () => {
           customerEmail = sessionData.session?.user?.email ?? null;
         }
 
-        const totalAmount = normalizedItems.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
+        const totalAmount = chargedAmountMinor != null
+          ? chargedAmountMinor / 100
+          : normalizedItems.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0);
         const itemCount = normalizedItems.reduce((sum, item) => sum + item.quantity, 0);
         const currencyCode = normalizedItems[0]?.currencyCode ?? "USD";
 
@@ -183,6 +195,9 @@ const PaymentSuccess = () => {
             unitPrice: parseFloat(item.price),
             quantity: item.quantity,
             currencyCode: item.currencyCode,
+            bundleInstanceId: "bundleInstanceId" in item ? item.bundleInstanceId ?? null : null,
+            bundleHandle: "bundleHandle" in item ? item.bundleHandle ?? null : null,
+            bundleName: "bundleName" in item ? item.bundleName ?? null : null,
           })),
         );
 

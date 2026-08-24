@@ -10,6 +10,15 @@ type PaymentIntentItem = {
   handle: string;
   variantId: string;
   quantity: number;
+  bundleInstanceId?: string;
+};
+
+type BundleRow = {
+  handle: string;
+  name: string;
+  price: number;
+  currency_code: string | null;
+  product_handles: string[];
 };
 
 type EnrichedCartItem = {
@@ -117,22 +126,49 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Bundles are a pricing rule applied here, never trusted from the client: only an
+    // active bundle whose full product_handles set is present in a bundleInstanceId group
+    // gets the discounted price. Everything else prices at the regular catalog price.
+    const { data: bundleRows, error: bundleError } = await supabase
+      .from("bundles")
+      .select("handle, name, price, currency_code, product_handles")
+      .eq("active", true);
+
+    if (bundleError) {
+      return new Response(JSON.stringify({ error: "Could not validate bundles" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const bundles = (bundleRows ?? []) as BundleRow[];
+
     const normalizedRequested = new Set(handles.map((handle) => handle.toLowerCase()));
     const byHandle = new Map(
       ((products ?? []) as ProductRow[])
         .filter((product) => normalizedRequested.has(String(product.handle ?? "").trim().toLowerCase()))
         .map((product) => [String(product.handle ?? "").trim().toLowerCase(), product]),
     );
-    const enrichedCartItems: EnrichedCartItem[] = [];
 
-    let totalMinor = 0;
-    let itemCount = 0;
+    type ValidatedLine = {
+      handle: string;
+      variantId: string;
+      quantity: number;
+      product: ProductRow;
+      unitMinor: number;
+      rowCurrency: string;
+      bundleInstanceId: string;
+    };
+
+    const validatedLines: ValidatedLine[] = [];
     let currency = "usd";
+    let currencyLocked = false;
 
     for (const item of items) {
       const handle = String(item.handle ?? "").trim().toLowerCase();
       const variantId = String(item.variantId ?? "").trim();
       const quantity = Number(item.quantity ?? 0);
+      const bundleInstanceId = String(item.bundleInstanceId ?? "").trim();
       const product = byHandle.get(handle);
 
       if (!product || !product.available_for_sale) {
@@ -165,8 +201,9 @@ Deno.serve(async (req) => {
       }
 
       const rowCurrency = String(product.currency_code ?? "USD").toLowerCase();
-      if (totalMinor === 0) {
+      if (!currencyLocked) {
         currency = rowCurrency;
+        currencyLocked = true;
       } else if (currency !== rowCurrency) {
         return new Response(JSON.stringify({ error: "Cart cannot mix currencies" }), {
           status: 400,
@@ -174,23 +211,77 @@ Deno.serve(async (req) => {
         });
       }
 
-      totalMinor += unitMinor * quantity;
-      itemCount += quantity;
+      validatedLines.push({ handle, variantId, quantity, product, unitMinor, rowCurrency, bundleInstanceId });
+    }
 
-      const firstImage = Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : null;
+    // Group lines by bundleInstanceId (each "Add Bundle to Cart" click) and, for any group
+    // whose handles exactly match an active bundle's product_handles, price the matched
+    // quantity at the bundle price instead of summing individual product prices. Any
+    // quantity beyond the matched set (e.g. the shopper bumped one line's quantity) still
+    // prices individually.
+    const bundlesByHandleSet = new Map<string, BundleRow>();
+    for (const bundle of bundles) {
+      const key = [...bundle.product_handles].map((h) => h.toLowerCase()).sort().join("|");
+      bundlesByHandleSet.set(key, bundle);
+    }
+
+    const linesByInstanceId = new Map<string, ValidatedLine[]>();
+    for (const line of validatedLines) {
+      if (!line.bundleInstanceId) continue;
+      const group = linesByInstanceId.get(line.bundleInstanceId) ?? [];
+      group.push(line);
+      linesByInstanceId.set(line.bundleInstanceId, group);
+    }
+
+    const bundleUnitsByInstanceId = new Map<string, { bundle: BundleRow; units: number }>();
+    for (const [instanceId, group] of linesByInstanceId) {
+      const key = group.map((line) => line.handle).sort().join("|");
+      const bundle = bundlesByHandleSet.get(key);
+      if (!bundle) continue;
+
+      const bundleCurrency = String(bundle.currency_code ?? "USD").toLowerCase();
+      if (bundleCurrency !== currency) continue;
+
+      const units = Math.min(...group.map((line) => line.quantity));
+      if (units > 0) {
+        bundleUnitsByInstanceId.set(instanceId, { bundle, units });
+      }
+    }
+
+    let totalMinor = 0;
+    let itemCount = 0;
+    const enrichedCartItems: EnrichedCartItem[] = [];
+
+    for (const line of validatedLines) {
+      const bundleMatch = line.bundleInstanceId ? bundleUnitsByInstanceId.get(line.bundleInstanceId) : undefined;
+      const bundleUnits = bundleMatch?.units ?? 0;
+      const discountedQuantity = Math.min(bundleUnits, line.quantity);
+      const regularQuantity = line.quantity - discountedQuantity;
+
+      totalMinor += line.unitMinor * regularQuantity;
+      itemCount += line.quantity;
+
+      const firstImage = Array.isArray(line.product.images) && line.product.images.length > 0 ? line.product.images[0] : null;
       const imageUrl = firstImage && typeof firstImage === "object" && firstImage !== null && "url" in firstImage
         ? String((firstImage as { url?: unknown }).url ?? "")
         : "";
 
       enrichedCartItems.push({
-        h: handle,
-        t: String(product.title ?? handle),
-        v: String(product.variant_id ?? variantId),
-        q: quantity,
-        p: unitMinor,
-        c: rowCurrency,
+        h: line.handle,
+        t: String(line.product.title ?? line.handle),
+        v: String(line.product.variant_id ?? line.variantId),
+        q: line.quantity,
+        p: line.unitMinor,
+        c: line.rowCurrency,
         i: imageUrl,
       });
+    }
+
+    // Add each matched bundle instance once at its bundle price (not per member line).
+    for (const { bundle, units } of bundleUnitsByInstanceId.values()) {
+      const bundleUnitMinor = toMinorUnits(bundle.price);
+      if (!bundleUnitMinor) continue;
+      totalMinor += bundleUnitMinor * units;
     }
 
     if (totalMinor <= 0) {
@@ -199,6 +290,7 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     const stripe = new Stripe(stripeSecretKey, {
       apiVersion: "2024-06-20",

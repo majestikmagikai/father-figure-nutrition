@@ -164,6 +164,7 @@ const Checkout = () => {
             handle: item.handle,
             variantId: item.variantId,
             quantity: item.quantity,
+            bundleInstanceId: item.bundleInstanceId,
           })),
         },
       });

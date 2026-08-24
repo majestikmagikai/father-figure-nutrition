@@ -242,6 +242,7 @@ const AdminDashboard = () => {
   const isProductEditSection = currentSection === "product-edit";
   const isOrdersSection = currentSection === "orders";
   const isUsersSection = currentSection === "users";
+  const isBundlesSection = currentSection === "bundles";
   const isInsightsSection = currentSection === "insights";
   const isEditingNewProduct = isProductEditSection && productHandle === "new";
 
@@ -300,6 +301,22 @@ const AdminDashboard = () => {
   const [scanningOrder, setScanningOrder] = useState<OrderRecord | null>(null);
   const [sessionPages, setSessionPages] = useState<Record<string, number>>({});
   const [usersPage, setUsersPage] = useState(1);
+  const [bundles, setBundles] = useState<Bundle[]>([]);
+  const [editingBundleId, setEditingBundleId] = useState<string | null>(null);
+  const [isSavingBundle, setIsSavingBundle] = useState(false);
+  const [isDeletingBundleId, setIsDeletingBundleId] = useState<string | null>(null);
+  const [bundleDeleteTarget, setBundleDeleteTarget] = useState<Bundle | null>(null);
+  const [bundleForm, setBundleForm] = useState({
+    handle: "",
+    name: "",
+    description: "",
+    price: "0.00",
+    currencyCode: "USD",
+    productHandles: [] as string[],
+    tag: "",
+    active: true,
+    sortOrder: 0,
+  });
   const [metrics, setMetrics] = useState({
     totalSales: 0,
     totalOrders: 0,
@@ -326,6 +343,124 @@ const AdminDashboard = () => {
 
   const handleSessionPageChange = (userId: string, page: number) => {
     setSessionPages((prev) => ({ ...prev, [userId]: page }));
+  };
+
+  const resetBundleForm = () => {
+    setEditingBundleId(null);
+    setBundleForm({
+      handle: "",
+      name: "",
+      description: "",
+      price: "0.00",
+      currencyCode: "USD",
+      productHandles: [],
+      tag: "",
+      active: true,
+      sortOrder: bundles.length,
+    });
+  };
+
+  const handleEditBundle = (bundle: Bundle) => {
+    setEditingBundleId(bundle.id);
+    setBundleForm({
+      handle: bundle.handle,
+      name: bundle.name,
+      description: bundle.description ?? "",
+      price: bundle.price.toFixed(2),
+      currencyCode: bundle.currency_code,
+      productHandles: [...bundle.product_handles],
+      tag: bundle.tag ?? "",
+      active: bundle.active,
+      sortOrder: bundle.sort_order,
+    });
+  };
+
+  const handleToggleBundleProductHandle = (handle: string) => {
+    setBundleForm((prev) => ({
+      ...prev,
+      productHandles: prev.productHandles.includes(handle)
+        ? prev.productHandles.filter((h) => h !== handle)
+        : [...prev.productHandles, handle],
+    }));
+  };
+
+  const handleSaveBundle = async () => {
+    const handle = bundleForm.handle.trim().toLowerCase();
+    const name = bundleForm.name.trim();
+    const description = bundleForm.description.trim();
+    const parsedPrice = Number.parseFloat(bundleForm.price);
+    const currencyCode = bundleForm.currencyCode.trim().toUpperCase() || "USD";
+    const tag = bundleForm.tag.trim();
+
+    if (!/^[a-z0-9-]+$/.test(handle)) {
+      toast.error("Bundle handle must contain lowercase letters, numbers, or hyphens.");
+      return;
+    }
+    if (name.length < 2) {
+      toast.error("Bundle name must be at least 2 characters.");
+      return;
+    }
+    if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
+      toast.error("Bundle price must be a valid non-negative number.");
+      return;
+    }
+    if (bundleForm.productHandles.length < 2) {
+      toast.error("Select at least two products for the bundle.");
+      return;
+    }
+
+    setIsSavingBundle(true);
+    try {
+      const input = {
+        handle,
+        name,
+        description: description || null,
+        price: parsedPrice,
+        currencyCode,
+        productHandles: bundleForm.productHandles,
+        tag: tag || null,
+        active: bundleForm.active,
+        sortOrder: bundleForm.sortOrder,
+      };
+
+      if (editingBundleId) {
+        await updateBundle(editingBundleId, input);
+        toast.success("Bundle updated.");
+      } else {
+        await createBundle(input);
+        toast.success("Bundle added.");
+      }
+
+      resetBundleForm();
+      await reloadAdminData();
+    } catch {
+      toast.error("Could not save bundle. Handle may already exist.");
+    } finally {
+      setIsSavingBundle(false);
+    }
+  };
+
+  const openBundleDeleteModal = (bundle: Bundle) => {
+    setBundleDeleteTarget(bundle);
+  };
+
+  const confirmDeleteBundle = async () => {
+    if (!bundleDeleteTarget) return;
+
+    const target = bundleDeleteTarget;
+    setBundleDeleteTarget(null);
+    setIsDeletingBundleId(target.id);
+
+    try {
+      await deleteBundle(target.id);
+      toast.success("Bundle deleted.");
+      if (editingBundleId === target.id) resetBundleForm();
+      await reloadAdminData();
+    } catch {
+      toast.error("Could not delete bundle.");
+    } finally {
+      setIsDeletingBundleId(null);
+    }
   };
 
   const openDeleteOrderModal = (order: OrderRecord) => {
@@ -407,13 +542,14 @@ const AdminDashboard = () => {
       setIsLoadingData(true);
     }
     try {
-      const [nextMetrics, nextProductsRaw, nextOrders, nextOrderItems, nextCustomerProfiles, nextUserSessions] = await Promise.all([
+      const [nextMetrics, nextProductsRaw, nextOrders, nextOrderItems, nextCustomerProfiles, nextUserSessions, nextBundles] = await Promise.all([
         fetchDashboardMetrics(),
         fetchInventoryProducts(),
         fetchOrders(),
         fetchOrderItems(),
         fetchCustomerProfiles(),
         fetchUserSessions(),
+        fetchAllBundles(),
       ]);
 
       setMetrics(nextMetrics);
@@ -422,6 +558,7 @@ const AdminDashboard = () => {
       setOrderItems(nextOrderItems);
       setCustomerProfiles(nextCustomerProfiles);
       setUserSessions(nextUserSessions);
+      setBundles(nextBundles);
     } catch {
       if (!silent) {
         toast.error("Could not load dashboard data from Supabase.");
@@ -1350,6 +1487,9 @@ const AdminDashboard = () => {
                 <Link to="/admin/users">Users</Link>
               </Button>
               <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
+                <Link to="/admin/bundles">Bundles</Link>
+              </Button>
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
                 <Link to="/admin/insights">Insights</Link>
               </Button>
             </CardContent>
@@ -1360,7 +1500,7 @@ const AdminDashboard = () => {
               <CardHeader>
                 <CardTitle className="text-lg text-navy">Choose an Admin Page</CardTitle>
                 <CardDescription>
-                  Select a menu button to manage one area at a time: metrics, products, orders, users, or insights.
+                  Select a menu button to manage one area at a time: metrics, products, orders, users, bundles, or insights.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -2161,6 +2301,11 @@ const AdminDashboard = () => {
                                   <div className="min-w-0">
                                     <p className="font-medium text-navy break-words">{item.product_title}</p>
                                     <p className="text-sm break-words">{item.product_handle}{item.variant_id ? ` • ${item.variant_id}` : ""}</p>
+                                    {item.bundle_name && (
+                                      <span className="inline-flex items-center rounded-full bg-navy/10 text-navy px-2 py-0.5 text-sm mt-1">
+                                        Part of {item.bundle_name}
+                                      </span>
+                                    )}
                                   </div>
                                   <div className="text-right text-sm text-navy/60">
                                     <p>Qty {item.quantity}</p>
@@ -2481,6 +2626,173 @@ const AdminDashboard = () => {
             </Card>
           )}
 
+          {isBundlesSection && (
+            <Card className="border-navy/15 bg-white/95 mb-6">
+              <CardHeader>
+                <CardTitle className="text-lg text-navy">Bundle Manager</CardTitle>
+                <CardDescription>
+                  Bundles are a pricing rule applied at checkout over existing products, not a
+                  separate stock item. Select the products included and set the discounted price.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
+                  <p className="text-sm uppercase tracking-wide text-navy/60">
+                    {editingBundleId ? "Edit Bundle" : "Add New Bundle"}
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="space-y-1">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Handle</p>
+                      <Input
+                        placeholder="performance-stack"
+                        value={bundleForm.handle}
+                        onChange={(e) => setBundleForm((prev) => ({ ...prev, handle: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Name</p>
+                      <Input
+                        placeholder="Performance Stack"
+                        value={bundleForm.name}
+                        onChange={(e) => setBundleForm((prev) => ({ ...prev, name: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Price</p>
+                      <Input
+                        placeholder="34.99"
+                        value={bundleForm.price}
+                        onChange={(e) => setBundleForm((prev) => ({ ...prev, price: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Currency</p>
+                      <Input
+                        placeholder="USD"
+                        value={bundleForm.currencyCode}
+                        onChange={(e) => setBundleForm((prev) => ({ ...prev, currencyCode: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Tag (optional)</p>
+                      <Input
+                        placeholder="Best Value"
+                        value={bundleForm.tag}
+                        onChange={(e) => setBundleForm((prev) => ({ ...prev, tag: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Sort Order</p>
+                      <Input
+                        type="number"
+                        value={String(bundleForm.sortOrder)}
+                        onChange={(e) =>
+                          setBundleForm((prev) => ({ ...prev, sortOrder: Number.parseInt(e.target.value, 10) || 0 }))
+                        }
+                      />
+                    </div>
+                    <label className="inline-flex items-center gap-2 text-sm text-navy/70 self-end pb-2">
+                      <input
+                        type="checkbox"
+                        checked={bundleForm.active}
+                        onChange={(e) => setBundleForm((prev) => ({ ...prev, active: e.target.checked }))}
+                      />
+                      Active on storefront
+                    </label>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm uppercase tracking-wide text-navy/60">Description (optional)</p>
+                    <Textarea
+                      placeholder="Two ways to stack. One mission: show up stronger every day."
+                      value={bundleForm.description}
+                      onChange={(e) => setBundleForm((prev) => ({ ...prev, description: e.target.value }))}
+                      className="min-h-16"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm uppercase tracking-wide text-navy/60">
+                      Products Included ({bundleForm.productHandles.length} selected)
+                    </p>
+                    {products.length === 0 ? (
+                      <p className="text-sm text-navy/60">No products available yet.</p>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                        {products.map((product) => (
+                          <label
+                            key={product.id}
+                            className="inline-flex items-center gap-2 text-sm text-navy/70 rounded-md border border-navy/10 bg-white/70 px-3 py-2"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={bundleForm.productHandles.includes(product.handle)}
+                              onChange={() => handleToggleBundleProductHandle(product.handle)}
+                            />
+                            <span className="truncate">{product.title || product.handle}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Button onClick={() => void handleSaveBundle()} disabled={isSavingBundle}>
+                      {isSavingBundle ? "Saving..." : editingBundleId ? "Save Bundle" : "Add Bundle"}
+                    </Button>
+                    {editingBundleId && (
+                      <Button type="button" variant="outline" className="border-navy/20 text-navy hover:bg-navy/5" onClick={resetBundleForm}>
+                        Cancel Edit
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-sm uppercase tracking-wide text-navy/60">Existing Bundles</p>
+                  {isLoadingData ? (
+                    <p className="text-sm text-navy/60">Loading bundles...</p>
+                  ) : bundles.length === 0 ? (
+                    <p className="text-sm text-navy/60">No bundles created yet.</p>
+                  ) : (
+                    bundles.map((bundle) => (
+                      <div key={bundle.id} className="border border-navy/10 rounded-lg p-4 bg-white/80">
+                        <div className="flex items-center justify-between gap-3 flex-wrap">
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-semibold text-navy">{bundle.name}</p>
+                              <span
+                                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium ${bundle.active ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"
+                                  }`}
+                              >
+                                {bundle.active ? "Active" : "Inactive"}
+                              </span>
+                            </div>
+                            <p className="text-sm text-navy/60">Handle: {bundle.handle}</p>
+                            <p className="text-sm text-navy/60">
+                              {bundle.currency_code} {bundle.price.toFixed(2)} • {bundle.product_handles.length} products
+                            </p>
+                            <p className="text-sm text-navy/70">{bundle.product_handles.join(", ")}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button variant="outline" className="border-navy/20 text-navy hover:bg-navy/5" onClick={() => handleEditBundle(bundle)}>
+                              Edit
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              onClick={() => openBundleDeleteModal(bundle)}
+                              disabled={isDeletingBundleId === bundle.id}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              {isDeletingBundleId === bundle.id ? "Deleting..." : "Delete"}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {isInsightsSection && (
             <div className="grid md:grid-cols-3 gap-5">
               <Card className="border-navy/15 bg-white/95">
@@ -2640,6 +2952,29 @@ const AdminDashboard = () => {
               disabled={!productDeleteTarget || isDeletingProduct === productDeleteTarget.product.id}
             >
               {productDeleteTarget && isDeletingProduct === productDeleteTarget.product.id ? "Deleting..." : "Delete Product"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={Boolean(bundleDeleteTarget)} onOpenChange={(open) => { if (!open) setBundleDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Bundle</AlertDialogTitle>
+            <AlertDialogDescription>
+              {`Delete ${bundleDeleteTarget?.name || "this bundle"}? This cannot be undone.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={Boolean(bundleDeleteTarget && isDeletingBundleId === bundleDeleteTarget.id)}>
+              Keep Bundle
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={() => void confirmDeleteBundle()}
+              disabled={!bundleDeleteTarget || isDeletingBundleId === bundleDeleteTarget.id}
+            >
+              {bundleDeleteTarget && isDeletingBundleId === bundleDeleteTarget.id ? "Deleting..." : "Delete Bundle"}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

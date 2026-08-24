@@ -4,7 +4,13 @@ import type { User } from "@supabase/supabase-js";
 
 export type InventoryProduct = Database["public"]["Tables"]["inventory_products"]["Row"];
 export type OrderRecord = Database["public"]["Tables"]["orders"]["Row"];
-export type OrderItemRecord = Database["public"]["Tables"]["order_items"]["Row"];
+// bundle_* columns were added after the last Supabase typegen run; extend the
+// generated row type narrowly here until types.ts is regenerated.
+export type OrderItemRecord = Database["public"]["Tables"]["order_items"]["Row"] & {
+  bundle_instance_id?: string;
+  bundle_handle?: string | null;
+  bundle_name?: string | null;
+};
 export type CustomerProfile = Database["public"]["Tables"]["customer_profiles"]["Row"];
 export type UserSessionRecord = Database["public"]["Tables"]["user_sessions"]["Row"];
 
@@ -112,11 +118,14 @@ export const upsertOrderItems = async (
     unitPrice: number;
     quantity: number;
     currencyCode: string;
+    bundleInstanceId?: string | null;
+    bundleHandle?: string | null;
+    bundleName?: string | null;
   }>,
 ) => {
   if (!supabase || items.length === 0) return;
 
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from("order_items")
     .upsert(
       items.map((item) => ({
@@ -128,8 +137,11 @@ export const upsertOrderItems = async (
         unit_price: Number(item.unitPrice.toFixed(2)),
         quantity: item.quantity,
         currency_code: item.currencyCode,
+        bundle_instance_id: item.bundleInstanceId ?? "",
+        bundle_handle: item.bundleHandle ?? null,
+        bundle_name: item.bundleName ?? null,
       })),
-      { onConflict: "order_id,product_handle" },
+      { onConflict: "order_id,product_handle,bundle_instance_id" },
     );
 
   if (error) throw error;

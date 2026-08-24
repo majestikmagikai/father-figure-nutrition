@@ -213,8 +213,14 @@ Deno.serve(async (req) => {
               unit_price: Number((item.p / 100).toFixed(2)),
               quantity: item.q,
               currency_code: item.c.toUpperCase(),
+              // This fallback webhook path re-derives items from compact Stripe metadata,
+              // which does not carry bundle grouping, so these lines are always recorded as
+              // non-bundle ('') here. The primary PaymentSuccess.tsx path tags real bundle
+              // instances; this keeps the unique index (order_id, product_handle,
+              // bundle_instance_id) satisfied either way.
+              bundle_instance_id: "",
             })),
-            { onConflict: "order_id,product_handle" },
+            { onConflict: "order_id,product_handle,bundle_instance_id" },
           );
 
         if (orderItemsError) {
