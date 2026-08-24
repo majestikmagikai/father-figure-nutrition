@@ -19,6 +19,8 @@ type BundleRow = {
   price: number;
   currency_code: string | null;
   product_handles: string[];
+  discount_type: "fixed" | "percentage" | null;
+  discount_value: number | null;
 };
 
 type EnrichedCartItem = {
@@ -132,7 +134,7 @@ Deno.serve(async (req) => {
     // gets the discounted price. Everything else prices at the regular catalog price.
     const { data: bundleRows, error: bundleError } = await supabase
       .from("bundles")
-      .select("handle, name, price, currency_code, product_handles")
+      .select("handle, name, price, currency_code, product_handles, discount_type, discount_value")
       .eq("active", true);
 
     if (bundleError) {
@@ -283,10 +285,27 @@ Deno.serve(async (req) => {
 
       // Sum of original prices for one unit of the bundle.
       const originalBundlePriceMinor = group.reduce((sum, line) => sum + line.unitMinor, 0);
-      const bundlePriceMinor = toMinorUnits(bundle.price);
 
-      if (bundlePriceMinor && originalBundlePriceMinor > bundlePriceMinor) {
-        const discountPerBundle = originalBundlePriceMinor - bundlePriceMinor;
+      let discountPerBundle = 0;
+      const discountType = bundle.discount_type;
+      const discountValue = bundle.discount_value;
+
+      // Prefer new discount_type/value fields if available for more robust, real-time calculation.
+      if (discountType && discountValue != null && discountValue > 0) {
+        if (discountType === "fixed") {
+          discountPerBundle = toMinorUnits(discountValue) ?? 0;
+        } else if (discountType === "percentage") {
+          discountPerBundle = Math.round(originalBundlePriceMinor * (discountValue / 100));
+        }
+      } else {
+        // Fallback to using the pre-calculated `price` field for older bundle definitions.
+        const bundlePriceMinor = toMinorUnits(bundle.price);
+        if (bundlePriceMinor && originalBundlePriceMinor > bundlePriceMinor) {
+          discountPerBundle = originalBundlePriceMinor - bundlePriceMinor;
+        }
+      }
+
+      if (discountPerBundle > 0) {
         totalMinor -= discountPerBundle * units;
       }
     }
