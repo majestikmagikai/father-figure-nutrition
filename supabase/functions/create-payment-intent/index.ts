@@ -29,6 +29,7 @@ type EnrichedCartItem = {
   p: number;
   c: string;
   i: string;
+  b?: string;
 };
 
 type ProductRow = {
@@ -274,6 +275,7 @@ Deno.serve(async (req) => {
         p: line.unitMinor,
         c: line.rowCurrency,
         i: imageUrl,
+        b: line.bundleInstanceId,
       });
     }
 
@@ -311,7 +313,7 @@ Deno.serve(async (req) => {
         // Compact encoding to stay under Stripe's 500-character metadata value limit.
         // Title and image URL are re-fetched from inventory_products by handle when needed
         // (in the webhook and on the payment success page) instead of being stored here.
-        cart_lines: enrichedCartItems.map((item) => `${item.h}:${item.v}:${item.q}:${item.p}:${item.c}`).join("|"),
+        cart_lines: enrichedCartItems.map((item) => `${item.h}:${item.v}:${item.q}:${item.p}:${item.c}:${item.b || ""}`).join("|"),
         client_order_token: clientOrderToken,
       },
     });

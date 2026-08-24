@@ -116,55 +116,23 @@ Deno.serve(async (req) => {
       const clientOrderToken = intent.metadata?.client_order_token ?? null;
       const shippingAddress = formatShippingAddress(intent.shipping);
       const cartLinesRaw = intent.metadata?.cart_lines ?? "";
-
-      type ParsedCartLine = { h: string; v: string; q: number; p: number; c: string };
+      type BundleRow = { handle: string; name: string; price: number; currency_code: string | null; product_handles: string[] };
+      type ParsedCartLine = { h: string; v: string; q: number; p: number; c: string; bundleInstanceId: string };
 
       const cartLines: ParsedCartLine[] = cartLinesRaw
         ? cartLinesRaw
             .split("|")
             .map((line: string): ParsedCartLine | null => {
-              const [h, v, q, p, c] = line.split(":");
+              const [h, v, q, p, c, b] = line.split(":");
               const quantity = Number.parseInt(q ?? "", 10);
               const unitMinor = Number.parseInt(p ?? "", 10);
               if (!h || !c || !Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(unitMinor) || unitMinor <= 0) {
                 return null;
               }
-              return { h, v: v ?? "", q: quantity, p: unitMinor, c };
+              return { h, v: v ?? "", q: quantity, p: unitMinor, c, bundleInstanceId: b ?? "" };
             })
             .filter((line: ParsedCartLine | null): line is ParsedCartLine => line !== null)
         : [];
-
-      let cartItems: Array<{ h: string; t: string; v: string; q: number; p: number; c: string; i: string }> = [];
-
-      if (cartLines.length > 0) {
-        const { data: lineProducts } = await supabase
-          .from("inventory_products")
-          .select("handle, title, images")
-          .in("handle", cartLines.map((line) => line.h));
-
-        const productByHandle = new Map(
-          ((lineProducts ?? []) as Array<{ handle: string; title: string | null; images: Array<{ url?: unknown }> | null }>)
-            .map((product) => [product.handle, product]),
-        );
-
-        cartItems = cartLines.map((line) => {
-          const product = productByHandle.get(line.h);
-          const firstImage = Array.isArray(product?.images) && product.images.length > 0 ? product.images[0] : null;
-          const imageUrl = firstImage && typeof firstImage === "object" && firstImage !== null && "url" in firstImage
-            ? String((firstImage as { url?: unknown }).url ?? "")
-            : "";
-
-          return {
-            h: line.h,
-            t: product?.title ?? line.h,
-            v: line.v,
-            q: line.q,
-            p: line.p,
-            c: line.c,
-            i: imageUrl,
-          };
-        });
-      }
 
       const { error } = await supabase
         .from("orders")
@@ -200,28 +168,112 @@ Deno.serve(async (req) => {
         return new Response("Failed to resolve saved order", { status: 500, headers: corsHeaders });
       }
 
-      if (cartItems.length > 0) {
+      if (cartLines.length > 0) {
+        // Re-create bundle logic from create-payment-intent to correctly price line items
+        const { data: bundleRows, error: bundleError } = await supabase
+          .from("bundles")
+          .select("handle, name, price, currency_code, product_handles")
+          .eq("active", true);
+
+        if (bundleError) {
+          console.error("Webhook: Could not validate bundles", bundleError);
+        }
+
+        const bundles = (bundleRows ?? []) as BundleRow[];
+        const bundlesByHandleSet = new Map<string, BundleRow>();
+        for (const bundle of bundles) {
+          const key = [...bundle.product_handles].map((h) => h.toLowerCase()).sort().join("|");
+          bundlesByHandleSet.set(key, bundle);
+        }
+
+        const linesByInstanceId = new Map<string, ParsedCartLine[]>();
+        for (const line of cartLines) {
+          if (!line.bundleInstanceId) continue;
+          const group = linesByInstanceId.get(line.bundleInstanceId) ?? [];
+          group.push(line);
+          linesByInstanceId.set(line.bundleInstanceId, group);
+        }
+
+        const bundleUnitsByInstanceId = new Map<string, { bundle: BundleRow; units: number }>();
+        for (const [instanceId, group] of linesByInstanceId) {
+          const key = group.map((line) => line.h.toLowerCase()).sort().join("|");
+          const bundle = bundlesByHandleSet.get(key);
+          if (!bundle) continue;
+
+          const bundleCurrency = String(bundle.currency_code ?? "USD").toLowerCase();
+          if (bundleCurrency !== intent.currency.toLowerCase()) continue;
+
+          const units = Math.min(...group.map((line) => line.q));
+          if (units > 0) {
+            bundleUnitsByInstanceId.set(instanceId, { bundle, units });
+          }
+        }
+
+        const { data: lineProducts } = await supabase
+          .from("inventory_products")
+          .select("handle, title, images")
+          .in("handle", cartLines.map((line) => line.h));
+
+        const productInfoMap = new Map(
+          ((lineProducts ?? []) as Array<{ handle: string; title: string | null; images: any }>).map((p) => [p.handle, p]),
+        );
+
+        const orderItemsToUpsert = [];
+
+        for (const line of cartLines) {
+          const product = productInfoMap.get(line.h);
+          const title = product?.title ?? line.h;
+          const firstImage = Array.isArray(product?.images) && product.images.length > 0 ? product.images[0] : null;
+          const imageUrl = firstImage && typeof firstImage === "object" && firstImage !== null && "url" in firstImage
+            ? String((firstImage as { url?: unknown }).url ?? "")
+            : "";
+
+          const bundleMatch = line.bundleInstanceId ? bundleUnitsByInstanceId.get(line.bundleInstanceId) : undefined;
+          const bundleUnits = bundleMatch?.units ?? 0;
+          const discountedQuantity = Math.min(bundleUnits, line.q);
+          const regularQuantity = line.q - discountedQuantity;
+
+          if (regularQuantity > 0) {
+            orderItemsToUpsert.push({
+              order_id: savedOrder.id,
+              product_handle: line.h,
+              product_title: title,
+              variant_id: line.v || null,
+              image_url: imageUrl || null,
+              unit_price: Number((line.p / 100).toFixed(2)),
+              quantity: regularQuantity,
+              currency_code: line.c.toUpperCase(),
+              bundle_instance_id: "",
+            });
+          }
+
+          if (discountedQuantity > 0 && bundleMatch) {
+            const group = linesByInstanceId.get(line.bundleInstanceId)!;
+            const bundlePriceMinor = Math.round(bundleMatch.bundle.price * 100);
+            const originalBundlePriceMinor = group.reduce((sum, l) => sum + l.p, 0);
+
+            let discountedUnitPriceMinor = line.p;
+            if (originalBundlePriceMinor > 0) {
+              discountedUnitPriceMinor = Math.round(bundlePriceMinor * (line.p / originalBundlePriceMinor));
+            }
+
+            orderItemsToUpsert.push({
+              order_id: savedOrder.id,
+              product_handle: line.h,
+              product_title: title,
+              variant_id: line.v || null,
+              image_url: imageUrl || null,
+              unit_price: Number((discountedUnitPriceMinor / 100).toFixed(2)),
+              quantity: discountedQuantity,
+              currency_code: line.c.toUpperCase(),
+              bundle_instance_id: line.bundleInstanceId,
+            });
+          }
+        }
+
         const { error: orderItemsError } = await supabase
           .from("order_items")
-          .upsert(
-            cartItems.map((item) => ({
-              order_id: savedOrder.id,
-              product_handle: item.h,
-              product_title: item.t,
-              variant_id: item.v || null,
-              image_url: item.i || null,
-              unit_price: Number((item.p / 100).toFixed(2)),
-              quantity: item.q,
-              currency_code: item.c.toUpperCase(),
-              // This fallback webhook path re-derives items from compact Stripe metadata,
-              // which does not carry bundle grouping, so these lines are always recorded as
-              // non-bundle ('') here. The primary PaymentSuccess.tsx path tags real bundle
-              // instances; this keeps the unique index (order_id, product_handle,
-              // bundle_instance_id) satisfied either way.
-              bundle_instance_id: "",
-            })),
-            { onConflict: "order_id,product_handle,bundle_instance_id" },
-          );
+          .upsert(orderItemsToUpsert, { onConflict: "order_id,product_handle,bundle_instance_id" });
 
         if (orderItemsError) {
           console.error("Failed to persist order items", orderItemsError);
