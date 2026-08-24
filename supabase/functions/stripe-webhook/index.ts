@@ -115,6 +115,11 @@ Deno.serve(async (req) => {
       const customerEmail = intent.metadata?.customer_email ?? intent.receipt_email ?? null;
       const clientOrderToken = intent.metadata?.client_order_token ?? null;
       const shippingAddress = formatShippingAddress(intent.shipping);
+      const shippingAmount = Number.parseFloat(intent.metadata?.shipping_amount ?? "0") || 0;
+      const shippingMethod = intent.metadata?.shipping_method || null;
+      const taxAmount = Number.parseFloat(intent.metadata?.tax_amount ?? "0") || 0;
+      const taxRateRaw = intent.metadata?.tax_rate ?? "";
+      const taxRate = taxRateRaw ? Number.parseFloat(taxRateRaw) : null;
       const cartLinesRaw = intent.metadata?.cart_lines ?? "";
       type BundleRow = { handle: string; name: string; price: number; currency_code: string | null; product_handles: string[] };
       type ParsedCartLine = { h: string; v: string; q: number; p: number; c: string; bundleInstanceId: string };
@@ -146,6 +151,10 @@ Deno.serve(async (req) => {
             total_amount: Number(totalAmount.toFixed(2)),
             currency_code: currencyCode,
             item_count: itemCount,
+            shipping_amount: Number(shippingAmount.toFixed(2)),
+            shipping_method: shippingMethod,
+            tax_amount: Number(taxAmount.toFixed(2)),
+            tax_rate: taxRate,
             status: "processing",
             updated_at: new Date().toISOString(),
           },

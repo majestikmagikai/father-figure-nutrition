@@ -13,6 +13,15 @@ type PaymentIntentItem = {
   bundleInstanceId?: string;
 };
 
+type ShippingAddressInput = {
+  line1?: string;
+  line2?: string;
+  city?: string;
+  state?: string;
+  postal_code?: string;
+  country?: string;
+};
+
 type BundleRow = {
   handle: string;
   name: string;
@@ -98,9 +107,35 @@ Deno.serve(async (req) => {
       });
     }
 
+    const stripe = new Stripe(stripeSecretKey, {
+      apiVersion: "2024-06-20",
+    });
+
     const body = await req.json();
+
+    // Lightweight side-channel: list the shipping rates configured directly in the Stripe
+    // Dashboard (Tony's settings), so the client can render real options without us ever
+    // hardcoding shipping costs/methods in this codebase.
+    if (body?.action === "list-shipping-rates") {
+      const rates = await stripe.shippingRates.list({ active: true, limit: 20 });
+      return new Response(
+        JSON.stringify({
+          shippingRates: rates.data.map((rate: Stripe.ShippingRate) => ({
+            id: rate.id,
+            displayName: rate.display_name,
+            amount: (rate.fixed_amount?.amount ?? 0) / 100,
+            currency: rate.fixed_amount?.currency ?? "usd",
+          })),
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const items = Array.isArray(body?.items) ? (body.items as PaymentIntentItem[]) : [];
     const clientOrderToken = typeof body?.clientOrderToken === "string" ? body.clientOrderToken.trim() : "";
+    const paymentIntentId = typeof body?.paymentIntentId === "string" ? body.paymentIntentId.trim() : "";
+    const shippingRateId = typeof body?.shippingRateId === "string" ? body.shippingRateId.trim() : "";
+    const shippingAddress = (body?.shippingAddress ?? null) as ShippingAddressInput | null;
 
     if (items.length === 0) {
       return new Response(JSON.stringify({ error: "Cart items are required" }), {
@@ -318,31 +353,109 @@ Deno.serve(async (req) => {
     }
 
     const discountMinor = initialTotalMinor > totalMinor ? initialTotalMinor - totalMinor : 0;
+    const merchandiseTotalMinor = totalMinor;
 
+    // Shipping cost comes only from a real, active Stripe Shipping Rate (configured directly
+    // in the Stripe Dashboard) — never a client-supplied amount — so the price can't be spoofed.
+    let shippingAmountMinor = 0;
+    let shippingMethod: string | null = null;
 
-    const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: "2024-06-20",
-    });
+    if (shippingRateId) {
+      try {
+        const shippingRate = await stripe.shippingRates.retrieve(shippingRateId);
+        if (shippingRate.active && shippingRate.fixed_amount?.currency === currency) {
+          shippingAmountMinor = shippingRate.fixed_amount.amount;
+          shippingMethod = shippingRate.display_name ?? null;
+        }
+      } catch (shippingRateError) {
+        console.error("Invalid shipping rate requested", shippingRateError);
+        return new Response(JSON.stringify({ error: "Invalid shipping option" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: totalMinor,
-      currency,
-      automatic_payment_methods: {
-        enabled: true,
-      },
-      receipt_email: userData.user.email ?? undefined,
-      metadata: {
-        customer_id: userData.user.id,
-        customer_email: userData.user.email ?? "",
-        item_count: String(itemCount),
-        cart_handles: handles.join(","),
-        // Compact encoding to stay under Stripe's 500-character metadata value limit.
-        // Title and image URL are re-fetched from inventory_products by handle when needed
-        // (in the webhook and on the payment success page) instead of being stored here.
-        cart_lines: enrichedCartItems.map((item) => `${item.h}:${item.v}:${item.q}:${item.p}:${item.c}:${item.b || ""}`).join("|"),
-        client_order_token: clientOrderToken,
-      },
-    });
+    // Tax is calculated dynamically via Stripe Tax based on the shopper's destination
+    // address (never a hardcoded rate). If Stripe Tax isn't configured/enabled on the
+    // account yet, or no address has been collected, this is skipped and tax stays 0 —
+    // it never blocks checkout.
+    let taxAmountMinor = 0;
+    let taxRate: number | null = null;
+
+    if (shippingAddress?.postal_code && shippingAddress?.country) {
+      try {
+        const calculation = await stripe.tax.calculations.create({
+          currency,
+          line_items: [
+            {
+              amount: merchandiseTotalMinor,
+              reference: "merchandise",
+              tax_behavior: "exclusive",
+              tax_code: "txcd_99999999",
+            },
+          ],
+          shipping_cost: shippingAmountMinor > 0 ? { amount: shippingAmountMinor } : undefined,
+          customer_details: {
+            address: {
+              line1: shippingAddress.line1,
+              line2: shippingAddress.line2,
+              city: shippingAddress.city,
+              state: shippingAddress.state,
+              postal_code: shippingAddress.postal_code,
+              country: shippingAddress.country,
+            },
+            address_source: "shipping",
+          },
+        });
+
+        taxAmountMinor = calculation.tax_amount_exclusive;
+        const taxableMinor = merchandiseTotalMinor + shippingAmountMinor;
+        taxRate = taxableMinor > 0 ? Number((taxAmountMinor / taxableMinor).toFixed(4)) : 0;
+      } catch (taxError) {
+        // Stripe Tax not enabled/configured yet, or an unsupported address — fall back to
+        // no tax rather than failing checkout.
+        console.error("Stripe Tax calculation failed; defaulting to $0 tax", taxError);
+        taxAmountMinor = 0;
+        taxRate = null;
+      }
+    }
+
+    totalMinor = merchandiseTotalMinor + shippingAmountMinor + taxAmountMinor;
+
+    const metadata = {
+      customer_id: userData.user.id,
+      customer_email: userData.user.email ?? "",
+      item_count: String(itemCount),
+      cart_handles: handles.join(","),
+      // Compact encoding to stay under Stripe's 500-character metadata value limit.
+      // Title and image URL are re-fetched from inventory_products by handle when needed
+      // (in the webhook and on the payment success page) instead of being stored here.
+      cart_lines: enrichedCartItems.map((item) => `${item.h}:${item.v}:${item.q}:${item.p}:${item.c}:${item.b || ""}`).join("|"),
+      client_order_token: clientOrderToken,
+      shipping_amount: String(shippingAmountMinor / 100),
+      shipping_method: shippingMethod ?? "",
+      tax_amount: String(taxAmountMinor / 100),
+      tax_rate: taxRate != null ? String(taxRate) : "",
+    };
+
+    // Re-quoting an existing PaymentIntent (e.g. the shopper picked a shipping method or
+    // finished entering their address after the intent was first created) updates its
+    // amount/metadata in place instead of creating a brand-new intent/clientSecret.
+    const paymentIntent = paymentIntentId
+      ? await stripe.paymentIntents.update(paymentIntentId, {
+          amount: totalMinor,
+          metadata,
+        })
+      : await stripe.paymentIntents.create({
+          amount: totalMinor,
+          currency,
+          automatic_payment_methods: {
+            enabled: true,
+          },
+          receipt_email: userData.user.email ?? undefined,
+          metadata,
+        });
 
     return new Response(
       JSON.stringify({
@@ -351,6 +464,10 @@ Deno.serve(async (req) => {
         totalAmount: totalMinor / 100,
         subtotalAmount: initialTotalMinor / 100,
         discountAmount: discountMinor / 100,
+        shippingAmount: shippingAmountMinor / 100,
+        shippingMethod,
+        taxAmount: taxAmountMinor / 100,
+        taxRate,
         currency: currency,
       }),
       {
@@ -366,3 +483,4 @@ Deno.serve(async (req) => {
     });
   }
 });
+

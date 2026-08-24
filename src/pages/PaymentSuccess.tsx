@@ -63,6 +63,10 @@ const PaymentSuccess = () => {
         // otherwise make a client-side recomputation understate the discount (or, if tampered
         // with, overstate it).
         let chargedAmountMinor: number | null = null;
+        let shippingAmount: number | null = null;
+        let shippingMethod: string | null = null;
+        let taxAmount: number | null = null;
+        let taxRate: number | null = null;
 
         // Always retrieve the payment intent when we have its client secret so we can capture
         // the shipping address, even if we already have item details from the local cart snapshot.
@@ -77,6 +81,21 @@ const PaymentSuccess = () => {
           if (intent) {
             if (intent.status === "succeeded" && typeof intent.amount === "number") {
               chargedAmountMinor = intent.amount;
+            }
+
+            const metadataForBreakdown = (intent as { metadata?: Record<string, string> }).metadata ?? {};
+            if (metadataForBreakdown.shipping_amount) {
+              const parsed = Number.parseFloat(metadataForBreakdown.shipping_amount);
+              shippingAmount = Number.isFinite(parsed) ? parsed : null;
+            }
+            shippingMethod = metadataForBreakdown.shipping_method || null;
+            if (metadataForBreakdown.tax_amount) {
+              const parsed = Number.parseFloat(metadataForBreakdown.tax_amount);
+              taxAmount = Number.isFinite(parsed) ? parsed : null;
+            }
+            if (metadataForBreakdown.tax_rate) {
+              const parsed = Number.parseFloat(metadataForBreakdown.tax_rate);
+              taxRate = Number.isFinite(parsed) ? parsed : null;
             }
 
             if (intent.shipping) {
@@ -179,6 +198,10 @@ const PaymentSuccess = () => {
           currencyCode,
           itemCount,
           shippingAddress,
+          shippingAmount,
+          shippingMethod,
+          taxAmount,
+          taxRate,
         });
 
         if (!orderId) {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, CreditCard, Lock, ShieldCheck } from "lucide-react";
 import { Elements, PaymentElement, AddressElement, useElements, useStripe } from "@stripe/react-stripe-js";
@@ -17,7 +17,31 @@ const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : 
 const CHECKOUT_SNAPSHOT_KEY = "ff-checkout-cart-snapshot";
 const CHECKOUT_ORDER_TOKEN_KEY = "ff-checkout-order-token";
 
-const EmbeddedPaymentForm = () => {
+type ShippingRateOption = { id: string; displayName: string; amount: number; currency: string };
+
+type ShippingAddressValue = {
+  name: string;
+  phone?: string;
+  address: { line1: string; line2?: string; city: string; state: string; postal_code: string; country: string };
+};
+
+type PricingBreakdown = {
+  subtotalAmount: number;
+  discountAmount: number;
+  shippingAmount: number;
+  shippingMethod: string | null;
+  taxAmount: number;
+  taxRate: number | null;
+  totalAmount: number;
+};
+
+const EmbeddedPaymentForm = ({
+  onAddressChange,
+  canSubmit,
+}: {
+  onAddressChange: (address: ShippingAddressValue | null) => void;
+  canSubmit: boolean;
+}) => {
   const stripe = useStripe();
   const elements = useElements();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -26,6 +50,11 @@ const EmbeddedPaymentForm = () => {
     event.preventDefault();
 
     if (!stripe || !elements) return;
+
+    if (!canSubmit) {
+      toast.error("Please choose a shipping method.");
+      return;
+    }
 
     const addressElement = elements.getElement(AddressElement);
     let shipping: { name: string; phone?: string; address: { line1: string; line2?: string; city: string; state: string; postal_code: string; country: string } } | undefined;
@@ -78,13 +107,28 @@ const EmbeddedPaymentForm = () => {
     }
   };
 
+  const handleAddressElementChange = (event: {
+    complete: boolean;
+    value: { name: string; phone?: string; address: { line1: string; line2?: string; city: string; state: string; postal_code: string; country: string } };
+  }) => {
+    if (!event.complete) {
+      onAddressChange(null);
+      return;
+    }
+    onAddressChange({
+      name: event.value.name,
+      phone: event.value.phone || undefined,
+      address: event.value.address,
+    });
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <AddressElement options={{ mode: 'shipping' }} />
+      <AddressElement options={{ mode: 'shipping' }} onChange={handleAddressElementChange} />
       <PaymentElement />
       <Button
         type="submit"
-        disabled={!stripe || !elements || isSubmitting}
+        disabled={!stripe || !elements || isSubmitting || !canSubmit}
         size="lg"
         className="w-full bg-orange text-white hover:opacity-90 shadow-cta font-display uppercase tracking-wider"
       >
@@ -105,8 +149,14 @@ const Checkout = () => {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentFormError, setPaymentFormError] = useState<string | null>(null);
   const [retryToken, setRetryToken] = useState(0);
-  const [pricing, setPricing] = useState<{ subtotalAmount: number; discountAmount: number; totalAmount: number } | null>(null);
+  const [pricing, setPricing] = useState<PricingBreakdown | null>(null);
+  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
+  const [shippingRates, setShippingRates] = useState<ShippingRateOption[]>([]);
+  const [selectedShippingRateId, setSelectedShippingRateId] = useState<string>("");
+  const [shippingAddress, setShippingAddress] = useState<ShippingAddressValue | null>(null);
   const items = useCartStore((s) => s.items);
+  const orderTokenRef = useRef<string>("");
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) {
@@ -141,6 +191,74 @@ const Checkout = () => {
     [items],
   );
 
+  // Shipping methods are whatever Shipping Rates are configured directly in the Stripe
+  // Dashboard — fetched once per session, never hardcoded here.
+  useEffect(() => {
+    if (isCheckingSession || !supabase) return;
+
+    let isMounted = true;
+    (async () => {
+      const { data, error } = await supabase.functions.invoke("create-payment-intent", {
+        body: { action: "list-shipping-rates" },
+      });
+      if (!isMounted || error || !Array.isArray(data?.shippingRates)) return;
+      setShippingRates(data.shippingRates as ShippingRateOption[]);
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isCheckingSession]);
+
+  const applyPricingResponse = (data: {
+    clientSecret?: string;
+    paymentIntentId?: string;
+    subtotalAmount?: number;
+    discountAmount?: number;
+    shippingAmount?: number;
+    shippingMethod?: string | null;
+    taxAmount?: number;
+    taxRate?: number | null;
+    totalAmount?: number;
+  }) => {
+    if (typeof data.clientSecret === "string") setClientSecret(data.clientSecret);
+    if (typeof data.paymentIntentId === "string") setPaymentIntentId(data.paymentIntentId);
+    if (
+      typeof data.subtotalAmount === "number" &&
+      typeof data.discountAmount === "number" &&
+      typeof data.totalAmount === "number"
+    ) {
+      setPricing({
+        subtotalAmount: data.subtotalAmount,
+        discountAmount: data.discountAmount,
+        shippingAmount: data.shippingAmount ?? 0,
+        shippingMethod: data.shippingMethod ?? null,
+        taxAmount: data.taxAmount ?? 0,
+        taxRate: data.taxRate ?? null,
+        totalAmount: data.totalAmount,
+      });
+    }
+  };
+
+  const reportPaymentIntentError = async (error: unknown, data: unknown) => {
+    let detail = "";
+    if (error instanceof FunctionsHttpError) {
+      try {
+        const body = await error.context.json();
+        detail = String(body?.details ?? body?.error ?? "");
+      } catch {
+        // Response body was not JSON; fall through with no detail.
+      }
+    } else if (data && typeof data === "object" && "details" in data) {
+      detail = String((data as { details?: unknown }).details ?? "");
+    }
+
+    console.error("create-payment-intent failed", error, detail);
+    const message = detail ? `Could not initialize payment form: ${detail}` : "Could not initialize payment form.";
+    toast.error(message);
+    setPaymentFormError(message);
+  };
+
   useEffect(() => {
     if (isCheckingSession || !supabase || items.length === 0 || !stripePublishableKey) {
       return;
@@ -149,6 +267,7 @@ const Checkout = () => {
     let isMounted = true;
     // Start a new logical order token whenever checkout initializes for a non-empty cart.
     const orderToken = crypto.randomUUID();
+    orderTokenRef.current = orderToken;
     sessionStorage.setItem(CHECKOUT_ORDER_TOKEN_KEY, orderToken);
 
     const createPaymentIntent = async () => {
@@ -156,6 +275,7 @@ const Checkout = () => {
       setClientSecret(null);
       setPaymentFormError(null);
       setPricing(null);
+      setPaymentIntentId(null);
 
       sessionStorage.setItem(CHECKOUT_SNAPSHOT_KEY, JSON.stringify(items));
 
@@ -168,44 +288,19 @@ const Checkout = () => {
             quantity: item.quantity,
             bundleInstanceId: item.bundleInstanceId,
           })),
+          shippingRateId: selectedShippingRateId || undefined,
         },
       });
 
       if (!isMounted) return;
 
       if (error || !data?.clientSecret) {
-        let detail = "";
-        if (error instanceof FunctionsHttpError) {
-          try {
-            const body = await error.context.json();
-            detail = String(body?.details ?? body?.error ?? "");
-          } catch {
-            // Response body was not JSON; fall through with no detail.
-          }
-        } else if (data && typeof data === "object" && "details" in data) {
-          detail = String((data as { details?: unknown }).details ?? "");
-        }
-
-        console.error("create-payment-intent failed", error, detail);
-        const message = detail ? `Could not initialize payment form: ${detail}` : "Could not initialize payment form.";
-        toast.error(message);
-        setPaymentFormError(message);
+        await reportPaymentIntentError(error, data);
         setIsPreparingPayment(false);
         return;
       }
 
-      setClientSecret(data.clientSecret);
-      if (
-        typeof data.subtotalAmount === "number" &&
-        typeof data.discountAmount === "number" &&
-        typeof data.totalAmount === "number"
-      ) {
-        setPricing({
-          subtotalAmount: data.subtotalAmount,
-          discountAmount: data.discountAmount,
-          totalAmount: data.totalAmount,
-        });
-      }
+      applyPricingResponse(data);
       setIsPreparingPayment(false);
     };
 
@@ -215,6 +310,55 @@ const Checkout = () => {
       isMounted = false;
     };
   }, [isCheckingSession, items, retryToken]);
+
+  // Re-quotes the existing PaymentIntent's amount whenever the shopper picks a shipping
+  // method or finishes entering a destination address, so tax/shipping stay accurate and
+  // match what will actually be charged.
+  const recalcTotals = async (overrides: { shippingRateId?: string; shippingAddress?: ShippingAddressValue | null }) => {
+    if (!supabase || !paymentIntentId || items.length === 0) return;
+
+    const requestId = ++requestIdRef.current;
+    const nextShippingRateId = overrides.shippingRateId ?? selectedShippingRateId;
+    const nextShippingAddress = overrides.shippingAddress !== undefined ? overrides.shippingAddress : shippingAddress;
+
+    const { data, error } = await supabase.functions.invoke("create-payment-intent", {
+      body: {
+        clientOrderToken: orderTokenRef.current,
+        paymentIntentId,
+        items: items.map((item) => ({
+          handle: item.handle,
+          variantId: item.variantId,
+          quantity: item.quantity,
+          bundleInstanceId: item.bundleInstanceId,
+        })),
+        shippingRateId: nextShippingRateId || undefined,
+        shippingAddress: nextShippingAddress?.address ?? undefined,
+      },
+    });
+
+    if (requestId !== requestIdRef.current) return; // a newer recalculation superseded this one
+
+    if (error || !data?.clientSecret) {
+      await reportPaymentIntentError(error, data);
+      return;
+    }
+
+    applyPricingResponse(data);
+  };
+
+  const handleSelectShippingRate = (rateId: string) => {
+    setSelectedShippingRateId(rateId);
+    void recalcTotals({ shippingRateId: rateId });
+  };
+
+  const handleAddressChange = (address: ShippingAddressValue | null) => {
+    setShippingAddress(address);
+    if (address) {
+      void recalcTotals({ shippingAddress: address });
+    }
+  };
+
+
 
   if (!stripePublishableKey) {
     return (
@@ -299,11 +443,39 @@ const Checkout = () => {
                     </p>
                   </div>
 
+                  {shippingRates.length > 0 && (
+                    <div className="rounded-lg border border-navy/15 p-4 space-y-2">
+                      <p className="text-sm font-semibold text-navy">Shipping Method</p>
+                      {shippingRates.map((rate) => (
+                        <label
+                          key={rate.id}
+                          className="flex items-center justify-between gap-3 text-sm text-navy/70 rounded-md border border-navy/10 px-3 py-2 cursor-pointer"
+                        >
+                          <span className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              name="shipping-rate"
+                              checked={selectedShippingRateId === rate.id}
+                              onChange={() => handleSelectShippingRate(rate.id)}
+                            />
+                            {rate.displayName}
+                          </span>
+                          <span className="font-medium text-navy">
+                            {rate.amount > 0 ? `$${rate.amount.toFixed(2)}` : "Free"}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+
                   {isPreparingPayment ? (
                     <p className="text-sm text-navy/70">Preparing secure payment form...</p>
                   ) : clientSecret && options ? (
                     <Elements stripe={stripePromise} options={options}>
-                      <EmbeddedPaymentForm />
+                      <EmbeddedPaymentForm
+                        onAddressChange={handleAddressChange}
+                        canSubmit={shippingRates.length === 0 || Boolean(selectedShippingRateId)}
+                      />
                     </Elements>
                   ) : items.length === 0 ? (
                     <p className="text-sm text-destructive">Your cart is empty. Add an item to check out.</p>
@@ -371,6 +543,20 @@ const Checkout = () => {
                             <span>-${pricing.discountAmount.toFixed(2)}</span>
                           </div>
                         )}
+                        <div className="flex justify-between items-center text-sm text-navy/70">
+                          <span>Shipping{pricing?.shippingMethod ? ` (${pricing.shippingMethod})` : ""}</span>
+                          <span>
+                            {pricing && pricing.shippingAmount > 0
+                              ? `$${pricing.shippingAmount.toFixed(2)}`
+                              : shippingRates.length > 0 && !selectedShippingRateId
+                                ? "Select method"
+                                : "Free"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm text-navy/70">
+                          <span>Tax{pricing?.taxRate ? ` (${(pricing.taxRate * 100).toFixed(2)}%)` : ""}</span>
+                          <span>${(pricing?.taxAmount ?? 0).toFixed(2)}</span>
+                        </div>
                         <div className="flex justify-between items-center pt-1">
                           <span className="font-semibold text-navy">Total</span>
                           <span className="font-display text-2xl text-orange">

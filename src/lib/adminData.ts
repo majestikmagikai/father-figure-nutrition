@@ -3,7 +3,14 @@ import type { Database } from "@/integrations/supabase/types";
 import type { User } from "@supabase/supabase-js";
 
 export type InventoryProduct = Database["public"]["Tables"]["inventory_products"]["Row"];
-export type OrderRecord = Database["public"]["Tables"]["orders"]["Row"];
+// shipping_amount/tax_amount/shipping_method/tax_rate were added after the last Supabase
+// typegen run; extend the generated row type narrowly here until types.ts is regenerated.
+export type OrderRecord = Database["public"]["Tables"]["orders"]["Row"] & {
+  shipping_amount?: number | null;
+  tax_amount?: number | null;
+  shipping_method?: string | null;
+  tax_rate?: number | null;
+};
 // bundle_* columns were added after the last Supabase typegen run; extend the
 // generated row type narrowly here until types.ts is regenerated.
 export type OrderItemRecord = Database["public"]["Tables"]["order_items"]["Row"] & {
@@ -64,10 +71,19 @@ export const createOrderRecord = async (input: {
   currencyCode: string;
   itemCount: number;
   shippingAddress?: string | null;
+  shippingAmount?: number | null;
+  shippingMethod?: string | null;
+  taxAmount?: number | null;
+  taxRate?: number | null;
 }): Promise<string | null> => {
   if (!supabase) return null;
 
-  const payload: Database["public"]["Tables"]["orders"]["Insert"] = {
+  const payload: Database["public"]["Tables"]["orders"]["Insert"] & {
+    shipping_amount?: number;
+    tax_amount?: number;
+    shipping_method?: string | null;
+    tax_rate?: number | null;
+  } = {
     external_id: input.externalId ?? null,
     stripe_payment_intent_id: input.stripePaymentIntentId ?? input.externalId ?? null,
     client_order_token: input.clientOrderToken ?? null,
@@ -76,13 +92,17 @@ export const createOrderRecord = async (input: {
     currency_code: input.currencyCode,
     item_count: input.itemCount,
     shipping_address: input.shippingAddress ?? null,
+    shipping_amount: Number((input.shippingAmount ?? 0).toFixed(2)),
+    shipping_method: input.shippingMethod ?? null,
+    tax_amount: Number((input.taxAmount ?? 0).toFixed(2)),
+    tax_rate: input.taxRate ?? null,
     status: "pending",
     updated_at: new Date().toISOString(),
   };
 
   const query = input.externalId
-    ? supabase.from("orders").upsert(payload, { onConflict: "external_id" })
-    : supabase.from("orders").insert(payload);
+    ? (supabase as any).from("orders").upsert(payload, { onConflict: "external_id" })
+    : (supabase as any).from("orders").insert(payload);
 
   const { data, error } = await query.select("id").maybeSingle();
 

@@ -2339,6 +2339,16 @@ const AdminDashboard = () => {
                           <div className="text-sm text-navy/70 min-w-0">
                             <p className="font-semibold text-navy">{order.currency_code} {Number(order.total_amount).toFixed(2)}</p>
                             <p className="text-sm">Items: {order.item_count}</p>
+                            {(Number(order.shipping_amount ?? 0) > 0 || order.shipping_method) && (
+                              <p className="text-sm">
+                                Shipping{order.shipping_method ? ` (${order.shipping_method})` : ""}: {order.currency_code} {Number(order.shipping_amount ?? 0).toFixed(2)}
+                              </p>
+                            )}
+                            {Number(order.tax_amount ?? 0) > 0 && (
+                              <p className="text-sm">
+                                Tax{order.tax_rate ? ` (${(Number(order.tax_rate) * 100).toFixed(2)}%)` : ""}: {order.currency_code} {Number(order.tax_amount ?? 0).toFixed(2)}
+                              </p>
+                            )}
                           </div>
                           <div className="text-sm text-navy/70 min-w-0">
                             <p className="text-sm uppercase tracking-wide text-navy/50 mb-1">Order ID</p>
