@@ -253,13 +253,9 @@ Deno.serve(async (req) => {
     let itemCount = 0;
     const enrichedCartItems: EnrichedCartItem[] = [];
 
+    // First, calculate the total as if there were no bundles, and build enriched metadata.
     for (const line of validatedLines) {
-      const bundleMatch = line.bundleInstanceId ? bundleUnitsByInstanceId.get(line.bundleInstanceId) : undefined;
-      const bundleUnits = bundleMatch?.units ?? 0;
-      const discountedQuantity = Math.min(bundleUnits, line.quantity);
-      const regularQuantity = line.quantity - discountedQuantity;
-
-      totalMinor += line.unitMinor * regularQuantity;
+      totalMinor += line.unitMinor * line.quantity;
       itemCount += line.quantity;
 
       const firstImage = Array.isArray(line.product.images) && line.product.images.length > 0 ? line.product.images[0] : null;
@@ -279,11 +275,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Add each matched bundle instance once at its bundle price (not per member line).
-    for (const { bundle, units } of bundleUnitsByInstanceId.values()) {
-      const bundleUnitMinor = toMinorUnits(bundle.price);
-      if (!bundleUnitMinor) continue;
-      totalMinor += bundleUnitMinor * units;
+    // Now, for each matched bundle, calculate the discount and subtract it from the total.
+    for (const [instanceId, { bundle, units }] of bundleUnitsByInstanceId.entries()) {
+      const group = linesByInstanceId.get(instanceId)!;
+
+      // Sum of original prices for one unit of the bundle.
+      const originalBundlePriceMinor = group.reduce((sum, line) => sum + line.unitMinor, 0);
+      const bundlePriceMinor = toMinorUnits(bundle.price);
+
+      if (bundlePriceMinor && originalBundlePriceMinor > bundlePriceMinor) {
+        const discountPerBundle = originalBundlePriceMinor - bundlePriceMinor;
+        totalMinor -= discountPerBundle * units;
+      }
     }
 
     if (totalMinor <= 0) {
