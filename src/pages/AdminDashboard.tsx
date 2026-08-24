@@ -456,6 +456,16 @@ const AdminDashboard = () => {
       return;
     }
 
+    // Prevent saving if the handle is already used by another bundle.
+    const isHandleTaken = bundles.some(
+      (bundle) => bundle.handle.toLowerCase() === handle && bundle.id !== editingBundleId,
+    );
+
+    if (isHandleTaken) {
+      toast.error("Bundle handle is already in use. Please choose a unique handle.");
+      return;
+    }
+
     setIsSavingBundle(true);
     try {
       const input: BundleInput = {
@@ -482,8 +492,15 @@ const AdminDashboard = () => {
 
       resetBundleForm();
       await reloadAdminData();
-    } catch {
-      toast.error("Could not save bundle. Handle may already exist.");
+    } catch (err) {
+      const isDuplicateHandle =
+        err instanceof Error && (err.message.includes("duplicate key") || err.message.includes("bundles_handle_key"));
+      if (isDuplicateHandle) {
+        toast.error("Could not save bundle. The handle is already in use. Please refresh and try a different handle.");
+      } else {
+        const message = err instanceof Error ? err.message : "An unexpected error occurred.";
+        toast.error(`Could not save bundle: ${message}`);
+      }
     } finally {
       setIsSavingBundle(false);
     }
