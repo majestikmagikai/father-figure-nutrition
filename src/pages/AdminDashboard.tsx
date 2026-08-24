@@ -2011,52 +2011,56 @@ const AdminDashboard = () => {
             <Card className="border-navy/15 bg-white/95 mb-6">
               {/* Order Tracking Section */}
               <CardHeader>
-                <div className="mb-4 flex items-center justify-end gap-3 flex-wrap">
-                  <label className="flex items-center gap-2 text-sm text-navy/70">
-                    <span className="uppercase tracking-wide text-navy/60">Per Page</span>
-                    <select
-                      value={ordersPerPage}
-                      onChange={(e) => {
-                        setOrdersPerPage(Number(e.target.value));
-                        setOrdersPage(1);
-                      }}
-                      className="h-10 rounded-md border border-navy/20 bg-white px-3 py-2 text-sm text-navy"
-                    >
-                      <option value="10">10</option>
-                      <option value="25">25</option>
-                      <option value="50">50</option>
-                    </select>
-                  </label>
-                  <label className="flex items-center gap-2 text-sm text-navy/70">
-                    <Input
-                      value={orderSearchQuery}
-                      onChange={(e) => setOrderSearchQuery(e.target.value)}
-                      placeholder="Customer, email, order ID, tracking, product..."
-                      className="h-10 w-64 max-w-full border-navy/20 bg-white text-sm text-navy"
-                    />
-                  </label>
-                  <label className="flex items-center gap-2 text-sm text-navy/70">
-                    <select
-                      value={orderSort}
-                      onChange={(e) => {
-                        const nextSort = e.target.value as "newest" | "oldest" | "amount_desc" | "amount_asc" | "status";
-                        setOrderSort(nextSort);
-                        setOrdersPage(1);
-                      }}
-                      className="h-10 rounded-md border border-navy/20 bg-white px-3 py-2 text-sm text-navy"
-                    >
-                      <option value="newest">Newest first</option>
-                      <option value="oldest">Oldest first</option>
-                      <option value="amount_desc">Amount high to low</option>
-                      <option value="amount_asc">Amount low to high</option>
-                      <option value="status">Status (A-Z)</option>
-                    </select>
-                  </label>
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <CardTitle className="text-lg text-navy">Order Tracking</CardTitle>
+                    <CardDescription>
+                      View orders, mark fulfillment, and update statuses.
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center justify-end gap-3 flex-wrap">
+                    <label className="flex items-center gap-2 text-sm text-navy/70">
+                      <span className="uppercase tracking-wide text-navy/60">Per Page</span>
+                      <select
+                        value={ordersPerPage}
+                        onChange={(e) => {
+                          setOrdersPerPage(Number(e.target.value));
+                          setOrdersPage(1);
+                        }}
+                        className="h-10 rounded-md border border-navy/20 bg-white px-3 py-2 text-sm text-navy"
+                      >
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                      </select>
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-navy/70">
+                      <Input
+                        value={orderSearchQuery}
+                        onChange={(e) => setOrderSearchQuery(e.target.value)}
+                        placeholder="Customer, email, order ID, tracking, product..."
+                        className="h-10 w-64 max-w-full border-navy/20 bg-white text-sm text-navy"
+                      />
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-navy/70">
+                      <select
+                        value={orderSort}
+                        onChange={(e) => {
+                          const nextSort = e.target.value as "newest" | "oldest" | "amount_desc" | "amount_asc" | "status";
+                          setOrderSort(nextSort);
+                          setOrdersPage(1);
+                        }}
+                        className="h-10 rounded-md border border-navy/20 bg-white px-3 py-2 text-sm text-navy"
+                      >
+                        <option value="newest">Newest first</option>
+                        <option value="oldest">Oldest first</option>
+                        <option value="amount_desc">Amount high to low</option>
+                        <option value="amount_asc">Amount low to high</option>
+                        <option value="status">Status (A-Z)</option>
+                      </select>
+                    </label>
+                  </div>
                 </div>
-                <CardTitle className="text-lg text-navy">Order Tracking</CardTitle>
-                <CardDescription>
-                  View orders, mark fulfillment, and update statuses.
-                </CardDescription>
               </CardHeader>
               <CardContent>
                 {isLoadingData ? (
