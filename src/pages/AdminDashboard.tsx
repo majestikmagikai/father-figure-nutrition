@@ -291,6 +291,7 @@ const AdminDashboard = () => {
   const [removeImageTarget, setRemoveImageTarget] = useState<RemoveImageTarget | null>(null);
   const [scanningOrder, setScanningOrder] = useState<OrderRecord | null>(null);
   const [sessionPages, setSessionPages] = useState<Record<string, number>>({});
+  const [usersPage, setUsersPage] = useState(1);
   const [metrics, setMetrics] = useState({
     totalSales: 0,
     totalOrders: 0,
@@ -686,6 +687,18 @@ const AdminDashboard = () => {
       return accumulator;
     }, {});
   }, [userSessions]);
+
+  const usersPerPage = 4;
+  const totalUsersPages = Math.max(1, Math.ceil(customerProfiles.length / usersPerPage));
+  const paginatedCustomerProfiles = useMemo(() => {
+    const start = (usersPage - 1) * usersPerPage;
+    return customerProfiles.slice(start, start + usersPerPage);
+  }, [customerProfiles, usersPage]);
+
+  useEffect(() => {
+    setUsersPage(1);
+  }, [customerProfiles.length]);
+
 
   const orderItemsByOrderId = useMemo(() => {
     return orderItems.reduce<Record<string, OrderItemRecord[]>>((accumulator, item) => {
@@ -2060,7 +2073,7 @@ const AdminDashboard = () => {
                             )}
                             <p className="text-sm break-words">{new Date(order.created_at).toLocaleString()}</p>
                             {order.tracking_sent_at && (
-                              <p className="text-xs text-emerald-700 mt-1 break-words">
+                              <p className="text-sm text-emerald-700 mt-1 break-words">
                                 Tracking sent: {new Date(order.tracking_sent_at).toLocaleString()}
                               </p>
                             )}
@@ -2281,7 +2294,7 @@ const AdminDashboard = () => {
                   <p className="text-sm text-navy/60">No customer profiles found yet.</p>
                 ) : (
                   <div className="space-y-3">
-                    {customerProfiles.map((profile) => {
+                    {paginatedCustomerProfiles.map((profile) => {
                       const fullName = [profile.first_name, profile.last_name]
                         .filter(Boolean)
                         .join(" ")
@@ -2371,6 +2384,32 @@ const AdminDashboard = () => {
                         </div>
                       );
                     })}
+
+                    {totalUsersPages > 1 && (
+                      <div className="flex items-center justify-between gap-3 pt-2">
+                        <p className="text-sm text-navy/60">
+                          Page {usersPage} of {totalUsersPages}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            className="border-navy/20 text-navy hover:bg-navy/5"
+                            disabled={usersPage === 1}
+                            onClick={() => setUsersPage((prev) => Math.max(1, prev - 1))}
+                          >
+                            Previous
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="border-navy/20 text-navy hover:bg-navy/5"
+                            disabled={usersPage >= totalUsersPages}
+                            onClick={() => setUsersPage((prev) => Math.min(totalUsersPages, prev + 1))}
+                          >
+                            Next
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>
