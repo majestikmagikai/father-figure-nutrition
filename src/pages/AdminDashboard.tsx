@@ -473,13 +473,13 @@ const AdminDashboard = () => {
         name,
         description: description || null,
         price: calculatedFinalPrice,
-        currencyCode,
-        productHandles: bundleForm.productHandles,
+        currency_code: currencyCode,
+        product_handles: bundleForm.productHandles,
         tag: tag || null,
         active: bundleForm.active,
-        sortOrder: bundleForm.sortOrder,
-        discountType,
-        discountValue: parsedDiscountValue,
+        sort_order: bundleForm.sortOrder,
+        discount_type: discountType,
+        discount_value: parsedDiscountValue,
       };
 
       if (editingBundleId) {
