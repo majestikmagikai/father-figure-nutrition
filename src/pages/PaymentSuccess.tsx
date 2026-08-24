@@ -90,10 +90,15 @@ const PaymentSuccess = () => {
                 : [];
 
               if (cartLines.length > 0 && supabase) {
-                const { data: lineProducts } = await supabase
+                const { data: lineProducts, error: productError } = await supabase
                   .from("inventory_products")
                   .select("handle, title, images")
                   .in("handle", cartLines.map((line) => line.h));
+
+                if (productError) {
+                  console.error("Could not fetch product details for order sync:", productError);
+                  toast.error("Could not sync all product details for the order.");
+                }
 
                 const productByHandle = new Map(
                   (lineProducts ?? []).map((product) => [product.handle, product]),
@@ -214,17 +219,22 @@ const PaymentSuccess = () => {
     };
 
     const runFlow = async () => {
-      await saveOrderIfNeeded();
+      try {
+        await saveOrderIfNeeded();
+      } catch (error) {
+        console.error("Failed to save order on success page:", error);
+        toast.error("There was an issue saving your order details. Please check your dashboard or contact support.");
+      } finally {
+        if (sourceItems.length > 0) {
+          clearCart();
+        }
 
-      if (sourceItems.length > 0) {
-        clearCart();
+        if (!isActive) return;
+
+        timer = window.setTimeout(() => {
+          navigate("/dashboard", { replace: true });
+        }, REDIRECT_DELAY_MS);
       }
-
-      if (!isActive) return;
-
-      timer = window.setTimeout(() => {
-        navigate("/dashboard", { replace: true });
-      }, REDIRECT_DELAY_MS);
     };
 
     void runFlow();
