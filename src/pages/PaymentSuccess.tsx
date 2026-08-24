@@ -194,7 +194,12 @@ const PaymentSuccess = () => {
         toast.success("Order confirmed! Redirecting to your dashboard.");
         setTimeout(() => navigate("/dashboard", { replace: true }), REDIRECT_DELAY_MS);
       } catch (err) {
-        const message = err instanceof Error ? err.message : "An unknown error occurred while saving your order.";
+        let message = "An unknown error occurred while saving your order.";
+        if (err instanceof Error) {
+          message = err.message;
+        } else if (err && typeof err === "object" && "message" in err && typeof err.message === "string") {
+          message = err.message;
+        }
         setErrorMessage(message);
         setStatus("error");
         toast.error(`Failed to save order: ${message}`);
