@@ -218,7 +218,7 @@ const PaymentSuccess = () => {
       sessionStorage.removeItem(CHECKOUT_ORDER_TOKEN_KEY);
     };
 
-    const runFlow = async () => {
+    const runOrderSave = async () => {
       try {
         await saveOrderIfNeeded();
       } catch (error) {
@@ -228,16 +228,16 @@ const PaymentSuccess = () => {
         if (sourceItems.length > 0) {
           clearCart();
         }
-
-        if (!isActive) return;
-
-        timer = window.setTimeout(() => {
-          navigate("/dashboard", { replace: true });
-        }, REDIRECT_DELAY_MS);
       }
     };
 
-    void runFlow();
+    void runOrderSave();
+
+    timer = window.setTimeout(() => {
+      if (isActive) {
+        navigate("/dashboard", { replace: true });
+      }
+    }, REDIRECT_DELAY_MS);
 
     return () => {
       isActive = false;
