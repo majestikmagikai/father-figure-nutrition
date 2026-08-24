@@ -86,6 +86,17 @@
 
   <body>
     <div id="root"></div>
+    <script>
+      (function () {
+        // Restore the path stashed by 404.html so a hard refresh on a deep
+        // link (e.g. /dashboard) lands on the right route instead of "/".
+        var redirect = sessionStorage.getItem("spa-redirect");
+        sessionStorage.removeItem("spa-redirect");
+        if (redirect && redirect !== window.location.pathname + window.location.search + window.location.hash) {
+          window.history.replaceState(null, "", redirect);
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

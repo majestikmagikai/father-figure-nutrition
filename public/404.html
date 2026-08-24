@@ -9,10 +9,19 @@
     <script>
       (function () {
         var hash = window.location.hash || "";
-        var search = window.location.search || "";
         var hasOAuthHash = hash.indexOf("access_token=") !== -1 || hash.indexOf("refresh_token=") !== -1;
-        var target = hasOAuthHash ? "/auth/callback" + hash : "/" + search + hash;
-        window.location.replace(target);
+        if (hasOAuthHash) {
+          window.location.replace("/auth/callback" + hash);
+          return;
+        }
+
+        // GitHub Pages has no server-side rewrites, so a hard refresh on a
+        // deep link (e.g. /dashboard) hits this 404 page. Stash the intended
+        // path and hand off to index.html, which restores it before the app
+        // mounts so React Router lands on the right route instead of "/".
+        var redirect = window.location.pathname + window.location.search + hash;
+        sessionStorage.setItem("spa-redirect", redirect);
+        window.location.replace("/");
       })();
     </script>
   </body>
