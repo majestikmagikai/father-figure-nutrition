@@ -59,8 +59,9 @@ const PaymentSuccess = () => {
         let normalizedItems = items.length > 0 ? items : snapshotItems;
         let shippingAddress: string | null = null;
 
-        // Only make the Stripe SDK network call if we lack item details
-        if (normalizedItems.length === 0 && paymentIntentClientSecret && stripePromise) {
+        // Always retrieve the payment intent when we have its client secret so we can capture
+        // the shipping address, even if we already have item details from the local cart snapshot.
+        if (paymentIntentClientSecret && stripePromise) {
           const stripe = await stripePromise;
           if (!stripe) throw new Error("Stripe.js failed to load.");
 
@@ -82,7 +83,7 @@ const PaymentSuccess = () => {
                 .join("\n");
             }
 
-            if (intent.status === "succeeded") {
+            if (intent.status === "succeeded" && normalizedItems.length === 0) {
               const metadata = (intent as { metadata?: Record<string, string> }).metadata ?? {};
               const cartLinesRaw = metadata.cart_lines ?? "";
 
@@ -165,7 +166,7 @@ const PaymentSuccess = () => {
           totalAmount,
           currencyCode,
           itemCount,
-          //shippingAddress: shippingAddress,
+          shippingAddress,
         });
 
         if (!orderId) {

@@ -27,11 +27,35 @@ const EmbeddedPaymentForm = () => {
 
     if (!stripe || !elements) return;
 
+    const addressElement = elements.getElement(AddressElement);
+    let shipping: { name: string; phone?: string; address: { line1: string; line2?: string; city: string; state: string; postal_code: string; country: string } } | undefined;
+
+    if (addressElement) {
+      const { complete, value } = await addressElement.getValue();
+      if (!complete) {
+        toast.error("Please enter a complete shipping address.");
+        return;
+      }
+      shipping = {
+        name: value.name,
+        phone: value.phone || undefined,
+        address: {
+          line1: value.address.line1,
+          line2: value.address.line2 || undefined,
+          city: value.address.city,
+          state: value.address.state,
+          postal_code: value.address.postal_code,
+          country: value.address.country,
+        },
+      };
+    }
+
     setIsSubmitting(true);
     const result = await stripe.confirmPayment({
       elements,
       confirmParams: {
         return_url: `${window.location.origin}/checkout/success`,
+        ...(shipping ? { shipping } : {}),
       },
     });
 
