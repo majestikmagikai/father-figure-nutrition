@@ -275,6 +275,8 @@ Deno.serve(async (req) => {
       });
     }
 
+    const initialTotalMinor = totalMinor;
+
     // Now, for each matched bundle, calculate the discount and subtract it from the total.
     for (const [instanceId, { bundle, units }] of bundleUnitsByInstanceId.entries()) {
       const group = linesByInstanceId.get(instanceId)!;
@@ -295,6 +297,8 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const discountMinor = initialTotalMinor > totalMinor ? initialTotalMinor - totalMinor : 0;
 
 
     const stripe = new Stripe(stripeSecretKey, {
@@ -325,6 +329,10 @@ Deno.serve(async (req) => {
       JSON.stringify({
         clientSecret: paymentIntent.client_secret,
         paymentIntentId: paymentIntent.id,
+        totalAmount: totalMinor / 100,
+        subtotalAmount: initialTotalMinor / 100,
+        discountAmount: discountMinor / 100,
+        currency: currency,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
