@@ -13,6 +13,7 @@ import ResetPassword from "./pages/ResetPassword.tsx";
 import AuthCallback from "./pages/AuthCallback.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
+import AdminHelp from "./pages/AdminHelp.tsx";
 import Checkout from "./pages/Checkout.tsx";
 import PaymentSuccess from "./pages/PaymentSuccess.tsx";
 import { RequireAdmin, RequireAuth } from "@/components/auth/RouteGuards";
@@ -110,6 +111,7 @@ const AppRoutes = () => {
         </Route>
         <Route element={<RequireAdmin />}>
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/help" element={<AdminHelp />} />
           <Route path="/admin/:section" element={<AdminDashboard />} />
           <Route path="/admin/:section/:productHandle" element={<AdminDashboard />} />
         </Route>
