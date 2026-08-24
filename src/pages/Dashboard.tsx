@@ -664,6 +664,11 @@ const Dashboard = () => {
                         </span>
                       </div>
                       <p className="text-sm">Placed: {new Date(order.created_at).toLocaleString()}</p>
+                    {(order.external_id || order.stripe_payment_intent_id) && (
+                      <p className="text-xs font-mono text-navy/60">
+                        Order ID: {order.external_id || order.stripe_payment_intent_id}
+                      </p>
+                    )}
                       <div className="pt-2 border-t border-navy/10">
                         <p className="text-xs uppercase tracking-wide text-navy/60">Products</p>
                         {orderItemsByOrderId[order.id]?.length ? (
