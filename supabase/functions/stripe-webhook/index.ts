@@ -6,6 +6,21 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature",
 };
 
+function formatShippingAddress(shipping: Stripe.Shipping | null | undefined): string | null {
+  if (!shipping?.name || !shipping.address) {
+    return null;
+  }
+  const { name, address } = shipping;
+  const addressParts = [
+    name,
+    address.line1,
+    address.line2,
+    `${address.city}, ${address.state} ${address.postal_code}`,
+    address.country,
+  ].filter(Boolean); // Filter out null/empty parts
+  return addressParts.join("\n");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -63,6 +78,7 @@ Deno.serve(async (req) => {
       const paymentIntentId = typeof session.payment_intent === "string" ? session.payment_intent : null;
       const orderExternalId = paymentIntentId ?? session.id;
       const clientOrderToken = session.metadata?.client_order_token ?? null;
+      const shippingAddress = formatShippingAddress(session.shipping_details);
 
       const status = session.payment_status === "paid" ? "processing" : "pending";
 
@@ -74,6 +90,7 @@ Deno.serve(async (req) => {
             stripe_payment_intent_id: paymentIntentId,
             client_order_token: clientOrderToken,
             customer_email: customerEmail,
+            shipping_address: shippingAddress,
             total_amount: Number(totalAmount.toFixed(2)),
             currency_code: currencyCode,
             item_count: itemCount,
@@ -97,6 +114,7 @@ Deno.serve(async (req) => {
       const itemCount = Number.parseInt(intent.metadata?.item_count ?? "0", 10) || 0;
       const customerEmail = intent.metadata?.customer_email ?? intent.receipt_email ?? null;
       const clientOrderToken = intent.metadata?.client_order_token ?? null;
+      const shippingAddress = formatShippingAddress(intent.shipping);
       const cartLinesRaw = intent.metadata?.cart_lines ?? "";
 
       type ParsedCartLine = { h: string; v: string; q: number; p: number; c: string };
@@ -156,6 +174,7 @@ Deno.serve(async (req) => {
             stripe_payment_intent_id: intent.id,
             client_order_token: clientOrderToken,
             customer_email: customerEmail,
+            shipping_address: shippingAddress,
             total_amount: Number(totalAmount.toFixed(2)),
             currency_code: currencyCode,
             item_count: itemCount,

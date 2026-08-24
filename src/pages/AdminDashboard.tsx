@@ -2063,12 +2063,14 @@ const AdminDashboard = () => {
                               Tracking sent: {new Date(order.tracking_sent_at).toLocaleString()}
                             </p>
                           )}
-                          {order.shipping_address && (
-                            <div className="text-sm text-navy/80 pt-2">
-                              <p className="font-semibold text-navy">Shipping To:</p>
-                              <p className="whitespace-pre-wrap">{order.shipping_address}</p>
-                            </div>
-                          )}
+                          <div className="text-sm text-navy/80 pt-2">
+                            <p className="font-semibold text-navy">Shipping To:</p>
+                            {order.shipping_address ? (
+                              <pre className="whitespace-pre-wrap font-sans">{order.shipping_address}</pre>
+                            ) : (
+                              <p>No shipping address provided.</p>
+                            )}
+                          </div>
                           {refundOutcomeByOrderId[order.id] && (
                             <span
                               className={`inline-flex mt-2 items-center rounded-full px-2.5 py-1 text-sm font-medium ${
