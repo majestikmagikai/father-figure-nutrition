@@ -39,6 +39,7 @@ import {
   fetchOrderItems,
   fetchOrders,
   fetchUserSessions,
+  importInventoryStockRows,
   type InventoryProduct,
   type OrderItemRecord,
   type OrderRecord,
@@ -85,7 +86,13 @@ type CancelRefundTarget = {
   order: OrderRecord;
 };
 
-type AdminInventoryProduct = InventoryProduct & { enable_3d_viewer?: boolean; upc?: string | null };
+type AdminInventoryProduct = InventoryProduct & {
+  enable_3d_viewer?: boolean;
+  upc?: string | null;
+  sku?: string | null;
+  stock_quantity?: number;
+  low_stock_threshold?: number;
+};
 
 type ProductDeleteTarget = {
   product: AdminInventoryProduct;
@@ -98,6 +105,55 @@ type RemoveImageTarget = {
 };
 
 const isHexColor = (value: string) => /^#[0-9a-fA-F]{6}$/.test(value.trim());
+
+// Minimal RFC 4180-ish CSV line parser (handles quoted fields containing commas
+// or escaped quotes) so we don't need to add a parsing dependency for the
+// admin inventory CSV import.
+const parseCsvLine = (line: string): string[] => {
+  const fields: string[] = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i += 1) {
+    const char = line[i];
+    if (inQuotes) {
+      if (char === '"') {
+        if (line[i + 1] === '"') {
+          current += '"';
+          i += 1;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        current += char;
+      }
+    } else if (char === '"') {
+      inQuotes = true;
+    } else if (char === ",") {
+      fields.push(current);
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  fields.push(current);
+  return fields;
+};
+
+const parseInventoryCsv = (text: string): Array<Record<string, string>> => {
+  const lines = text.split(/\r\n|\n|\r/).filter((line) => line.trim().length > 0);
+  if (lines.length < 2) return [];
+
+  const headers = parseCsvLine(lines[0]).map((header) => header.trim().toLowerCase());
+  return lines.slice(1).map((line) => {
+    const values = parseCsvLine(line);
+    const row: Record<string, string> = {};
+    headers.forEach((header, index) => {
+      row[header] = (values[index] ?? "").trim();
+    });
+    return row;
+  });
+};
 
 const HexColorInput = ({ value, onChange, placeholder, fallbackColor }: HexColorInputProps) => {
   const pickerRef = useRef<HTMLInputElement | null>(null);
@@ -271,6 +327,7 @@ const AdminDashboard = () => {
   const [isUploadingImageFor, setIsUploadingImageFor] = useState<string | null>(null);
   const [isUploadingModelFor, setIsUploadingModelFor] = useState<string | null>(null);
   const [isSavingSortOrder, setIsSavingSortOrder] = useState(false);
+  const [isImportingCsv, setIsImportingCsv] = useState(false);
   const [draggingProductId, setDraggingProductId] = useState<string | null>(null);
   const [productsPage, setProductsPage] = useState(1);
   const [ordersPage, setOrdersPage] = useState(1);
@@ -368,6 +425,9 @@ const AdminDashboard = () => {
     model3dUrl: "",
     enable3dViewer: false,
     upc: "",
+    sku: "",
+    stockQuantity: "0",
+    lowStockThreshold: "5",
   });
 
   const handleSessionPageChange = (userId: string, page: number) => {
@@ -1176,6 +1236,9 @@ const AdminDashboard = () => {
         model3dUrl: model3dUrl || null,
         enable3dViewer: product.enable_3d_viewer,
         upc: upc || null,
+        sku: (product.sku ?? "").trim() || null,
+        stockQuantity: Number(product.stock_quantity ?? 0),
+        lowStockThreshold: Number(product.low_stock_threshold ?? 5),
       } as any);
       toast.success("Product updated.");
       await reloadAdminData();
@@ -1209,6 +1272,87 @@ const AdminDashboard = () => {
     const target = productDeleteTarget;
     setProductDeleteTarget(null);
     await performDeleteProduct(target.product);
+  };
+
+  const handleExportInventoryCsv = () => {
+    const headers = ["id", "name", "sku", "stock_quantity", "low_stock_threshold"];
+    const rows = products.map((p) => [
+      p.id,
+      `"${p.title.replace(/"/g, '""')}"`,
+      p.sku ?? "",
+      String(p.stock_quantity ?? 0),
+      String(p.low_stock_threshold ?? 5),
+    ]);
+    const csvContent = [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `inventory_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportInventoryCsvFile = async (file: File | null) => {
+    if (!file) return;
+
+    setIsImportingCsv(true);
+    try {
+      const text = await file.text();
+      const rows = parseInventoryCsv(text);
+
+      if (rows.length === 0) {
+        toast.error("CSV file has no data rows.");
+        return;
+      }
+
+      const productsById = new Map(products.map((p) => [p.id, p]));
+      const productsBySku = new Map(products.filter((p) => p.sku).map((p) => [p.sku as string, p]));
+
+      const parsedRows: Array<{ id?: string; sku?: string; stockQuantity: number; lowStockThreshold?: number }> = [];
+      let skippedCount = 0;
+
+      for (const row of rows) {
+        const id = row.id?.trim();
+        const sku = row.sku?.trim();
+        const matches = (id && productsById.has(id)) || (sku && productsBySku.has(sku));
+        const stockQuantityRaw = Number.parseInt(row.stock_quantity ?? "", 10);
+        const lowStockThresholdRaw = row.low_stock_threshold ? Number.parseInt(row.low_stock_threshold, 10) : undefined;
+
+        if (!matches || Number.isNaN(stockQuantityRaw) || stockQuantityRaw < 0) {
+          skippedCount += 1;
+          continue;
+        }
+
+        parsedRows.push({
+          id: id && productsById.has(id) ? id : undefined,
+          sku: !id || !productsById.has(id) ? sku : undefined,
+          stockQuantity: stockQuantityRaw,
+          lowStockThreshold: lowStockThresholdRaw !== undefined && !Number.isNaN(lowStockThresholdRaw) ? lowStockThresholdRaw : undefined,
+        });
+      }
+
+      if (parsedRows.length === 0) {
+        toast.error("No valid rows found. Each row needs a matching id or sku and a non-negative stock_quantity.");
+        return;
+      }
+
+      const { successCount, errorCount } = await importInventoryStockRows(parsedRows);
+
+      if (successCount > 0) {
+        toast.success(`Updated stock for ${successCount} product(s).${skippedCount > 0 ? ` Skipped ${skippedCount} unmatched row(s).` : ""}`);
+        await reloadAdminData();
+      }
+      if (errorCount > 0) {
+        toast.error(`Failed to update ${errorCount} row(s).`);
+      }
+    } catch {
+      toast.error("Could not read or parse the CSV file.");
+    } finally {
+      setIsImportingCsv(false);
+    }
   };
 
   const handleUploadNewProductImage = async (file: File | null) => {
@@ -1427,6 +1571,9 @@ const AdminDashboard = () => {
         model3dUrl: model3dUrl || null,
         enable3dViewer: newProduct.enable3dViewer,
         upc: upc || null,
+        sku: newProduct.sku.trim() || null,
+        stockQuantity: Number.parseInt(newProduct.stockQuantity, 10) || 0,
+        lowStockThreshold: Number.parseInt(newProduct.lowStockThreshold, 10) || 0,
       } as any);
       toast.success("Product added.");
       setNewProduct({
@@ -1445,6 +1592,9 @@ const AdminDashboard = () => {
         model3dUrl: "",
         enable3dViewer: false,
         upc: "",
+        sku: "",
+        stockQuantity: "0",
+        lowStockThreshold: "5",
       });
       await reloadAdminData();
     } catch {
@@ -1621,6 +1771,34 @@ const AdminDashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="border-navy/20 text-navy hover:bg-navy/5"
+                    onClick={handleExportInventoryCsv}
+                    disabled={products.length === 0}
+                  >
+                    Export Inventory CSV
+                  </Button>
+                  <label className="inline-flex items-center gap-2">
+                    <input
+                      type="file"
+                      accept=".csv,text/csv"
+                      className="hidden"
+                      onChange={(e) => {
+                        void handleImportInventoryCsvFile(e.target.files?.[0] ?? null);
+                        e.currentTarget.value = "";
+                      }}
+                    />
+                    <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                      {isImportingCsv ? "Importing..." : "Import Stock CSV"}
+                    </span>
+                  </label>
+                  <p className="text-sm text-navy/50">
+                    CSV columns: id or sku, stock_quantity, low_stock_threshold (optional).
+                  </p>
+                </div>
                 {isLoadingData ? (
                   <p className="text-sm text-navy/60">Loading products...</p>
                 ) : products.length === 0 ? (
@@ -1658,6 +1836,8 @@ const AdminDashboard = () => {
                               <p className="text-sm text-navy/60">{product.currency_code} {Number(product.price).toFixed(2)}</p>
                               <p className="text-sm text-navy/70 mt-1">{product.description || "No short description."}</p>
                               {product.upc && <p className="text-xs font-mono text-navy/60 mt-1">UPC: {product.upc}</p>}
+                              {product.sku && <p className="text-xs font-mono text-navy/60 mt-1">SKU: {product.sku}</p>}
+                              <p className="text-sm text-navy/60 mt-1">Stock: {product.stock_quantity ?? 0}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -1674,11 +1854,16 @@ const AdminDashboard = () => {
                             </Button>
                           </div>
                         </div>
-                        <div className="mt-3">
+                        <div className="mt-3 flex flex-wrap gap-2">
                           <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-sm font-medium ${product.available_for_sale ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"
                             }`}>
                             {product.available_for_sale ? "Available" : "Unavailable"}
                           </span>
+                          {(product.stock_quantity ?? 0) <= (product.low_stock_threshold ?? 5) && (
+                            <span className="inline-flex items-center rounded-full bg-rose-100 text-rose-800 px-2.5 py-1 text-sm font-medium">
+                              Low Stock: {product.stock_quantity ?? 0} left
+                            </span>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -1788,6 +1973,35 @@ const AdminDashboard = () => {
                             placeholder="USD"
                             value={newProduct.currencyCode}
                             onChange={(e) => setNewProduct((prev) => ({ ...prev, currencyCode: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Inventory Tracking</p>
+                      <div className="grid md:grid-cols-3 gap-3">
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">SKU</p>
+                          <Input
+                            placeholder="FFN-CREA-001"
+                            value={newProduct.sku}
+                            onChange={(e) => setNewProduct((prev) => ({ ...prev, sku: e.target.value }))}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Stock Quantity</p>
+                          <Input
+                            placeholder="0"
+                            value={newProduct.stockQuantity}
+                            onChange={(e) => setNewProduct((prev) => ({ ...prev, stockQuantity: e.target.value }))}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Low Stock Threshold</p>
+                          <Input
+                            placeholder="5"
+                            value={newProduct.lowStockThreshold}
+                            onChange={(e) => setNewProduct((prev) => ({ ...prev, lowStockThreshold: e.target.value }))}
                           />
                         </div>
                       </div>
@@ -1987,6 +2201,47 @@ const AdminDashboard = () => {
                           />
                         </div>
                       </div>
+                    </div>
+                    <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
+                      <p className="text-sm uppercase tracking-wide text-navy/60">Inventory Tracking</p>
+                      <div className="grid md:grid-cols-3 gap-3">
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">SKU</p>
+                          <Input
+                            placeholder="FFN-CREA-001"
+                            value={editingProduct.sku ?? ""}
+                            onChange={(e) => {
+                              const sku = e.target.value;
+                              setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, sku } : p)));
+                            }}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Stock Quantity</p>
+                          <Input
+                            value={String(editingProduct.stock_quantity ?? 0)}
+                            onChange={(e) => {
+                              const stock_quantity = Number.parseInt(e.target.value || "0", 10);
+                              setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, stock_quantity: Number.isNaN(stock_quantity) ? 0 : stock_quantity } : p)));
+                            }}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Low Stock Threshold</p>
+                          <Input
+                            value={String(editingProduct.low_stock_threshold ?? 5)}
+                            onChange={(e) => {
+                              const low_stock_threshold = Number.parseInt(e.target.value || "0", 10);
+                              setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, low_stock_threshold: Number.isNaN(low_stock_threshold) ? 0 : low_stock_threshold } : p)));
+                            }}
+                          />
+                        </div>
+                      </div>
+                      {(editingProduct.stock_quantity ?? 0) <= (editingProduct.low_stock_threshold ?? 5) && (
+                        <span className="inline-flex items-center rounded-full bg-rose-100 text-rose-800 px-2.5 py-1 text-sm font-medium">
+                          Low Stock: {editingProduct.stock_quantity ?? 0} left
+                        </span>
+                      )}
                     </div>
                     <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
                       <p className="text-sm uppercase tracking-wide text-navy/60">Descriptions</p>

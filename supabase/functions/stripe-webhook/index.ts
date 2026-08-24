@@ -288,6 +288,24 @@ Deno.serve(async (req) => {
           console.error("Failed to persist order items", orderItemsError);
           return new Response("Failed to persist order items", { status: 500, headers: corsHeaders });
         }
+
+        // Decrement stock for each ordered product. Aggregate quantities per handle first
+        // (a handle can appear in multiple cart lines, e.g. split across bundle/non-bundle
+        // quantities) so each product only gets one atomic decrement call.
+        const quantityByHandle = new Map<string, number>();
+        for (const line of cartLines) {
+          quantityByHandle.set(line.h, (quantityByHandle.get(line.h) ?? 0) + line.q);
+        }
+
+        for (const [handle, quantity] of quantityByHandle) {
+          const { error: stockError } = await supabase.rpc("decrement_inventory_stock", {
+            p_handle: handle,
+            p_quantity: quantity,
+          });
+          if (stockError) {
+            console.error(`Failed to decrement stock for ${handle}`, stockError);
+          }
+        }
       }
     }
 

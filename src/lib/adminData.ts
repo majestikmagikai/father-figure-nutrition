@@ -2,7 +2,11 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import type { User } from "@supabase/supabase-js";
 
-export type InventoryProduct = Database["public"]["Tables"]["inventory_products"]["Row"];
+export type InventoryProduct = Database["public"]["Tables"]["inventory_products"]["Row"] & {
+  stock_quantity?: number;
+  low_stock_threshold?: number;
+  sku?: string | null;
+};
 // shipping_amount/tax_amount/shipping_method/tax_rate were added after the last Supabase
 // typegen run; extend the generated row type narrowly here until types.ts is regenerated.
 export type OrderRecord = Database["public"]["Tables"]["orders"]["Row"] & {
@@ -382,6 +386,9 @@ export const updateInventoryProduct = async (input: {
   model3dUrl: string | null;
   enable3dViewer: boolean;
   upc: string | null;
+  sku?: string | null;
+  stockQuantity?: number;
+  lowStockThreshold?: number;
 }) => {
   if (!supabase) return;
 
@@ -402,8 +409,11 @@ export const updateInventoryProduct = async (input: {
       model_3d_url: input.model3dUrl,
       enable_3d_viewer: input.enable3dViewer,
       upc: input.upc,
+      sku: input.sku ?? null,
+      stock_quantity: input.stockQuantity ?? 0,
+      low_stock_threshold: input.lowStockThreshold ?? 5,
       updated_at: new Date().toISOString(),
-    })
+    } as never)
     .eq("id", input.id);
 
   if (error) throw error;
@@ -424,6 +434,9 @@ export const createInventoryProduct = async (input: {
   model3dUrl: string | null;
   enable3dViewer: boolean;
   upc: string | null;
+  sku?: string | null;
+  stockQuantity?: number;
+  lowStockThreshold?: number;
 }) => {
   if (!supabase) return;
 
@@ -442,9 +455,54 @@ export const createInventoryProduct = async (input: {
     model_3d_url: input.model3dUrl,
     enable_3d_viewer: input.enable3dViewer,
     upc: input.upc,
-  });
+    sku: input.sku ?? null,
+    stock_quantity: input.stockQuantity ?? 0,
+    low_stock_threshold: input.lowStockThreshold ?? 5,
+  } as never);
 
   if (error) throw error;
+};
+
+// Bulk stock update used by the CSV import flow. Each row matches an existing
+// product by id (preferred) or sku, and only touches stock_quantity /
+// low_stock_threshold — never product identity fields like handle or price.
+export const importInventoryStockRows = async (
+  rows: Array<{ id?: string; sku?: string; stockQuantity: number; lowStockThreshold?: number }>,
+): Promise<{ successCount: number; errorCount: number }> => {
+  if (!supabase) return { successCount: 0, errorCount: rows.length };
+
+  let successCount = 0;
+  let errorCount = 0;
+
+  for (const row of rows) {
+    const payload: Record<string, unknown> = {
+      stock_quantity: row.stockQuantity,
+      updated_at: new Date().toISOString(),
+    };
+    if (typeof row.lowStockThreshold === "number") {
+      payload.low_stock_threshold = row.lowStockThreshold;
+    }
+
+    const query = row.id
+      ? supabase.from("inventory_products").update(payload as never).eq("id", row.id)
+      : row.sku
+        ? (supabase as any).from("inventory_products").update(payload).eq("sku", row.sku)
+        : null;
+
+    if (!query) {
+      errorCount += 1;
+      continue;
+    }
+
+    const { error } = await query;
+    if (error) {
+      errorCount += 1;
+    } else {
+      successCount += 1;
+    }
+  }
+
+  return { successCount, errorCount };
 };
 
 export const uploadProductAsset = async (input: {
