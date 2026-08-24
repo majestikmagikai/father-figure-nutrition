@@ -105,6 +105,7 @@ const Checkout = () => {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentFormError, setPaymentFormError] = useState<string | null>(null);
   const [retryToken, setRetryToken] = useState(0);
+  const [pricing, setPricing] = useState<{ subtotalAmount: number; discountAmount: number; totalAmount: number } | null>(null);
   const items = useCartStore((s) => s.items);
 
   useEffect(() => {
@@ -154,6 +155,7 @@ const Checkout = () => {
       setIsPreparingPayment(true);
       setClientSecret(null);
       setPaymentFormError(null);
+      setPricing(null);
 
       sessionStorage.setItem(CHECKOUT_SNAPSHOT_KEY, JSON.stringify(items));
 
@@ -193,6 +195,17 @@ const Checkout = () => {
       }
 
       setClientSecret(data.clientSecret);
+      if (
+        typeof data.subtotalAmount === "number" &&
+        typeof data.discountAmount === "number" &&
+        typeof data.totalAmount === "number"
+      ) {
+        setPricing({
+          subtotalAmount: data.subtotalAmount,
+          discountAmount: data.discountAmount,
+          totalAmount: data.totalAmount,
+        });
+      }
       setIsPreparingPayment(false);
     };
 
@@ -337,6 +350,9 @@ const Checkout = () => {
                         <div key={item.variantId} className="flex justify-between gap-3 text-sm">
                           <div className="text-navy/70">
                             <p className="font-medium text-navy">{item.title}</p>
+                            {item.bundleName && (
+                              <p className="text-sm text-orange">Part of {item.bundleName}</p>
+                            )}
                             <p>Qty {item.quantity}</p>
                           </div>
                           <p className="font-semibold text-navy">
@@ -344,9 +360,23 @@ const Checkout = () => {
                           </p>
                         </div>
                       ))}
-                      <div className="border-t border-navy/10 pt-3 flex justify-between items-center">
-                        <span className="font-semibold text-navy">Total</span>
-                        <span className="font-display text-2xl text-orange">${subtotal.toFixed(2)}</span>
+                      <div className="border-t border-navy/10 pt-3 space-y-2">
+                        <div className="flex justify-between items-center text-sm text-navy/70">
+                          <span>Subtotal</span>
+                          <span>${(pricing?.subtotalAmount ?? subtotal).toFixed(2)}</span>
+                        </div>
+                        {pricing && pricing.discountAmount > 0 && (
+                          <div className="flex justify-between items-center text-sm text-emerald-700 font-medium">
+                            <span>Bundle discount</span>
+                            <span>-${pricing.discountAmount.toFixed(2)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between items-center pt-1">
+                          <span className="font-semibold text-navy">Total</span>
+                          <span className="font-display text-2xl text-orange">
+                            ${(pricing?.totalAmount ?? subtotal).toFixed(2)}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   )}
