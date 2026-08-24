@@ -265,6 +265,7 @@ const AdminDashboard = () => {
   const [draggingProductId, setDraggingProductId] = useState<string | null>(null);
   const [productsPage, setProductsPage] = useState(1);
   const [ordersPage, setOrdersPage] = useState(1);
+  const [ordersPerPage, setOrdersPerPage] = useState(10);
   const [orderSort, setOrderSort] = useState<"newest" | "oldest" | "amount_desc" | "amount_asc" | "status">("newest");
   const [orderSearchQuery, setOrderSearchQuery] = useState("");
   const [isSavingOrder, setIsSavingOrder] = useState<string | null>(null);
@@ -763,7 +764,6 @@ const AdminDashboard = () => {
     return products.slice(start, start + productsPerPage);
   }, [products, productsPage]);
 
-  const ordersPerPage = 10;
   const filteredOrders = useMemo(() => {
     const query = orderSearchQuery.trim().toLowerCase();
     if (!query) return orders;
@@ -822,7 +822,7 @@ const AdminDashboard = () => {
   const paginatedOrders = useMemo(() => {
     const start = (ordersPage - 1) * ordersPerPage;
     return sortedOrders.slice(start, start + ordersPerPage);
-  }, [sortedOrders, ordersPage]);
+  }, [sortedOrders, ordersPage, ordersPerPage]);
 
   const getOrderCardAccentClass = (status: string) => {
     if (status === "fulfilled") return "border-l-emerald-500";
@@ -1330,19 +1330,19 @@ const AdminDashboard = () => {
               <CardDescription>Each area now has its own page.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
                 <Link to="/admin/metrics">Metrics</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
                 <Link to="/admin/products">Products</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
                 <Link to="/admin/orders">Orders</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
                 <Link to="/admin/users">Users</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
                 <Link to="/admin/insights">Insights</Link>
               </Button>
             </CardContent>
@@ -2012,6 +2012,21 @@ const AdminDashboard = () => {
               {/* Order Tracking Section */}
               <CardHeader>
                 <div className="mb-4 flex items-center justify-end gap-3 flex-wrap">
+                  <label className="flex items-center gap-2 text-sm text-navy/70">
+                    <span className="uppercase tracking-wide text-navy/60">Per Page</span>
+                    <select
+                      value={ordersPerPage}
+                      onChange={(e) => {
+                        setOrdersPerPage(Number(e.target.value));
+                        setOrdersPage(1);
+                      }}
+                      className="h-10 rounded-md border border-navy/20 bg-white px-3 py-2 text-sm text-navy"
+                    >
+                      <option value="10">10</option>
+                      <option value="25">25</option>
+                      <option value="50">50</option>
+                    </select>
+                  </label>
                   <label className="flex items-center gap-2 text-sm text-navy/70">
                     <Input
                       value={orderSearchQuery}
