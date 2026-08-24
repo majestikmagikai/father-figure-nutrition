@@ -165,7 +165,7 @@ const PaymentSuccess = () => {
           totalAmount,
           currencyCode,
           itemCount,
-          shippingAddress,
+          //shippingAddress: shippingAddress,
         });
 
         if (!orderId) {
