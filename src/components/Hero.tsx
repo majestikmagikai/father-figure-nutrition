@@ -41,7 +41,7 @@ export const Hero = () => {
     <section ref={sectionRef} className="relative overflow-hidden" aria-label="Hero">
       {/* Background Slideshow with Parallax */}
       <div
-        className="absolute inset-0 w-full h-[180%] -top-[10%]"
+        className="absolute inset-0 w-full h-[180%] -top-[20%]" /* Shifted container top higher */
         style={{
           transform: `translateY(${offset}px)`,
           willChange: "transform",
@@ -56,7 +56,7 @@ export const Hero = () => {
             style={{
               backgroundImage: `url(${img})`,
               backgroundSize: "cover",
-              backgroundPosition: "center",
+              backgroundPosition: "center 55%", /* Shifted focus 20% from the top */
             }}
           />
         ))}
