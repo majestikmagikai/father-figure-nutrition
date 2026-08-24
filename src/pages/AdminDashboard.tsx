@@ -2063,6 +2063,12 @@ const AdminDashboard = () => {
                               Tracking sent: {new Date(order.tracking_sent_at).toLocaleString()}
                             </p>
                           )}
+                      {(order as any).shipping_address && (
+                        <div className="text-xs text-navy/70 mt-2 bg-navy/5 p-2 rounded border border-navy/10 whitespace-pre-wrap">
+                          <p className="font-semibold text-navy">Ship To:</p>
+                          {(order as any).shipping_address}
+                        </div>
+                      )}
                           {refundOutcomeByOrderId[order.id] && (
                             <span
                               className={`inline-flex mt-2 items-center rounded-full px-2.5 py-1 text-sm font-medium ${

@@ -664,6 +664,12 @@ const Dashboard = () => {
                         </span>
                       </div>
                       <p className="text-sm">Placed: {new Date(order.created_at).toLocaleString()}</p>
+                  {(order as any).shipping_address && (
+                    <div className="text-xs text-navy/70 mt-2 bg-navy/5 p-2 rounded border border-navy/10 whitespace-pre-wrap">
+                      <p className="font-semibold text-navy">Shipping To:</p>
+                      {(order as any).shipping_address}
+                    </div>
+                  )}
                     {(order.external_id || order.stripe_payment_intent_id) && (
                       <p className="text-xs font-mono text-navy/60">
                         Order ID: {order.external_id || order.stripe_payment_intent_id}

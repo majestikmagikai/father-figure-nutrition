@@ -48,69 +48,83 @@ const PaymentSuccess = () => {
       }
 
       let normalizedItems = sourceItems;
+      let shippingAddress: string | null = null;
 
-      if (normalizedItems.length === 0 && paymentIntentClientSecret && stripePromise) {
+      if (paymentIntentClientSecret && stripePromise) {
         const stripe = await stripePromise;
         if (stripe) {
           const result = await stripe.retrievePaymentIntent(paymentIntentClientSecret);
           const intent = result.paymentIntent;
 
-          if (intent?.status === "succeeded") {
-            const metadata = (intent as unknown as { metadata?: Record<string, string> }).metadata ?? {};
-            const cartLinesRaw = metadata.cart_lines ?? "";
+          if (intent) {
+            if (intent.shipping) {
+              const s = intent.shipping;
+              shippingAddress = [
+                s.name,
+                s.address?.line1,
+                s.address?.line2,
+                `${s.address?.city}, ${s.address?.state} ${s.address?.postal_code}`,
+                s.address?.country
+              ].filter(Boolean).join("\n");
+            }
 
-            type ParsedCartLine = { h: string; v: string; q: number; p: number; c: string };
+            if (intent.status === "succeeded" && normalizedItems.length === 0) {
+              const metadata = (intent as unknown as { metadata?: Record<string, string> }).metadata ?? {};
+              const cartLinesRaw = metadata.cart_lines ?? "";
 
-            const cartLines: ParsedCartLine[] = cartLinesRaw
-              ? cartLinesRaw
-                  .split("|")
-                  .map((line): ParsedCartLine | null => {
-                    const [h, v, q, p, c] = line.split(":");
-                    const quantity = Number.parseInt(q ?? "", 10);
-                    const unitMinor = Number.parseInt(p ?? "", 10);
-                    if (!h || !c || !Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(unitMinor) || unitMinor <= 0) {
-                      return null;
-                    }
-                    return { h, v: v ?? "", q: quantity, p: unitMinor, c };
-                  })
-                  .filter((line): line is ParsedCartLine => line !== null)
-              : [];
+              type ParsedCartLine = { h: string; v: string; q: number; p: number; c: string };
 
-            if (cartLines.length > 0 && supabase) {
-              const { data: lineProducts } = await supabase
-                .from("inventory_products")
-                .select("handle, title, images")
-                .in("handle", cartLines.map((line) => line.h));
+              const cartLines: ParsedCartLine[] = cartLinesRaw
+                ? cartLinesRaw
+                    .split("|")
+                    .map((line): ParsedCartLine | null => {
+                      const [h, v, q, p, c] = line.split(":");
+                      const quantity = Number.parseInt(q ?? "", 10);
+                      const unitMinor = Number.parseInt(p ?? "", 10);
+                      if (!h || !c || !Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(unitMinor) || unitMinor <= 0) {
+                        return null;
+                      }
+                      return { h, v: v ?? "", q: quantity, p: unitMinor, c };
+                    })
+                    .filter((line): line is ParsedCartLine => line !== null)
+                : [];
 
-              const productByHandle = new Map(
-                (lineProducts ?? []).map((product) => [product.handle, product]),
-              );
+              if (cartLines.length > 0 && supabase) {
+                const { data: lineProducts } = await supabase
+                  .from("inventory_products")
+                  .select("handle, title, images")
+                  .in("handle", cartLines.map((line) => line.h));
 
-              normalizedItems = cartLines.map((line) => {
-                const product = productByHandle.get(line.h);
-                const images = product?.images as Array<{ url?: unknown }> | null | undefined;
-                const firstImage = Array.isArray(images) && images.length > 0 ? images[0] : null;
-                const imageUrl = firstImage && typeof firstImage === "object" && firstImage !== null && "url" in firstImage
-                  ? String((firstImage as { url?: unknown }).url ?? "")
-                  : "";
-                const title = product?.title ?? line.h;
+                const productByHandle = new Map(
+                  (lineProducts ?? []).map((product) => [product.handle, product]),
+                );
 
-                return {
-                  productId: `prod-${line.h}`,
-                  handle: line.h,
-                  title,
-                  image: {
-                    url: imageUrl,
-                    altText: title,
-                  },
-                  variantId: line.v,
-                  price: (line.p / 100).toFixed(2),
-                  currencyCode: line.c.toUpperCase(),
-                  quantity: line.q,
-                };
-              });
-            } else {
-              normalizedItems = [];
+                normalizedItems = cartLines.map((line) => {
+                  const product = productByHandle.get(line.h);
+                  const images = product?.images as Array<{ url?: unknown }> | null | undefined;
+                  const firstImage = Array.isArray(images) && images.length > 0 ? images[0] : null;
+                  const imageUrl = firstImage && typeof firstImage === "object" && firstImage !== null && "url" in firstImage
+                    ? String((firstImage as { url?: unknown }).url ?? "")
+                    : "";
+                  const title = product?.title ?? line.h;
+
+                  return {
+                    productId: `prod-${line.h}`,
+                    handle: line.h,
+                    title,
+                    image: {
+                      url: imageUrl,
+                      altText: title,
+                    },
+                    variantId: line.v,
+                    price: (line.p / 100).toFixed(2),
+                    currencyCode: line.c.toUpperCase(),
+                    quantity: line.q,
+                  };
+                });
+              } else {
+                normalizedItems = [];
+              }
             }
           }
         }
@@ -141,6 +155,7 @@ const PaymentSuccess = () => {
           totalAmount,
           currencyCode,
           itemCount,
+        shippingAddress,
         });
       } catch {
         // The webhook may have already created the order row; continue so line items can still be stored.
@@ -220,7 +235,7 @@ const PaymentSuccess = () => {
         window.clearTimeout(timer);
       }
     };
-  }, [clearCart, items.length, navigate]);
+  }, [clearCart, items, navigate]);
 
   return (
     <div className="min-h-screen flex flex-col">

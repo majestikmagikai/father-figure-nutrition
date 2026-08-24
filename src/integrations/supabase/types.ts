@@ -411,6 +411,7 @@ export type Database = {
           fulfilled_at: string | null
           id: string
           item_count: number
+          shipping_address: string | null
           status: string
           stripe_payment_intent_id: string | null
           total_amount: number
@@ -429,6 +430,7 @@ export type Database = {
           fulfilled_at?: string | null
           id?: string
           item_count?: number
+          shipping_address?: string | null
           status?: string
           stripe_payment_intent_id?: string | null
           total_amount: number
@@ -447,6 +449,7 @@ export type Database = {
           fulfilled_at?: string | null
           id?: string
           item_count?: number
+          shipping_address?: string | null
           status?: string
           stripe_payment_intent_id?: string | null
           total_amount?: number

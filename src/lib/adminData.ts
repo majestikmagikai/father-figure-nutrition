@@ -57,6 +57,7 @@ export const createOrderRecord = async (input: {
   totalAmount: number;
   currencyCode: string;
   itemCount: number;
+  shippingAddress?: string | null;
 }): Promise<string | null> => {
   if (!supabase) return null;
 
@@ -68,6 +69,7 @@ export const createOrderRecord = async (input: {
     total_amount: Number(input.totalAmount.toFixed(2)),
     currency_code: input.currencyCode,
     item_count: input.itemCount,
+    shipping_address: input.shippingAddress ?? null,
     status: "pending",
     updated_at: new Date().toISOString(),
   };

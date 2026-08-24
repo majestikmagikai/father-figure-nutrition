@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, CreditCard, Lock, ShieldCheck } from "lucide-react";
-import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
+import { Elements, PaymentElement, AddressElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -56,6 +56,7 @@ const EmbeddedPaymentForm = () => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <AddressElement options={{ mode: 'shipping' }} />
       <PaymentElement />
       <Button
         type="submit"
