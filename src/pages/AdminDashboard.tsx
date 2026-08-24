@@ -924,16 +924,6 @@ const AdminDashboard = () => {
     void reloadAdminData();
   }, []);
 
-  useEffect(() => {
-    const interval = window.setInterval(() => {
-      // Avoid overwriting unsaved tracking/status edits while on Orders.
-      if (isOrdersSection) return;
-      void reloadAdminData({ silent: true });
-    }, 15000);
-
-    return () => window.clearInterval(interval);
-  }, [isOrdersSection]);
-
   const displayName = useMemo(() => {
     const first = user?.user_metadata?.first_name as string | undefined;
     const last = user?.user_metadata?.last_name as string | undefined;
