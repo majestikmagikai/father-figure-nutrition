@@ -171,7 +171,7 @@ const HexColorInput = ({ value, onChange, placeholder, fallbackColor }: HexColor
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onClick={() => pickerRef.current?.click()}
-        className="pr-12 font-mono text-sm"
+        className="pr-12 font-mono text-base"
       />
       <button
         type="button"
@@ -249,8 +249,8 @@ const RichTextEditor = ({ value, onChange, placeholder, variant = "default" }: R
 
   const editorClass =
     variant === "fieldManual"
-      ? "min-h-28 p-3 text-sm leading-relaxed text-navy/90 focus:outline-none [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-2 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-2 [&_a]:text-orange [&_a]:underline [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1"
-      : "min-h-28 p-3 text-sm leading-relaxed focus:outline-none [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-2 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-2 [&_a]:text-orange [&_a]:underline [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1";
+      ? "min-h-28 p-3 text-base leading-relaxed text-navy/90 focus:outline-none [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-2 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-2 [&_a]:text-orange [&_a]:underline [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1"
+      : "min-h-28 p-3 text-base leading-relaxed focus:outline-none [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-2 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-2 [&_a]:text-orange [&_a]:underline [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1";
 
   return (
     <div className={containerClass}>
@@ -1651,7 +1651,7 @@ const AdminDashboard = () => {
       <main className="admin-shell flex-1 px-3 py-5 sm:px-6 sm:py-12 bg-gradient-to-b from-sky/20 via-secondary to-background">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-8">
-            <Link to="/" className="inline-flex items-center gap-2 text-sm text-navy/70 hover:text-orange transition-colors font-medium">
+            <Link to="/" className="inline-flex items-center gap-2 text-base text-navy/70 hover:text-orange transition-colors font-medium">
               <ArrowLeft className="h-4 w-4" /> Back to home
             </Link>
             {user && (
@@ -1673,7 +1673,7 @@ const AdminDashboard = () => {
 
           <Card className="border-navy/15 shadow-card mb-6 bg-white/95">
             <CardHeader>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border bg-navy/10 border-navy/20 text-navy text-sm uppercase tracking-widest font-semibold mb-3 w-fit">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border bg-navy/10 border-navy/20 text-navy text-base uppercase tracking-widest font-semibold mb-3 w-fit">
                 <ShieldCheck className="h-3.5 w-3.5" /> Admin Dashboard
               </div>
               <CardTitle className="font-display uppercase text-xl text-navy">Welcome, {displayName}</CardTitle>
@@ -1789,21 +1789,21 @@ const AdminDashboard = () => {
                         e.currentTarget.value = "";
                       }}
                     />
-                    <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                    <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-base font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
                       {isImportingCsv ? "Importing..." : "Import Stock CSV"}
                     </span>
                   </label>
-                  <p className="text-sm text-navy/50">
+                  <p className="text-base text-navy/50">
                     CSV columns: id or sku, stock_quantity, low_stock_threshold (optional).
                   </p>
                 </div>
                 {isLoadingData ? (
-                  <p className="text-sm text-navy/60">Loading products...</p>
+                  <p className="text-base text-navy/60">Loading products...</p>
                 ) : products.length === 0 ? (
-                  <p className="text-sm text-navy/60">No products found in inventory_products.</p>
+                  <p className="text-base text-navy/60">No products found in inventory_products.</p>
                 ) : (
                   <div className="space-y-3">
-                    <p className="text-sm uppercase tracking-wide text-navy/60">
+                    <p className="text-base uppercase tracking-wide text-navy/60">
                       Drag products by the grip icon to reorder. {isSavingSortOrder ? "Saving order..." : ""}
                     </p>
                     {paginatedProducts.map((product, index) => (
@@ -1828,14 +1828,14 @@ const AdminDashboard = () => {
                             </button>
                             <div className="min-w-0">
                               <p className="font-semibold text-navy break-words">{product.title || "Untitled Product"}</p>
-                              <p className="text-sm text-navy/60">Category: <span className="font-medium">{product.handle.startsWith("father-figure-") ? "Apparel" : "Supplement"}</span></p>
-                              <p className="text-sm text-navy/60 break-words">Handle: {product.handle}</p>
-                              <p className="text-sm text-navy/60">Position: {(productsPage - 1) * productsPerPage + index + 1}</p>
-                              <p className="text-sm text-navy/60">{product.currency_code} {Number(product.price).toFixed(2)}</p>
-                              <p className="text-sm text-navy/70 mt-1 break-words">{product.description || "No short description."}</p>
-                              {product.upc && <p className="text-sm font-mono text-navy/60 mt-1">UPC: {product.upc}</p>}
-                              {product.sku && <p className="text-sm font-mono text-navy/60 mt-1">SKU: {product.sku}</p>}
-                              <p className="text-sm text-navy/60 mt-1">Stock: {product.stock_quantity ?? 0}</p>
+                              <p className="text-base text-navy/60">Category: <span className="font-medium">{product.handle.startsWith("father-figure-") ? "Apparel" : "Supplement"}</span></p>
+                              <p className="text-base text-navy/60 break-words">Handle: {product.handle}</p>
+                              <p className="text-base text-navy/60">Position: {(productsPage - 1) * productsPerPage + index + 1}</p>
+                              <p className="text-base text-navy/60">{product.currency_code} {Number(product.price).toFixed(2)}</p>
+                              <p className="text-base text-navy/70 mt-1 break-words">{product.description || "No short description."}</p>
+                              {product.upc && <p className="text-base font-mono text-navy/60 mt-1">UPC: {product.upc}</p>}
+                              {product.sku && <p className="text-base font-mono text-navy/60 mt-1">SKU: {product.sku}</p>}
+                              <p className="text-base text-navy/60 mt-1">Stock: {product.stock_quantity ?? 0}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -1854,12 +1854,12 @@ const AdminDashboard = () => {
                           </div>
                         </div>
                         <div className="mt-3 flex flex-wrap gap-2">
-                          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-sm font-medium ${product.available_for_sale ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"
+                          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-base font-medium ${product.available_for_sale ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"
                             }`}>
                             {product.available_for_sale ? "Available" : "Unavailable"}
                           </span>
                           {(product.stock_quantity ?? 0) <= (product.low_stock_threshold ?? 5) && (
-                            <span className="inline-flex items-center rounded-full bg-rose-100 text-rose-800 px-2.5 py-1 text-sm font-medium">
+                            <span className="inline-flex items-center rounded-full bg-rose-100 text-rose-800 px-2.5 py-1 text-base font-medium">
                               Low Stock: {product.stock_quantity ?? 0} left
                             </span>
                           )}
@@ -1868,7 +1868,7 @@ const AdminDashboard = () => {
                     ))}
                     {totalProductPages > 1 && (
                       <div className="flex items-center justify-between gap-3 pt-2">
-                        <p className="text-sm text-navy/60">
+                        <p className="text-base text-navy/60">
                           Page {productsPage} of {totalProductPages}
                         </p>
                         <div className="flex items-center gap-2">
@@ -1905,7 +1905,7 @@ const AdminDashboard = () => {
           {isProductEditSection && (
             <Card className="border-navy/15 bg-white/95 mb-6 shadow-card">
               <CardHeader>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-navy/10 border border-navy/20 text-navy text-sm uppercase tracking-widest font-semibold w-fit">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-navy/10 border border-navy/20 text-navy text-base uppercase tracking-widest font-semibold w-fit">
                   Product Editor
                 </div>
                 <CardTitle className="text-lg text-navy">Product Edit Studio</CardTitle>
@@ -1921,21 +1921,21 @@ const AdminDashboard = () => {
                 {isEditingNewProduct ? (
                   <>
                     <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Core Info</p>
+                      <p className="text-base uppercase tracking-wide text-navy/60">Add New Product: Core Info</p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 gap-3">
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Category</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">Category</p>
                           <select
                             value={newProduct.category}
                             onChange={(e) => setNewProduct((prev) => ({ ...prev, category: e.target.value }))}
-                            className="h-10 w-full rounded-md border border-navy/20 bg-white px-3 py-2 text-sm text-navy"
+                            className="h-10 w-full rounded-md border border-navy/20 bg-white px-3 py-2 text-base text-navy"
                           >
                             <option value="supplement">Supplement</option>
                             <option value="apparel">Apparel</option>
                           </select>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Handle</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">Handle</p>
                           <Input
                             placeholder="creatine-hardbody"
                             value={newProduct.handle}
@@ -1943,7 +1943,7 @@ const AdminDashboard = () => {
                           />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Title</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">Title</p>
                           <Input
                             placeholder="Product title"
                             value={newProduct.title}
@@ -1951,7 +1951,7 @@ const AdminDashboard = () => {
                           />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Variant ID</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">Variant ID</p>
                           <Input
                             placeholder="var-product-default"
                             value={newProduct.variantId}
@@ -1959,7 +1959,7 @@ const AdminDashboard = () => {
                           />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Price</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">Price</p>
                           <Input
                             placeholder="0.00"
                             value={newProduct.price}
@@ -1967,7 +1967,7 @@ const AdminDashboard = () => {
                           />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Currency</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">Currency</p>
                           <Input
                             placeholder="USD"
                             value={newProduct.currencyCode}
@@ -1977,10 +1977,10 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                     <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Inventory Tracking</p>
+                      <p className="text-base uppercase tracking-wide text-navy/60">Add New Product: Inventory Tracking</p>
                       <div className="grid md:grid-cols-3 gap-3">
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">SKU</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">SKU</p>
                           <Input
                             placeholder="FFN-CREA-001"
                             value={newProduct.sku}
@@ -1988,7 +1988,7 @@ const AdminDashboard = () => {
                           />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Stock Quantity</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">Stock Quantity</p>
                           <Input
                             placeholder="0"
                             value={newProduct.stockQuantity}
@@ -1996,7 +1996,7 @@ const AdminDashboard = () => {
                           />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Low Stock Threshold</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">Low Stock Threshold</p>
                           <Input
                             placeholder="5"
                             value={newProduct.lowStockThreshold}
@@ -2006,12 +2006,12 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                     <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Descriptions</p>
+                      <p className="text-base uppercase tracking-wide text-navy/60">Add New Product: Descriptions</p>
                       <div className="grid lg:grid-cols-2 gap-4">
                         <div className="rounded-lg border border-navy/10 bg-white/90 p-3 space-y-3">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Description Editor</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">Description Editor</p>
                           <div className="space-y-1">
-                            <p className="text-sm uppercase tracking-wide text-navy/60">Short Description</p>
+                            <p className="text-base uppercase tracking-wide text-navy/60">Short Description</p>
                             <Input
                               placeholder="Short summary shown under product title"
                               value={newProduct.description}
@@ -2019,7 +2019,7 @@ const AdminDashboard = () => {
                             />
                           </div>
                           <div className="space-y-1">
-                            <p className="text-sm uppercase tracking-wide text-navy/60">Full Description</p>
+                            <p className="text-base uppercase tracking-wide text-navy/60">Full Description</p>
                             <RichTextEditor
                               value={newProduct.fullDescription}
                               onChange={(nextValue) => setNewProduct((prev) => ({ ...prev, fullDescription: nextValue }))}
@@ -2028,20 +2028,20 @@ const AdminDashboard = () => {
                           </div>
                         </div>
                         <div className="rounded-lg border border-navy/10 bg-sky/10 p-3">
-                          <p className="text-sm uppercase tracking-wide text-navy/60 mb-2">Live Preview</p>
-                          <p className="text-sm text-navy/80 mb-3">{newProduct.description || "No short description yet."}</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60 mb-2">Live Preview</p>
+                          <p className="text-base text-navy/80 mb-3">{newProduct.description || "No short description yet."}</p>
                           <div
-                            className="text-sm text-navy/80 [&_b]:font-semibold [&_i]:italic [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1"
+                            className="text-base text-navy/80 [&_b]:font-semibold [&_i]:italic [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1"
                             dangerouslySetInnerHTML={{ __html: newProduct.fullDescription || "<p>No full description yet.</p>" }}
                           />
                         </div>
                       </div>
                     </div>
                     <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Add New Product: Visuals</p>
+                      <p className="text-base uppercase tracking-wide text-navy/60">Add New Product: Visuals</p>
                       <div className="grid md:grid-cols-3 gap-3">
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Cap Color</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">Cap Color</p>
                           <HexColorInput
                             placeholder="#f5f5f5"
                             value={newProduct.capColor}
@@ -2050,7 +2050,7 @@ const AdminDashboard = () => {
                           />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Fill Color</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">Fill Color</p>
                           <HexColorInput
                             placeholder="#7a86b8 or blank"
                             value={newProduct.fillColor}
@@ -2059,7 +2059,7 @@ const AdminDashboard = () => {
                           />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">3D Model URL (.glb)</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">3D Model URL (.glb)</p>
                           <Input
                             placeholder="https://.../model.glb"
                             value={newProduct.model3dUrl}
@@ -2078,7 +2078,7 @@ const AdminDashboard = () => {
                               e.currentTarget.value = "";
                             }}
                           />
-                          <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                          <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-base font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
                             {isUploadingImageFor === "new" ? "Converting & uploading..." : "Upload Image (auto .webp)"}
                           </span>
                         </label>
@@ -2092,13 +2092,13 @@ const AdminDashboard = () => {
                               e.currentTarget.value = "";
                             }}
                           />
-                          <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                          <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-base font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
                             {isUploadingModelFor === "new" ? "Uploading .glb..." : "Upload 360 .glb"}
                           </span>
                         </label>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">Images JSON</p>
+                        <p className="text-base uppercase tracking-wide text-navy/60">Images JSON</p>
                         <Textarea
                           placeholder='[{"url":"...","altText":"..."}]'
                           value={newProduct.imagesJson}
@@ -2130,19 +2130,19 @@ const AdminDashboard = () => {
                     </div>
                   </>
                 ) : !productHandle ? (
-                  <p className="text-sm text-navy/60">No product selected. Pick one from Products List.</p>
+                  <p className="text-base text-navy/60">No product selected. Pick one from Products List.</p>
                 ) : isLoadingData ? (
-                  <p className="text-sm text-navy/60">Loading product...</p>
+                  <p className="text-base text-navy/60">Loading product...</p>
                 ) : !editingProduct ? (
-                  <p className="text-sm text-navy/60">Product not found for handle: {productHandle}</p>
+                  <p className="text-base text-navy/60">Product not found for handle: {productHandle}</p>
                 ) : (
                   <>
-                    <p className="text-sm uppercase tracking-wide text-navy/60">Product: {editingProduct.title || editingProduct.handle}</p>
+                    <p className="text-base uppercase tracking-wide text-navy/60">Product: {editingProduct.title || editingProduct.handle}</p>
                     <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Core Info</p>
+                      <p className="text-base uppercase tracking-wide text-navy/60">Core Info</p>
                       <div className="grid md:grid-cols-6 gap-3">
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Category</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">Category</p>
                           <Input
                             value={editingProduct.handle.startsWith("father-figure-") ? "Apparel" : "Supplement"}
                             disabled
@@ -2150,7 +2150,7 @@ const AdminDashboard = () => {
                           />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Handle</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">Handle</p>
                           <Input
                             value={editingProduct.handle}
                             onChange={(e) => {
@@ -2160,7 +2160,7 @@ const AdminDashboard = () => {
                           />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Title</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">Title</p>
                           <Input
                             value={editingProduct.title}
                             onChange={(e) => {
@@ -2170,7 +2170,7 @@ const AdminDashboard = () => {
                           />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Variant ID</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">Variant ID</p>
                           <Input
                             value={editingProduct.variant_id ?? ""}
                             onChange={(e) => {
@@ -2180,7 +2180,7 @@ const AdminDashboard = () => {
                           />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Price</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">Price</p>
                           <Input
                             value={String(editingProduct.price)}
                             onChange={(e) => {
@@ -2190,7 +2190,7 @@ const AdminDashboard = () => {
                           />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Currency</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">Currency</p>
                           <Input
                             value={editingProduct.currency_code}
                             onChange={(e) => {
@@ -2202,10 +2202,10 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                     <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Inventory Tracking</p>
+                      <p className="text-base uppercase tracking-wide text-navy/60">Inventory Tracking</p>
                       <div className="grid md:grid-cols-3 gap-3">
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">SKU</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">SKU</p>
                           <Input
                             placeholder="FFN-CREA-001"
                             value={editingProduct.sku ?? ""}
@@ -2216,7 +2216,7 @@ const AdminDashboard = () => {
                           />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Stock Quantity</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">Stock Quantity</p>
                           <Input
                             value={String(editingProduct.stock_quantity ?? 0)}
                             onChange={(e) => {
@@ -2226,7 +2226,7 @@ const AdminDashboard = () => {
                           />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Low Stock Threshold</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">Low Stock Threshold</p>
                           <Input
                             value={String(editingProduct.low_stock_threshold ?? 5)}
                             onChange={(e) => {
@@ -2237,18 +2237,18 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                       {(editingProduct.stock_quantity ?? 0) <= (editingProduct.low_stock_threshold ?? 5) && (
-                        <span className="inline-flex items-center rounded-full bg-rose-100 text-rose-800 px-2.5 py-1 text-sm font-medium">
+                        <span className="inline-flex items-center rounded-full bg-rose-100 text-rose-800 px-2.5 py-1 text-base font-medium">
                           Low Stock: {editingProduct.stock_quantity ?? 0} left
                         </span>
                       )}
                     </div>
                     <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Descriptions</p>
+                      <p className="text-base uppercase tracking-wide text-navy/60">Descriptions</p>
                       <div className="grid lg:grid-cols-2 gap-4">
                         <div className="rounded-lg border border-navy/10 bg-white/90 p-3 space-y-3">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Description Editor</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">Description Editor</p>
                           <div className="space-y-1">
-                            <p className="text-sm uppercase tracking-wide text-navy/60">Short Description</p>
+                            <p className="text-base uppercase tracking-wide text-navy/60">Short Description</p>
                             <Input
                               placeholder="Short description shown under product title"
                               value={editingProduct.description}
@@ -2259,7 +2259,7 @@ const AdminDashboard = () => {
                             />
                           </div>
                           <div className="space-y-1">
-                            <p className="text-sm uppercase tracking-wide text-navy/60">Full Description</p>
+                            <p className="text-base uppercase tracking-wide text-navy/60">Full Description</p>
                             <RichTextEditor
                               value={editingProduct.full_description ?? ""}
                               onChange={(e) => {
@@ -2271,15 +2271,15 @@ const AdminDashboard = () => {
                           </div>
                         </div>
                         <div className="rounded-lg border border-navy/10 bg-sky/10 p-3">
-                          <p className="text-sm uppercase tracking-wide text-navy/60 mb-2">Description Preview</p>
-                          <p className="text-sm text-navy/80 mb-3">{editingProduct.description || "No short description."}</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60 mb-2">Description Preview</p>
+                          <p className="text-base text-navy/80 mb-3">{editingProduct.description || "No short description."}</p>
                           <div
-                            className="text-sm text-navy/80 [&_b]:font-semibold [&_i]:italic [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1"
+                            className="text-base text-navy/80 [&_b]:font-semibold [&_i]:italic [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1"
                             dangerouslySetInnerHTML={{ __html: editingProduct.full_description || "" }}
                           />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">UPC</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">UPC</p>
                           <Input
                             placeholder="e.g. 199874431949"
                             value={editingProduct.upc ?? ""}
@@ -2292,12 +2292,12 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                     <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Media and Visuals</p>
+                      <p className="text-base uppercase tracking-wide text-navy/60">Media and Visuals</p>
                       <div className="space-y-2">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">Image Order</p>
-                        <p className="text-sm text-navy/60">The first image is used in Product Grid and as the default image in Product Detail.</p>
+                        <p className="text-base uppercase tracking-wide text-navy/60">Image Order</p>
+                        <p className="text-base text-navy/60">The first image is used in Product Grid and as the default image in Product Detail.</p>
                         {(parseImagesInput(JSON.stringify(editingProduct.images)) ?? []).length === 0 ? (
-                          <p className="text-sm text-navy/60">No images yet. Upload one below.</p>
+                          <p className="text-base text-navy/60">No images yet. Upload one below.</p>
                         ) : (
                           <div className="space-y-2">
                             {(parseImagesInput(JSON.stringify(editingProduct.images)) ?? []).map((image, index, allImages) => (
@@ -2309,9 +2309,9 @@ const AdminDashboard = () => {
                                     className="h-14 w-14 rounded-md border border-navy/10 object-cover bg-white"
                                   />
                                   <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium text-navy">Image {index + 1}{index === 0 ? " (Primary)" : ""}</p>
-                                    <p className="text-sm text-navy/70 truncate">{image.altText}</p>
-                                    <p className="text-sm text-navy/50 truncate">{image.url}</p>
+                                    <p className="text-base font-medium text-navy">Image {index + 1}{index === 0 ? " (Primary)" : ""}</p>
+                                    <p className="text-base text-navy/70 truncate">{image.altText}</p>
+                                    <p className="text-base text-navy/50 truncate">{image.url}</p>
                                   </div>
                                 </div>
                                 <div className="mt-2 flex flex-wrap gap-2">
@@ -2356,7 +2356,7 @@ const AdminDashboard = () => {
                         )}
                       </div>
                       <div className="space-y-1">
-                        <p className="text-sm uppercase tracking-wide text-navy/60">Images JSON</p>
+                        <p className="text-base uppercase tracking-wide text-navy/60">Images JSON</p>
                         <Textarea
                           value={JSON.stringify(editingProduct.images, null, 2)}
                           onChange={(e) => {
@@ -2364,12 +2364,12 @@ const AdminDashboard = () => {
                             if (!parsed) return;
                             setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, images: parsed } : p)));
                           }}
-                          className="min-h-24 font-mono text-sm"
+                          className="min-h-24 font-mono text-base"
                         />
                       </div>
                       <div className="grid md:grid-cols-5 gap-3 items-end">
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Cap Color</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">Cap Color</p>
                           <HexColorInput
                             placeholder="#f5f5f5"
                             value={editingProduct.cap_color ?? ""}
@@ -2380,7 +2380,7 @@ const AdminDashboard = () => {
                           />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">Fill Color</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">Fill Color</p>
                           <HexColorInput
                             placeholder="#7a86b8 or blank"
                             value={editingProduct.fill_color ?? ""}
@@ -2391,7 +2391,7 @@ const AdminDashboard = () => {
                           />
                         </div>
                         <div className="space-y-1 md:col-span-2">
-                          <p className="text-sm uppercase tracking-wide text-navy/60">3D Model URL</p>
+                          <p className="text-base uppercase tracking-wide text-navy/60">3D Model URL</p>
                           <Input
                             value={editingProduct.model_3d_url ?? ""}
                             onChange={(e) => {
@@ -2436,7 +2436,7 @@ const AdminDashboard = () => {
                               e.currentTarget.value = "";
                             }}
                           />
-                          <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                          <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-base font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
                             {isUploadingImageFor === editingProduct.id ? "Converting & uploading..." : "Upload Image (auto .webp)"}
                           </span>
                         </label>
@@ -2450,7 +2450,7 @@ const AdminDashboard = () => {
                               e.currentTarget.value = "";
                             }}
                           />
-                          <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                          <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-base font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer">
                             {isUploadingModelFor === editingProduct.id ? "Uploading .glb..." : "Upload 360 .glb"}
                           </span>
                         </label>
@@ -2498,7 +2498,7 @@ const AdminDashboard = () => {
                           setOrdersPerPage(Number(e.target.value));
                           setOrdersPage(1);
                         }}
-                        className="h-10 rounded-md border border-navy/20 bg-white px-3 py-2 text-sm text-navy"
+                        className="h-10 rounded-md border border-navy/20 bg-white px-3 py-2 text-base text-navy"
                       >
                         <option value="10">10</option>
                         <option value="25">25</option>
@@ -2510,7 +2510,7 @@ const AdminDashboard = () => {
                         value={orderSearchQuery}
                         onChange={(e) => setOrderSearchQuery(e.target.value)}
                         placeholder="Customer, email, order ID, tracking, product..."
-                        className="h-10 w-full sm:w-64 max-w-full border-navy/20 bg-white text-sm text-navy"
+                        className="h-10 w-full sm:w-64 max-w-full border-navy/20 bg-white text-base text-navy"
                       />
                     </label>
                     <label className="flex items-center gap-2 text-base text-navy/70">
@@ -2521,7 +2521,7 @@ const AdminDashboard = () => {
                           setOrderSort(nextSort);
                           setOrdersPage(1);
                         }}
-                        className="h-10 w-full sm:w-auto rounded-md border border-navy/20 bg-white px-3 py-2 text-sm text-navy"
+                        className="h-10 w-full sm:w-auto rounded-md border border-navy/20 bg-white px-3 py-2 text-base text-navy"
                       >
                         <option value="newest">Newest first</option>
                         <option value="oldest">Oldest first</option>
@@ -2535,11 +2535,11 @@ const AdminDashboard = () => {
               </CardHeader>
               <CardContent>
                 {isLoadingData ? (
-                  <p className="text-sm text-navy/60">Loading orders...</p>
+                  <p className="text-base text-navy/60">Loading orders...</p>
                 ) : orders.length === 0 ? (
-                  <p className="text-sm text-navy/60">No orders found yet.</p>
+                  <p className="text-base text-navy/60">No orders found yet.</p>
                 ) : filteredOrders.length === 0 ? (
-                  <p className="text-sm text-navy/60">No orders match your search.</p>
+                  <p className="text-base text-navy/60">No orders match your search.</p>
                 ) : (
                   <div className="space-y-3">
                     {paginatedOrders.map((order, index) => (
@@ -2549,25 +2549,25 @@ const AdminDashboard = () => {
                           } ${getOrderCardAccentClass(order.status)}`}
                       >
                         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 pb-4 border-b border-navy/10">
-                          <div className="text-sm text-navy/70 min-w-0">
+                          <div className="text-base text-navy/70 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className="font-semibold text-navy break-words">
                                 {customerNameByEmail.get(order.customer_email ?? "") ?? order.customer_email ?? "Guest"}
                               </p>
-                              <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-sm font-semibold uppercase tracking-wide ${getOrderStatusPillClass(order.status)}`}>
+                              <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-base font-semibold uppercase tracking-wide ${getOrderStatusPillClass(order.status)}`}>
                                 {order.status}
                               </span>
                             </div>
                             {order.customer_email && (
-                              <p className="text-sm break-words">{order.customer_email}</p>
+                              <p className="text-base break-words">{order.customer_email}</p>
                             )}
-                            <p className="text-sm break-words">{new Date(order.created_at).toLocaleString()}</p>
+                            <p className="text-base break-words">{new Date(order.created_at).toLocaleString()}</p>
                             {order.tracking_sent_at && (
-                              <p className="text-sm text-emerald-700 mt-1 break-words">
+                              <p className="text-base text-emerald-700 mt-1 break-words">
                                 Tracking sent: {new Date(order.tracking_sent_at).toLocaleString()}
                               </p>
                             )}
-                            <div className="text-sm text-navy/80 pt-2">
+                            <div className="text-base text-navy/80 pt-2">
                               <p className="font-semibold text-navy">Shipping To:</p>
                               {order.shipping_address ? (
                                 <pre className="whitespace-pre-wrap font-sans">{order.shipping_address}</pre>
@@ -2577,7 +2577,7 @@ const AdminDashboard = () => {
                             </div>
                             {refundOutcomeByOrderId[order.id] && (
                               <span
-                                className={`inline-flex mt-2 items-center rounded-full px-2.5 py-1 text-sm font-medium ${refundOutcomeByOrderId[order.id].tone === "success"
+                                className={`inline-flex mt-2 items-center rounded-full px-2.5 py-1 text-base font-medium ${refundOutcomeByOrderId[order.id].tone === "success"
                                     ? "bg-emerald-100 text-emerald-800"
                                     : refundOutcomeByOrderId[order.id].tone === "warning"
                                       ? "bg-amber-100 text-amber-800"
@@ -2590,33 +2590,33 @@ const AdminDashboard = () => {
                               </span>
                             )}
                           </div>
-                          <div className="text-sm text-navy/70 min-w-0">
+                          <div className="text-base text-navy/70 min-w-0">
                             <p className="font-semibold text-navy">{order.currency_code} {Number(order.total_amount).toFixed(2)}</p>
-                            <p className="text-sm">Items: {order.item_count}</p>
+                            <p className="text-base">Items: {order.item_count}</p>
                             {(Number(order.shipping_amount ?? 0) > 0 || order.shipping_method) && (
-                              <p className="text-sm">
+                              <p className="text-base">
                                 Shipping{order.shipping_method ? ` (${order.shipping_method})` : ""}: {order.currency_code} {Number(order.shipping_amount ?? 0).toFixed(2)}
                               </p>
                             )}
                             {Number(order.tax_amount ?? 0) > 0 && (
-                              <p className="text-sm">
+                              <p className="text-base">
                                 Tax{order.tax_rate ? ` (${(Number(order.tax_rate) * 100).toFixed(2)}%)` : ""}: {order.currency_code} {Number(order.tax_amount ?? 0).toFixed(2)}
                               </p>
                             )}
                           </div>
-                          <div className="text-sm text-navy/70 min-w-0">
-                            <p className="text-sm uppercase tracking-wide text-navy/50 mb-1">Order ID</p>
+                          <div className="text-base text-navy/70 min-w-0">
+                            <p className="text-base uppercase tracking-wide text-navy/50 mb-1">Order ID</p>
                             <Input value={order.external_id ?? "N/A"} disabled className="bg-secondary/40 w-full" />
                           </div>
-                          <div className="text-sm text-navy/70 min-w-0">
-                            <p className="text-sm uppercase tracking-wide text-navy/50 mb-1">Status</p>
+                          <div className="text-base text-navy/70 min-w-0">
+                            <p className="text-base uppercase tracking-wide text-navy/50 mb-1">Status</p>
                             <select
                               value={order.status}
                               onChange={(e) => {
                                 const status = e.target.value;
                                 setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status } : o)));
                               }}
-                              className={`h-10 w-full rounded-md border px-3 py-2 text-sm font-medium ${getOrderStatusSelectClass(order.status)}`}
+                              className={`h-10 w-full rounded-md border px-3 py-2 text-base font-medium ${getOrderStatusSelectClass(order.status)}`}
                             >
                               <option value="pending">pending</option>
                               <option value="processing">processing</option>
@@ -2627,21 +2627,21 @@ const AdminDashboard = () => {
                         </div>
 
                         <div className="rounded-md border border-navy/10 bg-secondary/20 p-3 space-y-2">
-                          <p className="text-sm uppercase tracking-wide text-navy/50">Ordered Products</p>
+                          <p className="text-base uppercase tracking-wide text-navy/50">Ordered Products</p>
                           {orderItemsByOrderId[order.id]?.length ? (
                             <div className="space-y-2">
                               {orderItemsByOrderId[order.id].map((item) => (
-                                <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 text-sm text-navy/70">
+                                <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 text-base text-navy/70">
                                   <div className="min-w-0">
                                     <p className="font-medium text-navy break-words">{item.product_title}</p>
-                                    <p className="text-sm break-words">{item.product_handle}{item.variant_id ? ` • ${item.variant_id}` : ""}</p>
+                                    <p className="text-base break-words">{item.product_handle}{item.variant_id ? ` • ${item.variant_id}` : ""}</p>
                                     {item.bundle_name && (
-                                      <span className="inline-flex items-center rounded-full bg-navy/10 text-navy px-2 py-0.5 text-sm mt-1">
+                                      <span className="inline-flex items-center rounded-full bg-navy/10 text-navy px-2 py-0.5 text-base mt-1">
                                         Part of {item.bundle_name}
                                       </span>
                                     )}
                                   </div>
-                                  <div className="text-right text-sm text-navy/60">
+                                  <div className="text-right text-base text-navy/60">
                                     <p>Qty {item.quantity}</p>
                                     <p>
                                       {item.currency_code} {Number(item.line_total).toFixed(2)}
@@ -2651,7 +2651,7 @@ const AdminDashboard = () => {
                               ))}
                             </div>
                           ) : (
-                            <p className="text-sm text-navy/60">No line items stored yet for this order.</p>
+                            <p className="text-base text-navy/60">No line items stored yet for this order.</p>
                           )}
                         </div>
 
@@ -2706,7 +2706,7 @@ const AdminDashboard = () => {
                         <hr className="border-t border-navy/10 my-4" />
 
                         <div className="space-y-2">
-                          <p className="text-sm uppercase tracking-widest font-semibold text-navy/50">Tracking Details</p>
+                          <p className="text-base uppercase tracking-widest font-semibold text-navy/50">Tracking Details</p>
                           <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.2fr_1fr_1fr_1.4fr] items-end">
                             <Input
                               placeholder="Tracking #"
@@ -2755,7 +2755,7 @@ const AdminDashboard = () => {
                     ))}
                     {totalOrderPages > 1 && (
                       <div className="flex items-center justify-between gap-3 pt-2">
-                        <p className="text-sm text-navy/60">
+                        <p className="text-base text-navy/60">
                           Page {ordersPage} of {totalOrderPages}
                         </p>
                         <div className="flex items-center gap-2">
@@ -2794,9 +2794,9 @@ const AdminDashboard = () => {
               </CardHeader>
               <CardContent>
                 {isLoadingData ? (
-                  <p className="text-sm text-navy/60">Loading customer profiles...</p>
+                  <p className="text-base text-navy/60">Loading customer profiles...</p>
                 ) : customerProfiles.length === 0 ? (
-                  <p className="text-sm text-navy/60">No customer profiles found yet.</p>
+                  <p className="text-base text-navy/60">No customer profiles found yet.</p>
                 ) : (
                   <div className="space-y-3">
                     {paginatedCustomerProfiles.map((profile) => {
@@ -2817,16 +2817,16 @@ const AdminDashboard = () => {
                       return (
                         <div key={profile.id} className="space-y-3 border border-navy/10 rounded-lg p-3">
                           <div className="grid md:grid-cols-4 gap-3 items-center">
-                            <div className="text-sm text-navy/70">
+                            <div className="text-base text-navy/70">
                               <p className="font-semibold text-navy">{fullName}</p>
-                              <p className="text-sm">{profile.email}</p>
+                              <p className="text-base">{profile.email}</p>
                             </div>
-                            <div className="text-sm text-navy/70">
-                              <p className="text-sm uppercase tracking-wide text-navy/50">Registered</p>
+                            <div className="text-base text-navy/70">
+                              <p className="text-base uppercase tracking-wide text-navy/50">Registered</p>
                               <p>{new Date(profile.created_at).toLocaleString()}</p>
                             </div>
-                            <div className="text-sm text-navy/70">
-                              <p className="text-sm uppercase tracking-wide text-navy/50">Last Sign In</p>
+                            <div className="text-base text-navy/70">
+                              <p className="text-base uppercase tracking-wide text-navy/50">Last Sign In</p>
                               <p>{profile.last_sign_in_at ? new Date(profile.last_sign_in_at).toLocaleString() : "N/A"}</p>
                             </div>
                             <Input value={profile.id} disabled className="bg-secondary/40" />
@@ -2834,7 +2834,7 @@ const AdminDashboard = () => {
 
                           <div className="rounded-md border border-navy/10 bg-secondary/20 p-3 space-y-2">
                             <div className="flex items-center justify-between gap-3 flex-wrap">
-                              <p className="text-sm text-navy/70">
+                              <p className="text-base text-navy/70">
                                 Active sessions: <span className="font-semibold text-navy">{activeSessionCount}</span>
                               </p>
                               <Button
@@ -2848,13 +2848,13 @@ const AdminDashboard = () => {
                             </div>
 
                             {profileSessions.length === 0 ? (
-                              <p className="text-sm text-navy/60">No session records for this user yet.</p>
+                              <p className="text-base text-navy/60">No session records for this user yet.</p>
                             ) : (
                               <div className="space-y-2">
                                 {paginatedProfileSessions.map((sessionRecord) => (
                                   <div key={sessionRecord.id} className="rounded-md border border-navy/10 bg-white/80 p-2.5">
                                     <div className="flex items-start justify-between gap-3 flex-wrap">
-                                      <div className="text-sm text-navy/70 space-y-0.5">
+                                      <div className="text-base text-navy/70 space-y-0.5">
                                         <p className="font-medium text-navy">
                                           {sessionRecord.revoked_at ? "Revoked session" : "Active session"}
                                         </p>
@@ -2893,7 +2893,7 @@ const AdminDashboard = () => {
 
                                 {totalProfileSessionPages > 1 && (
                                   <div className="flex items-center justify-between gap-3 pt-1">
-                                    <p className="text-sm text-navy/60">
+                                    <p className="text-base text-navy/60">
                                       Page {currentSessionPage} of {totalProfileSessionPages}
                                     </p>
                                     <div className="flex items-center gap-2">
@@ -2931,7 +2931,7 @@ const AdminDashboard = () => {
 
                     {totalUsersPages > 1 && (
                       <div className="flex items-center justify-between gap-3 pt-2">
-                        <p className="text-sm text-navy/60">
+                        <p className="text-base text-navy/60">
                           Page {usersPage} of {totalUsersPages}
                         </p>
                         <div className="flex items-center gap-2">
@@ -2971,12 +2971,12 @@ const AdminDashboard = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
-                  <p className="text-sm uppercase tracking-wide text-navy/60">
+                  <p className="text-base uppercase tracking-wide text-navy/60">
                     {editingBundleId ? "Edit Bundle" : "Add New Bundle"}
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                     <div className="space-y-1">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Handle</p>
+                      <p className="text-base uppercase tracking-wide text-navy/60">Handle</p>
                       <Input
                         placeholder="performance-stack"
                         value={bundleForm.handle}
@@ -2984,7 +2984,7 @@ const AdminDashboard = () => {
                       />
                     </div>
                     <div className="space-y-1">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Name</p>
+                      <p className="text-base uppercase tracking-wide text-navy/60">Name</p>
                       <Input
                         placeholder="Performance Stack"
                         value={bundleForm.name}
@@ -2992,7 +2992,7 @@ const AdminDashboard = () => {
                       />
                     </div>
                     <div className="space-y-1">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Tag (optional)</p>
+                      <p className="text-base uppercase tracking-wide text-navy/60">Tag (optional)</p>
                       <Input
                         placeholder="Best Value"
                         value={bundleForm.tag}
@@ -3000,7 +3000,7 @@ const AdminDashboard = () => {
                       />
                     </div>
                     <div className="space-y-1">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Sort Order</p>
+                      <p className="text-base uppercase tracking-wide text-navy/60">Sort Order</p>
                       <Input
                         type="number"
                         value={String(bundleForm.sortOrder)}
@@ -3012,20 +3012,20 @@ const AdminDashboard = () => {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-3">
                     <div className="space-y-1">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Discount Type</p>
+                      <p className="text-base uppercase tracking-wide text-navy/60">Discount Type</p>
                       <select
                         value={bundleForm.discountType}
                         onChange={(e) =>
                           setBundleForm((prev) => ({ ...prev, discountType: e.target.value as "fixed" | "percentage" }))
                         }
-                        className="h-10 w-full rounded-md border border-navy/20 bg-white px-3 py-2 text-sm text-navy"
+                        className="h-10 w-full rounded-md border border-navy/20 bg-white px-3 py-2 text-base text-navy"
                       >
                         <option value="fixed">Fixed Amount ($)</option>
                         <option value="percentage">Percentage (%)</option>
                       </select>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Discount Value</p>
+                      <p className="text-base uppercase tracking-wide text-navy/60">Discount Value</p>
                       <Input
                         placeholder={bundleForm.discountType === "fixed" ? "10.00" : "20"}
                         value={bundleForm.discountValue}
@@ -3033,15 +3033,15 @@ const AdminDashboard = () => {
                       />
                     </div>
                     <div className="space-y-1">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Currency</p>
+                      <p className="text-base uppercase tracking-wide text-navy/60">Currency</p>
                       <Input
                         placeholder="USD"
                         value={bundleForm.currencyCode}
                         onChange={(e) => setBundleForm((prev) => ({ ...prev, currencyCode: e.target.value }))}
                       />
                     </div>
-                    <div className="space-y-1 rounded-md border border-sky-200 bg-sky-50 p-2 text-sm text-navy/80">
-                      <p className="text-sm uppercase tracking-wide text-navy/60">Pricing Preview</p>
+                    <div className="space-y-1 rounded-md border border-sky-200 bg-sky-50 p-2 text-base text-navy/80">
+                      <p className="text-base uppercase tracking-wide text-navy/60">Pricing Preview</p>
                       <p>Original: ${originalPrice.toFixed(2)}</p>
                       <p>Discount: -${discountAmount.toFixed(2)}</p>
                       <p className="font-bold text-navy">Final Price: ${finalPrice.toFixed(2)}</p>
@@ -3058,7 +3058,7 @@ const AdminDashboard = () => {
                     </label>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm uppercase tracking-wide text-navy/60">Description (optional)</p>
+                    <p className="text-base uppercase tracking-wide text-navy/60">Description (optional)</p>
                     <Textarea
                       placeholder="Two ways to stack. One mission: show up stronger every day."
                       value={bundleForm.description}
@@ -3067,11 +3067,11 @@ const AdminDashboard = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <p className="text-sm uppercase tracking-wide text-navy/60">
+                    <p className="text-base uppercase tracking-wide text-navy/60">
                       Products Included ({bundleForm.productHandles.length} selected)
                     </p>
                     {products.length === 0 ? (
-                      <p className="text-sm text-navy/60">No products available yet.</p>
+                      <p className="text-base text-navy/60">No products available yet.</p>
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                         {products.map((product) => (
@@ -3103,11 +3103,11 @@ const AdminDashboard = () => {
                 </div>
 
                 <div className="space-y-3">
-                  <p className="text-sm uppercase tracking-wide text-navy/60">Existing Bundles</p>
+                  <p className="text-base uppercase tracking-wide text-navy/60">Existing Bundles</p>
                   {isLoadingData ? (
-                    <p className="text-sm text-navy/60">Loading bundles...</p>
+                    <p className="text-base text-navy/60">Loading bundles...</p>
                   ) : bundles.length === 0 ? (
-                    <p className="text-sm text-navy/60">No bundles created yet.</p>
+                    <p className="text-base text-navy/60">No bundles created yet.</p>
                   ) : (
                     bundles.map((bundle) => (
                       <div key={bundle.id} className="border border-navy/10 rounded-lg p-4 bg-white/80">
@@ -3116,18 +3116,18 @@ const AdminDashboard = () => {
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className="font-semibold text-navy break-words">{bundle.name}</p>
                               <span
-                                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium ${bundle.active ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"
+                                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-base font-medium ${bundle.active ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"
                                   }`}
                               >
                                 {bundle.active ? "Active" : "Inactive"}
                               </span>
                             </div>
-                            <p className="text-sm text-navy/60 break-words">Handle: {bundle.handle}</p>
-                            <p className="text-sm text-navy/60">
+                            <p className="text-base text-navy/60 break-words">Handle: {bundle.handle}</p>
+                            <p className="text-base text-navy/60">
                               {bundle.currency_code} {bundle.price.toFixed(2)} • {bundle.product_handles.length} products
                             </p>
                             {bundle.discount_value != null && (
-                              <p className="text-sm font-medium text-emerald-700">
+                              <p className="text-base font-medium text-emerald-700">
                                 Discount:{" "}
                                 {bundle.discount_type === "percentage"
                                   ? `${bundle.discount_value}%`
@@ -3135,7 +3135,7 @@ const AdminDashboard = () => {
                                 off
                               </p>
                             )}
-                            <p className="text-sm text-navy/70 break-words">{bundle.product_handles.join(", ")}</p>
+                            <p className="text-base text-navy/70 break-words">{bundle.product_handles.join(", ")}</p>
                           </div>
                           <div className="flex items-center gap-2 w-full sm:w-auto">
                             <Button variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 flex-1 sm:flex-none justify-center" onClick={() => handleEditBundle(bundle)}>
@@ -3175,7 +3175,7 @@ const AdminDashboard = () => {
                   <p>
                     <span className="font-semibold text-navy">Signed in last 30 days:</span> {insights.customersWithRecentSignIn}
                   </p>
-                  <p className="text-sm text-navy/60">
+                  <p className="text-base text-navy/60">
                     Active sign-ins are based on `last_sign_in_at` in customer profiles.
                   </p>
                 </CardContent>
@@ -3217,7 +3217,7 @@ const AdminDashboard = () => {
                   <p>
                     <span className="font-semibold text-navy">Fulfilled without tracking:</span> {insights.fulfilledWithoutTracking}
                   </p>
-                  <p className="text-sm text-navy/60">
+                  <p className="text-base text-navy/60">
                     Use this panel as an operational risk checklist while deeper security logs are added.
                   </p>
                 </CardContent>
