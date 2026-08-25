@@ -618,7 +618,7 @@ const Dashboard = () => {
                 <UserRound className="h-5 w-5 text-orange" /> Account
               </CardTitle>
             </CardHeader>
-            <CardContent className="text-sm text-navy/70 space-y-2">
+            <CardContent className="text-base text-navy/70 space-y-2">
               <p><span className="font-semibold text-navy">Email:</span> {user?.email}</p>
               <p><span className="font-semibold text-navy">Status:</span> Verified Customer</p>
             </CardContent>
@@ -631,9 +631,9 @@ const Dashboard = () => {
                   <ClipboardList className="h-5 w-5 text-orange" /> Orders
                 </CardTitle>
               </CardHeader>
-              <CardContent className="text-sm text-navy/70 space-y-3">
+              <CardContent className="text-base text-navy/70 space-y-3">
                 <div className="flex items-center justify-end">
-                  <label className="flex items-center gap-2 text-sm text-navy/70">
+                  <label className="flex items-center gap-2 text-base text-navy/70">
                     <span className="uppercase tracking-wide text-navy/60">Sort by</span>
                     <select
                       value={orderSort}
@@ -673,15 +673,15 @@ const Dashboard = () => {
                           {order.status}
                         </span>
                       </div>
-                      <p className="text-sm">Placed: {new Date(order.created_at).toLocaleString()}</p>
+                      <p className="text-base">Placed: {new Date(order.created_at).toLocaleString()}</p>
                       {order.shipping_address && (
-                        <div className="text-sm text-navy/80 pt-2">
+                        <div className="text-base text-navy/80 pt-2">
                           <p className="font-semibold text-navy">Shipping To:</p>
                           <p className="whitespace-pre-wrap">{order.shipping_address}</p>
                         </div>
                       )}
                       {(order.external_id || order.stripe_payment_intent_id) && (
-                        <p className="text-sm font-mono text-navy/60 pt-2">
+                        <p className="text-base font-mono text-navy/60 pt-2">
                           Order ID: {order.external_id || order.stripe_payment_intent_id}
                         </p>
                       )}
@@ -690,7 +690,7 @@ const Dashboard = () => {
                         {orderItemsByOrderId[order.id]?.length ? (
                           <div className="space-y-1 mt-1">
                             {orderItemsByOrderId[order.id].map((item) => (
-                              <div key={item.id} className="text-sm text-navy/70">
+                              <div key={item.id} className="text-base text-navy/70">
                                 <span className="font-medium text-navy">{item.product_title}</span>
                                 <span> x{item.quantity}</span>
                                 <span> ({item.currency_code} {Number(item.line_total).toFixed(2)})</span>
@@ -698,26 +698,26 @@ const Dashboard = () => {
                             ))}
                           </div>
                         ) : (
-                          <p className="text-sm">Product details pending.</p>
+                          <p className="text-base">Product details pending.</p>
                         )}
                       </div>
                       {order.tracking_number ? (
                         <div className="pt-2 border-t border-navy/10 space-y-1">
-                          <p className="text-sm">Tracking: {order.tracking_number}</p>
-                          {order.tracking_carrier && <p className="text-sm">Carrier: {order.tracking_carrier}</p>}
+                          <p className="text-base">Tracking: {order.tracking_number}</p>
+                          {order.tracking_carrier && <p className="text-base">Carrier: {order.tracking_carrier}</p>}
                           {order.tracking_url && (
                             <a
                               href={order.tracking_url}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-sm text-orange underline"
+                              className="text-base text-orange underline"
                             >
                               Track Shipment
                             </a>
                           )}
                         </div>
                       ) : (
-                        <p className="text-sm pt-2 border-t border-navy/10">Tracking not available yet.</p>
+                        <p className="text-base pt-2 border-t border-navy/10">Tracking not available yet.</p>
                       )}
                     </div>
                     ))}
@@ -758,7 +758,7 @@ const Dashboard = () => {
                   <CalendarClock className="h-5 w-5 text-orange" /> Routine
                 </CardTitle>
               </CardHeader>
-              <CardContent className="text-sm text-navy/70 space-y-3">
+              <CardContent className="text-base text-navy/70 space-y-3">
                 <div className="rounded-md border border-navy/10 p-3 space-y-2">
                   <p className="text-sm uppercase tracking-wide text-navy/60">Add Routine</p>
                   <Input
@@ -778,7 +778,7 @@ const Dashboard = () => {
                     <p className="text-sm uppercase tracking-wide text-navy/60">Days</p>
                     <div className="flex flex-wrap gap-2">
                       {ROUTINE_DAYS.map((day) => (
-                        <label key={day} className="inline-flex items-center gap-1 text-sm">
+                        <label key={day} className="inline-flex items-center gap-1 text-base">
                           <input
                             type="checkbox"
                             checked={newRoutineDays.includes(day)}
@@ -845,7 +845,7 @@ const Dashboard = () => {
                           <p className="text-sm uppercase tracking-wide text-navy/60">Days</p>
                           <div className="flex flex-wrap gap-2">
                             {ROUTINE_DAYS.map((day) => (
-                              <label key={`${routine.id}-${day}`} className="inline-flex items-center gap-1 text-sm">
+                              <label key={`${routine.id}-${day}`} className="inline-flex items-center gap-1 text-base">
                                 <input
                                   type="checkbox"
                                   checked={schedule.days.includes(day)}
@@ -864,7 +864,7 @@ const Dashboard = () => {
                           }}
                           className="min-h-20"
                         />
-                        <label className="inline-flex items-center gap-2 text-sm text-navy/70">
+                        <label className="inline-flex items-center gap-2 text-base text-navy/70">
                           <input
                             type="checkbox"
                             checked={routine.is_active}
@@ -905,7 +905,7 @@ const Dashboard = () => {
                 Review where your account is signed in and revoke old or unrecognized sessions.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3 text-sm text-navy/70">
+            <CardContent className="space-y-3 text-base text-navy/70">
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <p>Current session is marked below.</p>
                 <Button
@@ -945,12 +945,12 @@ const Dashboard = () => {
                                 {isRevoked ? "Revoked" : isCurrent ? "Current" : "Active"}
                               </span>
                             </div>
-                            <p className="text-sm break-words">{sessionRecord.user_agent ?? "Unknown device"}</p>
-                            <p className="text-sm">
+                            <p className="text-base break-words">{sessionRecord.user_agent ?? "Unknown device"}</p>
+                            <p className="text-base">
                               Last active: {new Date(sessionRecord.last_seen_at).toLocaleString()}
                             </p>
                             {isRevoked && (
-                              <p className="text-sm text-rose-700">
+                              <p className="text-base text-rose-700">
                                 Revoked: {new Date(sessionRecord.revoked_at as string).toLocaleString()}
                               </p>
                             )}

@@ -2108,7 +2108,7 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-4 pt-2">
-                      <label className="inline-flex items-center gap-2 text-sm text-navy/70">
+                      <label className="inline-flex items-center gap-2 text-base text-navy/70">
                         <input
                           type="checkbox"
                           checked={newProduct.availableForSale}
@@ -2116,7 +2116,7 @@ const AdminDashboard = () => {
                         />
                         Available for sale
                       </label>
-                      <label className="inline-flex items-center gap-2 text-sm text-navy/70">
+                      <label className="inline-flex items-center gap-2 text-base text-navy/70">
                         <input
                           type="checkbox"
                           checked={newProduct.enable3dViewer}
@@ -2401,7 +2401,7 @@ const AdminDashboard = () => {
                           />
                         </div>
                         <div className="flex flex-col gap-2">
-                          <label className="inline-flex items-center gap-2 text-sm text-navy/70">
+                          <label className="inline-flex items-center gap-2 text-base text-navy/70">
                             <input
                               type="checkbox"
                               checked={editingProduct.available_for_sale}
@@ -2412,7 +2412,7 @@ const AdminDashboard = () => {
                             />
                             Available for sale
                           </label>
-                          <label className="inline-flex items-center gap-2 text-sm text-navy/70">
+                          <label className="inline-flex items-center gap-2 text-base text-navy/70">
                             <input
                               type="checkbox"
                               checked={editingProduct.enable_3d_viewer ?? false}
@@ -2490,7 +2490,7 @@ const AdminDashboard = () => {
                     </CardDescription>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 w-full sm:w-auto">
-                    <label className="flex items-center gap-2 text-sm text-navy/70">
+                    <label className="flex items-center gap-2 text-base text-navy/70">
                       <span className="uppercase tracking-wide text-navy/60">Per Page</span>
                       <select
                         value={ordersPerPage}
@@ -2505,7 +2505,7 @@ const AdminDashboard = () => {
                         <option value="50">50</option>
                       </select>
                     </label>
-                    <label className="flex items-center gap-2 text-sm text-navy/70 w-full sm:w-auto">
+                    <label className="flex items-center gap-2 text-base text-navy/70 w-full sm:w-auto">
                       <Input
                         value={orderSearchQuery}
                         onChange={(e) => setOrderSearchQuery(e.target.value)}
@@ -2513,7 +2513,7 @@ const AdminDashboard = () => {
                         className="h-10 w-full sm:w-64 max-w-full border-navy/20 bg-white text-sm text-navy"
                       />
                     </label>
-                    <label className="flex items-center gap-2 text-sm text-navy/70">
+                    <label className="flex items-center gap-2 text-base text-navy/70">
                       <select
                         value={orderSort}
                         onChange={(e) => {
@@ -3048,7 +3048,7 @@ const AdminDashboard = () => {
                     </div>
                   </div>
                   <div className="pt-2">
-                    <label className="inline-flex items-center gap-2 text-sm text-navy/70 self-end pb-2">
+                    <label className="inline-flex items-center gap-2 text-base text-navy/70 self-end pb-2">
                       <input
                         type="checkbox"
                         checked={bundleForm.active}
@@ -3077,7 +3077,7 @@ const AdminDashboard = () => {
                         {products.map((product) => (
                           <label
                             key={product.id}
-                            className="inline-flex items-center gap-2 text-sm text-navy/70 rounded-md border border-navy/10 bg-white/70 px-3 py-2"
+                            className="inline-flex items-center gap-2 text-base text-navy/70 rounded-md border border-navy/10 bg-white/70 px-3 py-2"
                           >
                             <input
                               type="checkbox"
@@ -3168,7 +3168,7 @@ const AdminDashboard = () => {
                     <UsersRound className="h-5 w-5 text-orange" /> Customer Access
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="text-sm text-navy/70 space-y-2">
+                <CardContent className="text-base text-navy/70 space-y-2">
                   <p>
                     <span className="font-semibold text-navy">Total profiles:</span> {insights.totalCustomers}
                   </p>
@@ -3187,7 +3187,7 @@ const AdminDashboard = () => {
                     <BarChart3 className="h-5 w-5 text-orange" /> Sales Overview
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="text-sm text-navy/70 space-y-2">
+                <CardContent className="text-base text-navy/70 space-y-2">
                   <p>
                     <span className="font-semibold text-navy">Orders (7d):</span> {insights.ordersLast7Days}
                   </p>
@@ -3210,7 +3210,7 @@ const AdminDashboard = () => {
                     <ShieldAlert className="h-5 w-5 text-orange" /> Security Monitor
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="text-sm text-navy/70 space-y-2">
+                <CardContent className="text-base text-navy/70 space-y-2">
                   <p>
                     <span className="font-semibold text-navy">Cancelled orders:</span> {insights.cancelledOrders}
                   </p>
