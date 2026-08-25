@@ -1833,8 +1833,8 @@ const AdminDashboard = () => {
                               <p className="text-sm text-navy/60">Position: {(productsPage - 1) * productsPerPage + index + 1}</p>
                               <p className="text-sm text-navy/60">{product.currency_code} {Number(product.price).toFixed(2)}</p>
                               <p className="text-sm text-navy/70 mt-1 break-words">{product.description || "No short description."}</p>
-                              {product.upc && <p className="text-xs font-mono text-navy/60 mt-1">UPC: {product.upc}</p>}
-                              {product.sku && <p className="text-xs font-mono text-navy/60 mt-1">SKU: {product.sku}</p>}
+                              {product.upc && <p className="text-sm font-mono text-navy/60 mt-1">UPC: {product.upc}</p>}
+                              {product.sku && <p className="text-sm font-mono text-navy/60 mt-1">SKU: {product.sku}</p>}
                               <p className="text-sm text-navy/60 mt-1">Stock: {product.stock_quantity ?? 0}</p>
                             </div>
                           </div>
@@ -1905,7 +1905,7 @@ const AdminDashboard = () => {
           {isProductEditSection && (
             <Card className="border-navy/15 bg-white/95 mb-6 shadow-card">
               <CardHeader>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-navy/10 border border-navy/20 text-navy text-xs uppercase tracking-widest font-semibold w-fit">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-navy/10 border border-navy/20 text-navy text-sm uppercase tracking-widest font-semibold w-fit">
                   Product Editor
                 </div>
                 <CardTitle className="text-lg text-navy">Product Edit Studio</CardTitle>
@@ -2554,7 +2554,7 @@ const AdminDashboard = () => {
                               <p className="font-semibold text-navy break-words">
                                 {customerNameByEmail.get(order.customer_email ?? "") ?? order.customer_email ?? "Guest"}
                               </p>
-                              <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ${getOrderStatusPillClass(order.status)}`}>
+                              <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-sm font-semibold uppercase tracking-wide ${getOrderStatusPillClass(order.status)}`}>
                                 {order.status}
                               </span>
                             </div>
@@ -2706,7 +2706,7 @@ const AdminDashboard = () => {
                         <hr className="border-t border-navy/10 my-4" />
 
                         <div className="space-y-2">
-                          <p className="text-xs uppercase tracking-widest font-semibold text-navy/50">Tracking Details</p>
+                          <p className="text-sm uppercase tracking-widest font-semibold text-navy/50">Tracking Details</p>
                           <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.2fr_1fr_1fr_1.4fr] items-end">
                             <Input
                               placeholder="Tracking #"

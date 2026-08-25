@@ -602,7 +602,7 @@ const Dashboard = () => {
 
           <Card className="border-navy/15 shadow-card bg-white/95 mb-6">
             <CardHeader>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-navy/10 border border-navy/20 text-navy text-xs uppercase tracking-widest font-semibold mb-3 w-fit">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-navy/10 border border-navy/20 text-navy text-sm uppercase tracking-widest font-semibold mb-3 w-fit">
                 <ShieldCheck className="h-3.5 w-3.5" /> Customer Dashboard
               </div>
               <CardTitle className="font-display uppercase text-xl text-navy">Welcome, {displayName}</CardTitle>
@@ -669,7 +669,7 @@ const Dashboard = () => {
                         <p className="font-semibold text-navy">
                           {order.currency_code} {Number(order.total_amount).toFixed(2)}
                         </p>
-                        <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ${getOrderStatusPillClass(order.status)}`}>
+                        <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-sm font-semibold uppercase tracking-wide ${getOrderStatusPillClass(order.status)}`}>
                           {order.status}
                         </span>
                       </div>
@@ -681,12 +681,12 @@ const Dashboard = () => {
                         </div>
                       )}
                       {(order.external_id || order.stripe_payment_intent_id) && (
-                        <p className="text-xs font-mono text-navy/60 pt-2">
+                        <p className="text-sm font-mono text-navy/60 pt-2">
                           Order ID: {order.external_id || order.stripe_payment_intent_id}
                         </p>
                       )}
                       <div className="pt-2 border-t border-navy/10">
-                        <p className="text-xs uppercase tracking-wide text-navy/60">Products</p>
+                        <p className="text-sm uppercase tracking-wide text-navy/60">Products</p>
                         {orderItemsByOrderId[order.id]?.length ? (
                           <div className="space-y-1 mt-1">
                             {orderItemsByOrderId[order.id].map((item) => (
@@ -760,14 +760,14 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent className="text-sm text-navy/70 space-y-3">
                 <div className="rounded-md border border-navy/10 p-3 space-y-2">
-                  <p className="text-xs uppercase tracking-wide text-navy/60">Add Routine</p>
+                  <p className="text-sm uppercase tracking-wide text-navy/60">Add Routine</p>
                   <Input
                     placeholder="Routine name (e.g. Morning Stack)"
                     value={newRoutineName}
                     onChange={(e) => setNewRoutineName(e.target.value)}
                   />
                   <div className="grid grid-cols-2 gap-2 items-center">
-                    <label className="text-xs uppercase tracking-wide text-navy/60">Time</label>
+                    <label className="text-sm uppercase tracking-wide text-navy/60">Time</label>
                     <Input
                       type="time"
                       value={newRoutineTime}
@@ -775,10 +775,10 @@ const Dashboard = () => {
                     />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs uppercase tracking-wide text-navy/60">Days</p>
+                    <p className="text-sm uppercase tracking-wide text-navy/60">Days</p>
                     <div className="flex flex-wrap gap-2">
                       {ROUTINE_DAYS.map((day) => (
-                        <label key={day} className="inline-flex items-center gap-1 text-xs">
+                        <label key={day} className="inline-flex items-center gap-1 text-sm">
                           <input
                             type="checkbox"
                             checked={newRoutineDays.includes(day)}
@@ -819,7 +819,7 @@ const Dashboard = () => {
                           }}
                         />
                         <div className="grid grid-cols-2 gap-2 items-center">
-                          <label className="text-xs uppercase tracking-wide text-navy/60">Time</label>
+                          <label className="text-sm uppercase tracking-wide text-navy/60">Time</label>
                           <Input
                             type="time"
                             value={schedule.time}
@@ -842,10 +842,10 @@ const Dashboard = () => {
                           />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-xs uppercase tracking-wide text-navy/60">Days</p>
+                          <p className="text-sm uppercase tracking-wide text-navy/60">Days</p>
                           <div className="flex flex-wrap gap-2">
                             {ROUTINE_DAYS.map((day) => (
-                              <label key={`${routine.id}-${day}`} className="inline-flex items-center gap-1 text-xs">
+                              <label key={`${routine.id}-${day}`} className="inline-flex items-center gap-1 text-sm">
                                 <input
                                   type="checkbox"
                                   checked={schedule.days.includes(day)}
@@ -864,7 +864,7 @@ const Dashboard = () => {
                           }}
                           className="min-h-20"
                         />
-                        <label className="inline-flex items-center gap-2 text-xs text-navy/70">
+                        <label className="inline-flex items-center gap-2 text-sm text-navy/70">
                           <input
                             type="checkbox"
                             checked={routine.is_active}
@@ -941,7 +941,7 @@ const Dashboard = () => {
                               <p className="font-medium text-navy">
                                 {isCurrent ? "Current Device" : "Signed-in Device"}
                               </p>
-                              <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ${getSessionStatusPillClass(isCurrent, isRevoked)}`}>
+                              <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-sm font-semibold uppercase tracking-wide ${getSessionStatusPillClass(isCurrent, isRevoked)}`}>
                                 {isRevoked ? "Revoked" : isCurrent ? "Current" : "Active"}
                               </span>
                             </div>
