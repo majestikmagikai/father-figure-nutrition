@@ -151,6 +151,7 @@ const Checkout = () => {
   const [retryToken, setRetryToken] = useState(0);
   const [pricing, setPricing] = useState<PricingBreakdown | null>(null);
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
+  const [isRecalculating, setIsRecalculating] = useState(false);
   const [shippingRates, setShippingRates] = useState<ShippingRateOption[]>([]);
   const [selectedShippingRateId, setSelectedShippingRateId] = useState<string>("");
   const [shippingAddress, setShippingAddress] = useState<ShippingAddressValue | null>(null);
@@ -321,6 +322,7 @@ const Checkout = () => {
     const nextShippingRateId = overrides.shippingRateId ?? selectedShippingRateId;
     const nextShippingAddress = overrides.shippingAddress !== undefined ? overrides.shippingAddress : shippingAddress;
 
+    setIsRecalculating(true);
     const { data, error } = await supabase.functions.invoke("create-payment-intent", {
       body: {
         clientOrderToken: orderTokenRef.current,
@@ -336,8 +338,9 @@ const Checkout = () => {
       },
     });
 
-    if (requestId !== requestIdRef.current) return; // a newer recalculation superseded this one
+    if (requestId !== requestIdRef.current) return;
 
+    setIsRecalculating(false);
     if (error || !data?.clientSecret) {
       await reportPaymentIntentError(error, data);
       return;
@@ -474,7 +477,7 @@ const Checkout = () => {
                     <Elements stripe={stripePromise} options={options}>
                       <EmbeddedPaymentForm
                         onAddressChange={handleAddressChange}
-                        canSubmit={shippingRates.length === 0 || Boolean(selectedShippingRateId)}
+                        canSubmit={!isRecalculating && (shippingRates.length === 0 || Boolean(selectedShippingRateId))}
                       />
                     </Elements>
                   ) : items.length === 0 ? (

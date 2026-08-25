@@ -45,12 +45,11 @@ export const getSessionIdFromAccessToken = (accessToken: string | null | undefin
 
 export const upsertCurrentSessionRecord = async (session: Session | null) => {
   if (!supabase || !session?.access_token) return;
-  const client = supabase as any;
 
   const sessionId = getSessionIdFromAccessToken(session.access_token);
   if (!sessionId) return;
 
-  await client.rpc("upsert_current_session", {
+  await supabase.rpc("upsert_current_session", {
     p_user_agent: navigator.userAgent,
     p_email: session.user.email ?? null,
   });
@@ -58,9 +57,8 @@ export const upsertCurrentSessionRecord = async (session: Session | null) => {
 
 export const revokeUserSessionRecord = async (sessionRecordId: string, reason?: string | null) => {
   if (!supabase) return;
-  const client = supabase as any;
 
-  const { error } = await client.rpc("revoke_user_session", {
+  const { error } = await supabase.rpc("revoke_user_session", {
     p_session_record_id: sessionRecordId,
     p_reason: reason ?? null,
   });
@@ -70,9 +68,8 @@ export const revokeUserSessionRecord = async (sessionRecordId: string, reason?: 
 
 export const revokeAllSessionsForUser = async (userId: string, reason?: string | null) => {
   if (!supabase) return 0;
-  const client = supabase as any;
 
-  const { data, error } = await client.rpc("revoke_all_user_sessions", {
+  const { data, error } = await supabase.rpc("revoke_all_user_sessions", {
     p_target_user_id: userId,
     p_reason: reason ?? null,
   });
@@ -115,9 +112,8 @@ export const startSessionRevocationMonitor = () => {
 
   const checkRevocation = async () => {
     if (!currentAuthSessionId || hasForcedSignOut) return;
-    const client = supabase as any;
 
-    const { data, error } = await client
+    const { data, error } = await supabase
       .from("user_sessions")
       .select("id, revoked_at")
       .eq("auth_session_id", currentAuthSessionId)

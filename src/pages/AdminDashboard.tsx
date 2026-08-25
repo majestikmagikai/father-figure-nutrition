@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import DOMPurify from "dompurify";
 import { UPCScannerModal } from "@/components/UPCScannerModal";
 import {
   ArrowLeft,
@@ -211,7 +212,7 @@ const RichTextEditor = ({ value, onChange, placeholder, variant = "default" }: R
     if (!editor) return;
     editor.focus();
     document.execCommand(command);
-    onChange(editor.innerHTML);
+    onChange(DOMPurify.sanitize(editor.innerHTML));
   };
 
   const runHeading = (tag: "H2" | "H3" | "P") => {
@@ -219,7 +220,7 @@ const RichTextEditor = ({ value, onChange, placeholder, variant = "default" }: R
     if (!editor) return;
     editor.focus();
     document.execCommand("formatBlock", false, tag);
-    onChange(editor.innerHTML);
+    onChange(DOMPurify.sanitize(editor.innerHTML));
   };
 
   const insertLink = () => {
@@ -234,7 +235,7 @@ const RichTextEditor = ({ value, onChange, placeholder, variant = "default" }: R
       return;
     }
     document.execCommand("createLink", false, url);
-    onChange(editor.innerHTML);
+    onChange(DOMPurify.sanitize(editor.innerHTML));
   };
 
   const containerClass =
@@ -288,7 +289,7 @@ const RichTextEditor = ({ value, onChange, placeholder, variant = "default" }: R
         contentEditable
         suppressContentEditableWarning
         className={editorClass}
-        onInput={(e) => onChange((e.currentTarget as HTMLDivElement).innerHTML)}
+        onInput={(e) => onChange(DOMPurify.sanitize((e.currentTarget as HTMLDivElement).innerHTML))}
         data-placeholder={placeholder ?? "Type description..."}
       />
     </div>
@@ -1234,7 +1235,7 @@ const AdminDashboard = () => {
         sku: (product.sku ?? "").trim() || null,
         stockQuantity: Number(product.stock_quantity ?? 0),
         lowStockThreshold: Number(product.low_stock_threshold ?? 5),
-      } as any);
+      });
       toast.success("Product updated.");
       await reloadAdminData();
     } catch {
@@ -1569,7 +1570,7 @@ const AdminDashboard = () => {
         sku: newProduct.sku.trim() || null,
         stockQuantity: Number.parseInt(newProduct.stockQuantity, 10) || 0,
         lowStockThreshold: Number.parseInt(newProduct.lowStockThreshold, 10) || 0,
-      } as any);
+      });
       toast.success("Product added.");
       setNewProduct({
         category: "supplement",
@@ -2032,7 +2033,7 @@ const AdminDashboard = () => {
                           <p className="text-base text-navy/80 mb-3">{newProduct.description || "No short description yet."}</p>
                           <div
                             className="text-base text-navy/80 [&_b]:font-semibold [&_i]:italic [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1"
-                            dangerouslySetInnerHTML={{ __html: newProduct.fullDescription || "<p>No full description yet.</p>" }}
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(newProduct.fullDescription || "<p>No full description yet.</p>") }}
                           />
                         </div>
                       </div>
@@ -2275,7 +2276,7 @@ const AdminDashboard = () => {
                           <p className="text-base text-navy/80 mb-3">{editingProduct.description || "No short description."}</p>
                           <div
                             className="text-base text-navy/80 [&_b]:font-semibold [&_i]:italic [&_ul]:list-disc [&_ul]:ml-5 [&_li]:mb-1"
-                            dangerouslySetInnerHTML={{ __html: editingProduct.full_description || "" }}
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(editingProduct.full_description || "") }}
                           />
                         </div>
                         <div className="space-y-1">

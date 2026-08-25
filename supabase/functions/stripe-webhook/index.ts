@@ -2,8 +2,8 @@ import Stripe from "https://esm.sh/stripe@16.8.0?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.105.1";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature",
+  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") ?? "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 function formatShippingAddress(shipping: Stripe.Shipping | null | undefined): string | null {
