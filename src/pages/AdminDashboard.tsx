@@ -1688,26 +1688,26 @@ const AdminDashboard = () => {
               <CardTitle className="text-lg text-navy">Admin Menu</CardTitle>
               <CardDescription>Each area now has its own page.</CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300 w-full sm:w-auto justify-start sm:justify-center">
+            <CardContent className="grid grid-cols-2 md:flex md:flex-wrap gap-2">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300 w-full md:w-auto justify-start md:justify-center">
                 <Link to="/admin/metrics"><BarChart3 className="h-4 w-4 mr-2" />Metrics</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300 w-full sm:w-auto justify-start sm:justify-center">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300 w-full md:w-auto justify-start md:justify-center">
                 <Link to="/admin/products"><Package className="h-4 w-4 mr-2" />Products</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300 w-full sm:w-auto justify-start sm:justify-center">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300 w-full md:w-auto justify-start md:justify-center">
                 <Link to="/admin/orders"><ClipboardList className="h-4 w-4 mr-2" />Orders</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300 w-full sm:w-auto justify-start sm:justify-center">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300 w-full md:w-auto justify-start md:justify-center">
                 <Link to="/admin/users"><UsersRound className="h-4 w-4 mr-2" />Users</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300 w-full sm:w-auto justify-start sm:justify-center">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300 w-full md:w-auto justify-start md:justify-center">
                 <Link to="/admin/bundles"><Boxes className="h-4 w-4 mr-2" />Bundles</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300 w-full sm:w-auto justify-start sm:justify-center">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300 w-full md:w-auto justify-start md:justify-center">
                 <Link to="/admin/insights"><Lightbulb className="h-4 w-4 mr-2" />Insights</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300 w-full sm:w-auto justify-start sm:justify-center">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300 w-full md:w-auto justify-start md:justify-center">
                 <Link to="/admin/help"><HelpCircle className="h-4 w-4 mr-2" /> Help Guide</Link>
               </Button>
             </CardContent>

@@ -159,7 +159,7 @@
 }
 
 /* Admin & customer dashboards: tighter Card padding/spacing on small screens for more usable space. */
-@media (max-width: 639px) {
+@media (max-width: 1023px) {
   .admin-shell .p-6 {
     padding: 0.85rem;
   }
