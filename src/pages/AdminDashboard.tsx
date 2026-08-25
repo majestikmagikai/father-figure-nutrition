@@ -1686,25 +1686,25 @@ const AdminDashboard = () => {
               <CardDescription>Each area now has its own page.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-800">
                 <Link to="/admin/metrics">Metrics</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-800">
                 <Link to="/admin/products">Products</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-800">
                 <Link to="/admin/orders">Orders</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-800">
                 <Link to="/admin/users">Users</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-800">
                 <Link to="/admin/bundles">Bundles</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-800">
                 <Link to="/admin/insights">Insights</Link>
               </Button>
-              <Button asChild variant="outline" className="border-sky-300 bg-sky-50 text-sky-900 hover:bg-sky-100">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-800">
                 <Link to="/admin/help"><HelpCircle className="h-4 w-4 mr-2" /> Help Guide</Link>
               </Button>
             </CardContent>
