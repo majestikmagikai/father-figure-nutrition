@@ -575,16 +575,16 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen flex flex-col">       
       <SiteHeader />
-      <main className="flex-1 bg-gradient-to-b from-sky/20 via-secondary to-background px-6 py-12">
+      <main className="admin-shell flex-1 bg-gradient-to-b from-sky/20 via-secondary to-background px-3 py-5 sm:px-6 sm:py-12">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between gap-4 mb-8 flex-wrap">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-8">
             <Link to="/" className="inline-flex items-center gap-2 text-sm text-navy/70 hover:text-orange transition-colors font-medium">
               <ArrowLeft className="h-4 w-4" /> Back to home
             </Link>
             {user && (
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
                 {isAdminUser(user) && (
-                  <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5">
+                  <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 w-full sm:w-auto">
                     <Link to="/admin">Admin Dashboard</Link>
                   </Button>
                 )}
@@ -592,7 +592,7 @@ const Dashboard = () => {
                   onClick={handleSignOut}
                   disabled={isSigningOut}
                   variant="outline"
-                  className="border-navy/20 text-navy hover:bg-navy/5"
+                  className="border-navy/20 text-navy hover:bg-navy/5 w-full sm:w-auto"
                 >
                   <LogOut className="h-4 w-4 mr-2" /> {isSigningOut ? "Signing out..." : "Sign Out"}
                 </Button>
