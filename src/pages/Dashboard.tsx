@@ -602,7 +602,7 @@ const Dashboard = () => {
 
           <Card className="border-navy/15 shadow-card bg-white/95 mb-6">
             <CardHeader>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-navy/10 border border-navy/20 text-navy text-sm uppercase tracking-widest font-semibold mb-3 w-fit">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border bg-navy/10 border-navy/20 text-navy text-base uppercase tracking-widest font-semibold mb-3 w-fit">
                 <ShieldCheck className="h-3.5 w-3.5" /> Customer Dashboard
               </div>
               <CardTitle className="font-display uppercase text-xl text-navy">Welcome, {displayName}</CardTitle>
