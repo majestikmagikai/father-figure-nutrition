@@ -1648,22 +1648,22 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
-      <main className="flex-1 px-6 py-12 bg-gradient-to-b from-sky/20 via-secondary to-background">
+      <main className="flex-1 px-4 py-8 sm:px-6 sm:py-12 bg-gradient-to-b from-sky/20 via-secondary to-background">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between gap-4 mb-8 flex-wrap">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
             <Link to="/" className="inline-flex items-center gap-2 text-sm text-navy/70 hover:text-orange transition-colors font-medium">
               <ArrowLeft className="h-4 w-4" /> Back to home
             </Link>
             {user && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
+                <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 w-full sm:w-auto">
                   <Link to="/dashboard">Customer Dashboard</Link>
                 </Button>
                 <Button
                   onClick={handleSignOut}
                   disabled={isSigningOut}
                   variant="outline"
-                  className="border-navy/20 text-navy hover:bg-navy/5"
+                  className="border-navy/20 text-navy hover:bg-navy/5 w-full sm:w-auto"
                 >
                   <LogOut className="h-4 w-4 mr-2" /> {isSigningOut ? "Signing out..." : "Sign Out"}
                 </Button>
@@ -1688,26 +1688,26 @@ const AdminDashboard = () => {
               <CardTitle className="text-lg text-navy">Admin Menu</CardTitle>
               <CardDescription>Each area now has its own page.</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
+            <CardContent className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300 w-full sm:w-auto justify-start sm:justify-center">
                 <Link to="/admin/metrics"><BarChart3 className="h-4 w-4 mr-2" />Metrics</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300 w-full sm:w-auto justify-start sm:justify-center">
                 <Link to="/admin/products"><Package className="h-4 w-4 mr-2" />Products</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300 w-full sm:w-auto justify-start sm:justify-center">
                 <Link to="/admin/orders"><ClipboardList className="h-4 w-4 mr-2" />Orders</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300 w-full sm:w-auto justify-start sm:justify-center">
                 <Link to="/admin/users"><UsersRound className="h-4 w-4 mr-2" />Users</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300 w-full sm:w-auto justify-start sm:justify-center">
                 <Link to="/admin/bundles"><Boxes className="h-4 w-4 mr-2" />Bundles</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300 w-full sm:w-auto justify-start sm:justify-center">
                 <Link to="/admin/insights"><Lightbulb className="h-4 w-4 mr-2" />Insights</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300 w-full sm:w-auto justify-start sm:justify-center">
                 <Link to="/admin/help"><HelpCircle className="h-4 w-4 mr-2" /> Help Guide</Link>
               </Button>
             </CardContent>
@@ -1813,39 +1813,40 @@ const AdminDashboard = () => {
                         onDragOver={handleDragOver}
                         onDrop={() => void handleDropOnProduct(product.id)}
                       >
-                        <div className="flex items-center justify-between gap-3 flex-wrap">
-                          <div className="flex items-start gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                          <div className="flex items-start gap-3 min-w-0">
                             <button
                               type="button"
                               draggable
                               onDragStart={() => handleDragStart(product.id)}
                               onDragEnd={() => setDraggingProductId(null)}
-                              className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-md border border-navy/20 text-navy/60 hover:text-navy hover:border-navy/40 cursor-grab active:cursor-grabbing"
+                              className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-navy/20 text-navy/60 hover:text-navy hover:border-navy/40 cursor-grab active:cursor-grabbing"
                               title="Drag to reorder"
                               aria-label="Drag to reorder"
                             >
                               <GripVertical className="h-4 w-4" />
                             </button>
-                            <div>
-                              <p className="font-semibold text-navy">{product.title || "Untitled Product"}</p>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-navy break-words">{product.title || "Untitled Product"}</p>
                               <p className="text-sm text-navy/60">Category: <span className="font-medium">{product.handle.startsWith("father-figure-") ? "Apparel" : "Supplement"}</span></p>
-                              <p className="text-sm text-navy/60">Handle: {product.handle}</p>
+                              <p className="text-sm text-navy/60 break-words">Handle: {product.handle}</p>
                               <p className="text-sm text-navy/60">Position: {(productsPage - 1) * productsPerPage + index + 1}</p>
                               <p className="text-sm text-navy/60">{product.currency_code} {Number(product.price).toFixed(2)}</p>
-                              <p className="text-sm text-navy/70 mt-1">{product.description || "No short description."}</p>
+                              <p className="text-sm text-navy/70 mt-1 break-words">{product.description || "No short description."}</p>
                               {product.upc && <p className="text-xs font-mono text-navy/60 mt-1">UPC: {product.upc}</p>}
                               {product.sku && <p className="text-xs font-mono text-navy/60 mt-1">SKU: {product.sku}</p>}
                               <p className="text-sm text-navy/60 mt-1">Stock: {product.stock_quantity ?? 0}</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5">
+                          <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 flex-1 sm:flex-none justify-center">
                               <Link to={`/admin/product-edit/${product.handle}`}>Edit Product</Link>
                             </Button>
                             <Button
                               variant="destructive"
                               onClick={() => openProductDeleteModal(product)}
                               disabled={isDeletingProduct === product.id}
+                              className="flex-1 sm:flex-none justify-center"
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
                               {isDeletingProduct === product.id ? "Deleting..." : "Delete"}
@@ -2488,7 +2489,7 @@ const AdminDashboard = () => {
                       View orders, mark fulfillment, and update statuses.
                     </CardDescription>
                   </div>
-                  <div className="flex items-center justify-end gap-3 flex-wrap">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 w-full sm:w-auto">
                     <label className="flex items-center gap-2 text-sm text-navy/70">
                       <span className="uppercase tracking-wide text-navy/60">Per Page</span>
                       <select
@@ -2504,12 +2505,12 @@ const AdminDashboard = () => {
                         <option value="50">50</option>
                       </select>
                     </label>
-                    <label className="flex items-center gap-2 text-sm text-navy/70">
+                    <label className="flex items-center gap-2 text-sm text-navy/70 w-full sm:w-auto">
                       <Input
                         value={orderSearchQuery}
                         onChange={(e) => setOrderSearchQuery(e.target.value)}
                         placeholder="Customer, email, order ID, tracking, product..."
-                        className="h-10 w-64 max-w-full border-navy/20 bg-white text-sm text-navy"
+                        className="h-10 w-full sm:w-64 max-w-full border-navy/20 bg-white text-sm text-navy"
                       />
                     </label>
                     <label className="flex items-center gap-2 text-sm text-navy/70">
@@ -2520,7 +2521,7 @@ const AdminDashboard = () => {
                           setOrderSort(nextSort);
                           setOrdersPage(1);
                         }}
-                        className="h-10 rounded-md border border-navy/20 bg-white px-3 py-2 text-sm text-navy"
+                        className="h-10 w-full sm:w-auto rounded-md border border-navy/20 bg-white px-3 py-2 text-sm text-navy"
                       >
                         <option value="newest">Newest first</option>
                         <option value="oldest">Oldest first</option>
@@ -3110,10 +3111,10 @@ const AdminDashboard = () => {
                   ) : (
                     bundles.map((bundle) => (
                       <div key={bundle.id} className="border border-navy/10 rounded-lg p-4 bg-white/80">
-                        <div className="flex items-center justify-between gap-3 flex-wrap">
-                          <div>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                          <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <p className="font-semibold text-navy">{bundle.name}</p>
+                              <p className="font-semibold text-navy break-words">{bundle.name}</p>
                               <span
                                 className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium ${bundle.active ? "bg-emerald-100 text-emerald-800" : "bg-slate-200 text-slate-700"
                                   }`}
@@ -3121,7 +3122,7 @@ const AdminDashboard = () => {
                                 {bundle.active ? "Active" : "Inactive"}
                               </span>
                             </div>
-                            <p className="text-sm text-navy/60">Handle: {bundle.handle}</p>
+                            <p className="text-sm text-navy/60 break-words">Handle: {bundle.handle}</p>
                             <p className="text-sm text-navy/60">
                               {bundle.currency_code} {bundle.price.toFixed(2)} • {bundle.product_handles.length} products
                             </p>
@@ -3134,16 +3135,17 @@ const AdminDashboard = () => {
                                 off
                               </p>
                             )}
-                            <p className="text-sm text-navy/70">{bundle.product_handles.join(", ")}</p>
+                            <p className="text-sm text-navy/70 break-words">{bundle.product_handles.join(", ")}</p>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Button variant="outline" className="border-navy/20 text-navy hover:bg-navy/5" onClick={() => handleEditBundle(bundle)}>
+                          <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <Button variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 flex-1 sm:flex-none justify-center" onClick={() => handleEditBundle(bundle)}>
                               Edit
                             </Button>
                             <Button
                               variant="destructive"
                               onClick={() => openBundleDeleteModal(bundle)}
                               disabled={isDeletingBundleId === bundle.id}
+                              className="flex-1 sm:flex-none justify-center"
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
                               {isDeletingBundleId === bundle.id ? "Deleting..." : "Delete"}
