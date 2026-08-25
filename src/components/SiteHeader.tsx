@@ -143,7 +143,7 @@ export const SiteHeader = () => {
           <img src={logo} alt="Father Figure Men's Supplements" className="h-16 md:h-20 object-contain" />
         </Link>
 
-        <nav className="hidden md:flex items-center gap-10 text-sm font-medium">
+        <nav className="hidden lg:flex items-center gap-10 text-sm font-medium">
           {nav.map((n) => {
             const hash = n.href.includes("#") ? n.href.split("#")[1] : null;
             return hash ? (
@@ -209,7 +209,7 @@ export const SiteHeader = () => {
           <CartButton />
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
+              <Button variant="ghost" size="icon" className="lg:hidden">
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
