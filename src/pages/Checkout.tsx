@@ -152,6 +152,7 @@ const Checkout = () => {
   const [pricing, setPricing] = useState<PricingBreakdown | null>(null);
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
   const [isRecalculating, setIsRecalculating] = useState(false);
+  const [shippingRatesLoaded, setShippingRatesLoaded] = useState(false);
   const [shippingRates, setShippingRates] = useState<ShippingRateOption[]>([]);
   const [selectedShippingRateId, setSelectedShippingRateId] = useState<string>("");
   const [shippingAddress, setShippingAddress] = useState<ShippingAddressValue | null>(null);
@@ -202,8 +203,11 @@ const Checkout = () => {
       const { data, error } = await supabase.functions.invoke("create-payment-intent", {
         body: { action: "list-shipping-rates" },
       });
-      if (!isMounted || error || !Array.isArray(data?.shippingRates)) return;
-      setShippingRates(data.shippingRates as ShippingRateOption[]);
+      if (!isMounted) return;
+      if (!error && Array.isArray(data?.shippingRates)) {
+        setShippingRates(data.shippingRates as ShippingRateOption[]);
+      }
+      setShippingRatesLoaded(true);
     })();
 
     return () => {
@@ -261,7 +265,7 @@ const Checkout = () => {
   };
 
   useEffect(() => {
-    if (isCheckingSession || !supabase || items.length === 0 || !stripePublishableKey) {
+    if (isCheckingSession || !shippingRatesLoaded || !supabase || items.length === 0 || !stripePublishableKey) {
       return;
     }
 
@@ -310,7 +314,7 @@ const Checkout = () => {
     return () => {
       isMounted = false;
     };
-  }, [isCheckingSession, items, retryToken]);
+  }, [isCheckingSession, shippingRatesLoaded, items, retryToken]);
 
   // Re-quotes the existing PaymentIntent's amount whenever the shopper picks a shipping
   // method or finishes entering a destination address, so tax/shipping stay accurate and
@@ -338,7 +342,10 @@ const Checkout = () => {
       },
     });
 
-    if (requestId !== requestIdRef.current) return;
+    if (requestId !== requestIdRef.current) {
+      setIsRecalculating(false);
+      return;
+    }
 
     setIsRecalculating(false);
     if (error || !data?.clientSecret) {
