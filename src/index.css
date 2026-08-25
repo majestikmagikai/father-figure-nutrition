@@ -157,3 +157,16 @@
   .animate-orb-2 { animation: orb-float-2 4s ease-in-out infinite; }
   .animate-orb-3 { animation: orb-float-3 3.5s ease-in-out infinite; }
 }
+
+/* Admin dashboard: tighter Card padding/spacing on small screens for more usable space. */
+@media (max-width: 639px) {
+  .admin-shell .p-6 {
+    padding: 0.85rem;
+  }
+  .admin-shell .p-6.pt-0 {
+    padding-top: 0;
+  }
+  .admin-shell .mb-6 {
+    margin-bottom: 1rem;
+  }
+}

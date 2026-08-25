@@ -1648,9 +1648,9 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
-      <main className="flex-1 px-4 py-8 sm:px-6 sm:py-12 bg-gradient-to-b from-sky/20 via-secondary to-background">
+      <main className="admin-shell flex-1 px-3 py-5 sm:px-6 sm:py-12 bg-gradient-to-b from-sky/20 via-secondary to-background">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-8">
             <Link to="/" className="inline-flex items-center gap-2 text-sm text-navy/70 hover:text-orange transition-colors font-medium">
               <ArrowLeft className="h-4 w-4" /> Back to home
             </Link>
