@@ -4,15 +4,18 @@ import { UPCScannerModal } from "@/components/UPCScannerModal";
 import {
   ArrowLeft,
   BarChart3,
+  Boxes,
+  ClipboardList,
   GripVertical,
   HelpCircle,
+  Lightbulb,
   LogOut,
+  Package,
   Scan,
   ShieldAlert,
   ShieldCheck,
   Trash2,
   UsersRound,
-  X,
 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -1686,25 +1689,25 @@ const AdminDashboard = () => {
               <CardDescription>Each area now has its own page.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-800">
-                <Link to="/admin/metrics">Metrics</Link>
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
+                <Link to="/admin/metrics"><BarChart3 className="h-4 w-4 mr-2" />Metrics</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-800">
-                <Link to="/admin/products">Products</Link>
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
+                <Link to="/admin/products"><Package className="h-4 w-4 mr-2" />Products</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-800">
-                <Link to="/admin/orders">Orders</Link>
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
+                <Link to="/admin/orders"><ClipboardList className="h-4 w-4 mr-2" />Orders</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-800">
-                <Link to="/admin/users">Users</Link>
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
+                <Link to="/admin/users"><UsersRound className="h-4 w-4 mr-2" />Users</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-800">
-                <Link to="/admin/bundles">Bundles</Link>
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
+                <Link to="/admin/bundles"><Boxes className="h-4 w-4 mr-2" />Bundles</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-800">
-                <Link to="/admin/insights">Insights</Link>
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
+                <Link to="/admin/insights"><Lightbulb className="h-4 w-4 mr-2" />Insights</Link>
               </Button>
-              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-800">
+              <Button asChild variant="outline" className="border-navy/20 text-navy hover:bg-navy/5 duration-300">
                 <Link to="/admin/help"><HelpCircle className="h-4 w-4 mr-2" /> Help Guide</Link>
               </Button>
             </CardContent>
