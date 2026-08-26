@@ -98,6 +98,7 @@ type AdminInventoryProduct = InventoryProduct & {
   sku?: string | null;
   stock_quantity?: number;
   low_stock_threshold?: number;
+  label_image_url?: string | null;
 };
 
 type ProductDeleteTarget = {
@@ -1231,6 +1232,7 @@ const AdminDashboard = () => {
         fillColor: fillColor || null,
         model3dUrl: model3dUrl || null,
         enable3dViewer: product.enable_3d_viewer,
+        labelImageUrl: product.label_image_url ?? null,
         upc: upc || null,
         sku: (product.sku ?? "").trim() || null,
         stockQuantity: Number(product.stock_quantity ?? 0),
@@ -2294,6 +2296,32 @@ const AdminDashboard = () => {
                     </div>
                     <div className="rounded-lg border border-navy/10 bg-secondary/20 p-3 space-y-3">
                       <p className="text-base uppercase tracking-wide text-navy/60">Media and Visuals</p>
+                      <div className="space-y-2">
+                        <p className="text-base uppercase tracking-wide text-navy/60">360° Label Image</p>
+                        <p className="text-base text-navy/60">Select which image is used as the label texture on the 3D viewer.</p>
+                        {(parseImagesInput(JSON.stringify(editingProduct.images)) ?? []).length === 0 ? (
+                          <p className="text-base text-navy/60">No images yet.</p>
+                        ) : (
+                          <div className="flex flex-wrap gap-3">
+                            {(parseImagesInput(JSON.stringify(editingProduct.images)) ?? []).map((image, index) => {
+                              const isSelected = editingProduct.label_image_url === image.url;
+                              return (
+                                <button
+                                  key={`label-pick-${index}`}
+                                  type="button"
+                                  onClick={() => setProducts((prev) => prev.map((p) => p.id === editingProduct.id ? { ...p, label_image_url: isSelected ? null : image.url } : p))}
+                                  className={`relative rounded-lg border-2 overflow-hidden transition-all ${isSelected ? "border-orange shadow-cta" : "border-navy/10 hover:border-orange/50"}`}
+                                >
+                                  <img src={image.url} alt={image.altText} className="h-16 w-16 object-cover bg-white" />
+                                  {isSelected && (
+                                    <span className="absolute bottom-0 inset-x-0 text-[8px] uppercase tracking-widest text-white font-bold bg-orange/90 py-0.5 text-center">Label</span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                       <div className="space-y-2">
                         <p className="text-base uppercase tracking-wide text-navy/60">Image Order</p>
                         <p className="text-base text-navy/60">The first image is used in Product Grid and as the default image in Product Detail.</p>

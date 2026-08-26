@@ -16,6 +16,7 @@ export interface LocalProduct {
   fill: string | null;
   model3dUrl?: string | null;
   enable3dViewer: boolean;
+  labelImageUrl: string | null;
   upc: string | null;
 }
 
@@ -123,6 +124,7 @@ const mapInventoryRowToProduct = (row: InventoryProductRow): LocalProduct | null
     fill: row.fill_color ?? null,
     model3dUrl: normalizeModelUrl(row.model_3d_url),
     enable3dViewer: row.enable_3d_viewer,
+    labelImageUrl: row.label_image_url ?? null,
     upc: row.upc ?? null,
   };
 };

@@ -385,6 +385,7 @@ export const updateInventoryProduct = async (input: {
   fillColor: string | null;
   model3dUrl: string | null;
   enable3dViewer: boolean;
+  labelImageUrl?: string | null;
   upc: string | null;
   sku?: string | null;
   stockQuantity?: number;
@@ -408,6 +409,7 @@ export const updateInventoryProduct = async (input: {
       fill_color: input.fillColor,
       model_3d_url: input.model3dUrl,
       enable_3d_viewer: input.enable3dViewer,
+      label_image_url: input.labelImageUrl ?? null,
       upc: input.upc,
       sku: input.sku ?? null,
       stock_quantity: input.stockQuantity ?? 0,
@@ -433,6 +435,7 @@ export const createInventoryProduct = async (input: {
   fillColor: string | null;
   model3dUrl: string | null;
   enable3dViewer: boolean;
+  labelImageUrl?: string | null;
   upc: string | null;
   sku?: string | null;
   stockQuantity?: number;
@@ -454,6 +457,7 @@ export const createInventoryProduct = async (input: {
     fill_color: input.fillColor,
     model_3d_url: input.model3dUrl,
     enable_3d_viewer: input.enable3dViewer,
+    label_image_url: input.labelImageUrl ?? null,
     upc: input.upc,
     sku: input.sku ?? null,
     stock_quantity: input.stockQuantity ?? 0,

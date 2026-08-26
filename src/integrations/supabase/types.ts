@@ -263,6 +263,7 @@ export type Database = {
           handle: string
           id: string
           images: Json
+          label_image_url: string | null
           model_3d_url: string | null
           price: number
           sort_order: number
@@ -283,6 +284,7 @@ export type Database = {
           handle: string
           id?: string
           images?: Json
+          label_image_url?: string | null
           model_3d_url?: string | null
           price: number
           sort_order?: number
@@ -303,6 +305,7 @@ export type Database = {
           handle?: string
           id?: string
           images?: Json
+          label_image_url?: string | null
           model_3d_url?: string | null
           price?: number
           sort_order?: number

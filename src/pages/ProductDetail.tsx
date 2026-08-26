@@ -103,6 +103,7 @@ const ProductDetail = () => {
 
   const labelImage = useMemo(() => {
     if (!product) return null;
+    if (product.labelImageUrl) return { url: product.labelImageUrl, altText: "label" };
     return product.images.find((i) => /label/i.test(i.altText)) ?? product.images[product.images.length - 1];
   }, [product]);
 
