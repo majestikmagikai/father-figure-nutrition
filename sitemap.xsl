@@ -169,7 +169,7 @@
 
           <footer>
             <p>&#169; <xsl:value-of select="substring(string(current-dateTime()), 1, 4)"/> Father Figure Nutrition ·
-              <a href="https://fatherfigurenutrition.com">fatherfigurenutrition.com</a>
+              <a href="https://figurefuel.fit">figurefuel.fit</a>
             </p>
           </footer>
         </div>
