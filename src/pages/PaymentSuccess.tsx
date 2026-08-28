@@ -263,7 +263,7 @@ const PaymentSuccess = () => {
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2 text-sky-900/80 text-sm">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Saving order...
+                  <Loader2 className="h-4 w-4 animate-spin" /> Saving your order...
                 </div>
               </CardContent>
             </Card>
