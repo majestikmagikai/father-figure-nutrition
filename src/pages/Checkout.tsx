@@ -168,52 +168,37 @@ const Checkout = () => {
 
     let isMounted = true;
 
-    const validateSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      if (error || !data.session?.user) { sessionStorage.setItem('returnTo', window.location.pathname + window.location.search); }
+    const init = async () => {
+      const [sessionResult, ratesResult] = await Promise.all([
+        supabase.auth.getSession(),
+        supabase.functions.invoke("create-payment-intent", { body: { action: "list-shipping-rates" } }),
+      ]);
+
       if (!isMounted) return;
 
+      const { data, error } = sessionResult;
       if (error || !data.session?.user) {
+        sessionStorage.setItem('returnTo', window.location.pathname + window.location.search);
         navigate("/login", { replace: true });
         return;
       }
 
+      if (!ratesResult.error && Array.isArray(ratesResult.data?.shippingRates)) {
+        setShippingRates(ratesResult.data.shippingRates as ShippingRateOption[]);
+      }
+      setShippingRatesLoaded(true);
       setIsCheckingSession(false);
     };
 
-    validateSession();
+    void init();
 
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [navigate]);
 
   const subtotal = useMemo(
     () => items.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0),
     [items],
   );
-
-  // Shipping methods are whatever Shipping Rates are configured directly in the Stripe
-  // Dashboard — fetched once per session, never hardcoded here.
-  useEffect(() => {
-    if (isCheckingSession || !supabase) return;
-
-    let isMounted = true;
-    (async () => {
-      const { data, error } = await supabase.functions.invoke("create-payment-intent", {
-        body: { action: "list-shipping-rates" },
-      });
-      if (!isMounted) return;
-      if (!error && Array.isArray(data?.shippingRates)) {
-        setShippingRates(data.shippingRates as ShippingRateOption[]);
-      }
-      setShippingRatesLoaded(true);
-    })();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isCheckingSession]);
 
   const applyPricingResponse = (data: {
     clientSecret?: string;

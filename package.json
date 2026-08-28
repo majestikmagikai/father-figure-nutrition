@@ -6,13 +6,14 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "deploy": "vite build && wrangler pages deploy dist --project-name father-figure-nutrition",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "predeploy": "npm run build"
+
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
